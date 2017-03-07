@@ -1,13 +1,15 @@
 #!/usr/bin/env python
-#
-# Script to search pulsars in BL-GBT data
-# Documentation can be found in Pulsar_seach_BL-GBT.txt file
-#
-# Author : Vishal Gajjar (1 June 2016) 
-# Email : vishalg@berkeley.edu or vishal.gajjar2002@gmail.com
-# SP_search_wrapper is a code which runs RFIFIND and then runs heimdall. 
-#-------------------------------------------------------------------------------------------#
 
+'''
+ Script to search pulsars in BL-GBT data
+ Documentation can be found in Pulsar_seach_BL-GBT.txt file
+
+ Author : Vishal Gajjar (1 June 2016) 
+ Email : vishalg@berkeley.edu or vishal.gajjar2002@gmail.com
+ SP_search_wrapper is a code which runs RFIFIND and then runs heimdall.
+ The goal of this script is also to extract single pulses using dspsr and in/coherently dedisperse 
+ filterbank or raw data, respectively.  
+'''
 import os, sys, glob
 import numpy,time 
 import sifting
