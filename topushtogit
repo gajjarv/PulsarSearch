@@ -1,3 +1,3 @@
 git add .
-git commit --amend
-git push -u origin master
+git commit -a -m "New repo"
+git push 

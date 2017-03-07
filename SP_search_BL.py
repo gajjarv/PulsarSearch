@@ -5,8 +5,7 @@
 #
 # Author : Vishal Gajjar (1 June 2016) 
 # Email : vishalg@berkeley.edu or vishal.gajjar2002@gmail.com
-# v2 : digilab version
-# v3 : RFIFIND and zapbirdie incorported
+# SP_search_wrapper is a code which runs RFIFIND and then runs heimdall. 
 #-------------------------------------------------------------------------------------------#
 
 import os, sys, glob
