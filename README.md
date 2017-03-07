@@ -148,5 +148,5 @@ This will make DD plan from 0 to 1000 DM.
 - Vishal Gajjar
 
 
-For more information write to gajjar@ncra.tifr.res.in
+For more information write to vishalg@berkeley.edu or vishal.gajjar2002@gmail.com
 ------------------------------------------------------------------------------------------------
