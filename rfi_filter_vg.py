@@ -28,7 +28,7 @@ def rfi_filter(fil_file, time, timesig, freqsig, chanfrac, intfrac, max_percent,
 	source_name = hdr_data[0].strip("\n")
 	MJD = hdr_data[1].strip("\n").replace(".", "_")
 	if (len(MJD) - MJD.index("_") - 1) > 4: #check to see if the MJD has more than 4 decimal places
-		MJD = MJD[MJD.index("_") + 4] #reduce the MJD to 4 decimal places
+		MJD = MJD[:MJD.index("_") + 5] #reduce the MJD to 4 decimal places
 	base_name = source_name + "_" + MJD #create a base filename for files that will be created from the pipeline.
 	tsamp = hdr_data[2].strip("\n")
 	nchans = hdr_data[3].strip("\n")
@@ -38,7 +38,7 @@ def rfi_filter(fil_file, time, timesig, freqsig, chanfrac, intfrac, max_percent,
 	#Create a string for the name of the .mask file, to be used later.
 	mask_file = base_name + "_rfifind.mask"
 	#Run the rfi_check command from the rfi_quality_check.py script to see what percentage of the data is flagged.
-	percentage_flagged, percentage_bad_ints = rfi_quality_check.rfi_check(base_name, mask_file, time, nchans, tsamp,intfrac)
+	percentage_flagged, percentage_bad_ints = rfi_quality_check.rfi_check(base_name, mask_file, time, nchans, tsamp,chanfrac)
 	#See if the percentage of data flag exceeds the maximum allowed percentage input.
 	if percentage_flagged > max_percent:
 		print("File is bad. Too much data flagged.")

@@ -7,7 +7,7 @@ import os
 from functools import reduce
 import numpy as np
 
-def rfi_check(base_name, mask_file, time, nchans, tsamp, intfrac):
+def rfi_check(base_name, mask_file, time, nchans, tsamp, chanfrac):
 	#Create rfifind class and set the channels to zap.
 	a = rfifind_bandpass_on.rfifind(mask_file)
 	channels = float(nchans)
@@ -47,7 +47,8 @@ def rfi_check(base_name, mask_file, time, nchans, tsamp, intfrac):
 	for i in range(len(int_times)):
 		item = int_times[i]
 		interval = zapped[i]
-		if interval.size / intervals >= intfrac:
+		if interval.size / channels >= chanfrac:
+			print interval.size/channels,chanfrac
 			time_killfile.write("{0}    {1}\n".format(str(item), str(item + time)))
 			bad_ints += 1
 	time_killfile.close()

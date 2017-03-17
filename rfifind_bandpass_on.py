@@ -84,7 +84,7 @@ class rfifind:
         print x.tell()
         x.close()
 
-    def get_bandpass(self, plot=True):
+    def get_bandpass(self, plot=False):
         """
         get_bandpass():
             This routine returns a 'good' bandpass based on an average
