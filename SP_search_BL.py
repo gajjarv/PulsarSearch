@@ -13,30 +13,45 @@ import timeit
 import optparse
 from rfi_filter_vg import rfi_filter as rfi
 import numpy as np
+import math
 
-def candplots(basedir,fil_file,source_name):
+def candplots(basedir,fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,maxMem):
 	os.chdir(basedir)
 	#os.system("cd %s" % (basedir))
 	print "Inside : %s" % (basedir) 
 	os.system("rm *_all.cand")
+	os.system("rm *.ar")
 	os.system("coincidencer *.cand")	
-	os.system("frb_detector_bl.py -cands_file *_all.cand -verbose")
-	os.system("frb_detector_bl.py -cands_file *_all.cand > FRBcand")
-	frb_cands = np.loadtxt("FRBcand",dtype={'names': ('snr','time','samp_idx','dm','filter','prim_beam'),'formats': ('f4', 'f4', 'i4','f4','i4','i4')})
+	os.system("frb_detector_bl.py -cands_file *_all.cand -filter_cut %d -snr_cut %f -max_cands_per_sec %f -max_members_cut %f -verbose" % (filter_cut,snr_cut,maxCandSec,maxMem))
+	os.system("frb_detector_bl.py -cands_file *_all.cand -filter_cut %d -snr_cut %f -max_cands_per_sec %f -max_members_cut %f  > FRBcand" % (filter_cut,snr_cut,maxCandSec,maxMem))
+	if(os.stat("FRBcand").st_size is not 0):
+		frb_cands = np.loadtxt("FRBcand",dtype={'names': ('snr','time','samp_idx','dm','filter','prim_beam'),'formats': ('f4', 'f4', 'i4','f4','i4','i4')})
+	else:
+		print "No candidate found"
+		return
 	#print frb_cands['time'],frb_cands['dm']
-	for frb in frb_cands:
-		time = frb['time']
-		dm = frb['dm']
-		os.system("dspsrfil -S %f -c 2.0 -T 2.0 -t 12 -D %f  -O %fsec_DM%f -e ar %s" % (time,dm,time,dm,fil_file))
-	os.system("paz -r -b -L -m *.ar")
-	os.system("psrplot -p F -j 'F 16, B 128' -D %s_frb_cand.ps/cps *.ar" % (source_name))
+	if(noplot is not True):
+		if(frb_cands.size > 1):
+			for frb in frb_cands:
+				time = frb['time']
+				dm = frb['dm']
+				os.system("dspsrfil -S %f -c 2.0 -T 2.0 -t 12 -D %f  -O %fsec_DM%f -e ar %s" % (math.floor(time),dm,time,dm,fil_file))
+		elif(frb_cands.size):
+			time = float(frb_cands['time'])
+			dm = float(frb_cands['dm'])
+			os.system("dspsrfil -S %f -c 2.0 -T 2.0 -t 12 -D %f  -O %fsec_DM%f -e ar %s" % (math.floor(time),dm,time,dm,fil_file))		
+		else:
+			print "No candidate found"
+			return
+		os.system("paz -r -b -L -m *.ar")
+		os.system("psrplot -p F -j 'F 16, B 128' -D %s_frb_cand.ps/cps *.ar" % (source_name))
 		
 
-def heimdall_run(fil_file,dmlo,dmhi,base_name):
+def heimdall_run(fil_file,dmlo,dmhi,base_name,boxcar_max):
 
 	print "Running Heimdal with %f to %f DM range" % (lodm,hidm)
 	
-	os.system("heimdall -f %s -dm %f %f -output_dir %s/  -v" % (fil_file,dmlo,dmhi,base_name));
+	os.system("heimdall -f %s -dm %f %f -rfi_tol 0.3 -boxcar_max %f -output_dir %s/  -v" % (fil_file,dmlo,dmhi,boxcar_max,base_name));
 	return
 
 if __name__ == "__main__":
@@ -46,10 +61,7 @@ if __name__ == "__main__":
 	#parser = ArgumentParser(description = "Parser for inputs")
 	parser.add_option("--fil", action='store', dest='fil_file', type=str,
                 help="SIGPROC .fil file")
-	parser.add_option("--lodm", action='store', dest='lodm', default=0.0, type=float,
-                help="Heimdall: Low DM limit to search (Default: 0)")
-	parser.add_option("--hidm", action='store', dest='hidm', default=1000.0, type=float,
-                help="Heimdall: High DM limit to search (Default: 1000)")
+
 	parser.add_option("--time", action='store', dest='time', default=2.0, type=float,
                 help="RFIFIND: Seconds to integrate for stats and FFT calcs (Default: 2.0 seconds)")
 	parser.add_option("--timesig", action='store', dest='timesig', default=10.0, type=float,
@@ -64,11 +76,31 @@ if __name__ == "__main__":
                 help="Maximum percentage of flagged data allowed to pass through the filter. (Default: 20.0%)")
 	parser.add_option("--mask", action='store_true', dest='mask',
                 help='Use this flag to indicate whether a .mask file already exists for the given filterbank file.')
-	parser.add_option("--sp", action='store_true', dest='sp',
-                help='Use this flag for single-pulse searches instead of pulsar searches.')
+	parser.add_option("--nozap", action='store_true', dest='sp',
+                help='Use this flag to not run zap (Default: Run)')
 	parser.add_option("--norfi", action='store_true', dest='norfi',
-                help='Do not run any RFI removal.')	
-		
+                help='Do not run any RFI removal (Default: Run)')	
+
+	parser.add_option("--lodm", action='store', dest='lodm', default=0.0, type=float,
+                help="Heimdall: Low DM limit to search (Default: 0)")
+        parser.add_option("--hidm", action='store', dest='hidm', default=1000.0, type=float,
+                help="Heimdall: High DM limit to search (Default: 1000)")
+        parser.add_option("--boxcar_max", action='store', dest='boxcar_max', default=16, type=float,
+                help="Heimdall: Boxcar maximum window size to search (Default: 16)")
+	parser.add_option("--nosearch", action='store_true', dest='nosearch',
+                help='Do not run Heimdall (Default: Run)')
+
+	parser.add_option("--snr_cut", action='store', dest='snr_cut', default=6.0, type=float,
+                help="Post Heimdall: SNR cut for candidate selection (Default: 6.0)")	
+	parser.add_option("--filter_cut", action='store', dest='filter_cut', default=16.0, type=int,
+                help="Post Heimdall: Window size or filter cut for candidate selection (Default: 16.0)")
+	parser.add_option("--maxCsec", action='store', dest='maxCandSec', default=2.0, type=float,
+                help="Post Heimdall: Maximum allowed candidate per sec (Default: 2.0)")
+	parser.add_option("--max_members_cut", action='store', dest='maxMem', default=3.0, type=float,
+                help="Post Heimdall: Number of required memebers in a cluster for a real candidate (Default: 3.0)")
+	parser.add_option("--noplot", action='store_true', dest='noplot',
+                help='Do not run plot candidates (Default: Run)')
+
 	options,args = parser.parse_args()
 
 	if (not options.fil_file):
@@ -88,6 +120,13 @@ if __name__ == "__main__":
 	lodm = options.lodm
 	hidm = options.hidm	
 	norfi = options.norfi
+	snr_cut = options.snr_cut
+	filter_cut = options.filter_cut
+	boxcar_max = options.boxcar_max	
+	maxCandSec = options.maxCandSec
+	nosearch = options.nosearch
+	noplot = options.noplot
+	maxMem = options.maxMem
 
 	file_name = fil_file[:-4]
 	hdr_file_name = file_name+".hdr"
@@ -105,8 +144,11 @@ if __name__ == "__main__":
 		os.system("mkdir %s" % (base_name))
 	if(norfi is not True):
 		rfi(fil_file, time, timesig, freqsig, chanfrac, intfrac, max_percent, mask, sp)
-	heimdall_run(fil_file,lodm,hidm,base_name)
+	if(nosearch is not True):
+		 # IF running heimdall then remove old candidates 
+                os.system("rm %s/*.cand" % (base_name))
+		heimdall_run(fil_file,lodm,hidm,base_name,boxcar_max)
 	os.system("mv %s.* %s" % (base_name,base_name))
 	basedir = os.getcwd() + "/" + base_name
-	candplots(basedir,fil_file,source_name)
+	candplots(basedir,fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,maxMem)
 
