@@ -30,28 +30,38 @@ def candplots(basedir,fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,
 		print "No candidate found"
 		return
 	#print frb_cands['time'],frb_cands['dm']
+	frb_cands = np.sort(frb_cands)	
+	frb_cands[:] = frb_cands[::-1]	
+
+	#Extract block to plot in seconds
+	extime = 2.0
+
 	if(noplot is not True):
 		if(frb_cands.size > 1):
-			for frb in frb_cands:
+			for indx,frb in enumerate(frb_cands):
 				time = frb['time']
 				dm = frb['dm']
-				os.system("dspsrfil -S %f -c 2.0 -T 2.0 -t 12 -D %f  -O %fsec_DM%f -e ar %s" % (math.floor(time),dm,time,dm,fil_file))
+				stime = time-(extime/2)
+				if(stime<0): stime = 0
+				os.system("dspsrfil -S %f -c %f -T %f -t 12 -D %f  -O %04d_%fsec_DM%f -e ar %s" % (stime,extime,extime,dm,indx,time,dm,fil_file))
 		elif(frb_cands.size):
 			time = float(frb_cands['time'])
 			dm = float(frb_cands['dm'])
-			os.system("dspsrfil -S %f -c 2.0 -T 2.0 -t 12 -D %f  -O %fsec_DM%f -e ar %s" % (math.floor(time),dm,time,dm,fil_file))		
+			stime = time-(extime/2)
+                        if(stime<0): stime = 0
+			os.system("dspsrfil -S %f -c %f -T %f -t 12 -D %f  -O %04d_%fsec_DM%f -e ar %s" % (stime,extime,extime,dm,indx,time,dm,fil_file))		
 		else:
 			print "No candidate found"
 			return
 		os.system("paz -r -b -L -m *.ar")
-		os.system("psrplot -p F -j 'F 16, B 128' -D %s_frb_cand.ps/cps *.ar" % (source_name))
+		os.system("psrplot -p F -j 'F 8, B 128' -D %s_frb_cand.ps/cps *.ar" % (source_name))
 		
 
 def heimdall_run(fil_file,dmlo,dmhi,base_name,boxcar_max):
 
 	print "Running Heimdal with %f to %f DM range" % (lodm,hidm)
 	
-	os.system("heimdall -f %s -dm %f %f -rfi_tol 0.3 -boxcar_max %f -output_dir %s/  -v" % (fil_file,dmlo,dmhi,boxcar_max,base_name));
+	os.system("heimdall -f %s -dm %f %f -boxcar_max %f -output_dir %s/  -v" % (fil_file,dmlo,dmhi,boxcar_max,base_name));
 	return
 
 if __name__ == "__main__":
@@ -76,10 +86,12 @@ if __name__ == "__main__":
                 help="Maximum percentage of flagged data allowed to pass through the filter. (Default: 20.0%)")
 	parser.add_option("--mask", action='store_true', dest='mask',
                 help='Use this flag to indicate whether a .mask file already exists for the given filterbank file.')
-	parser.add_option("--nozap", action='store_true', dest='sp',
-                help='Use this flag to not run zap (Default: Run)')
-	parser.add_option("--norfi", action='store_true', dest='norfi',
-                help='Do not run any RFI removal (Default: Run)')	
+	'''
+	parser.add_option("--dozap", action='store_true', dest='sp',
+                help='Use this flag to run zap (Default: Do not Run)')
+	'''
+	parser.add_option("--dorfi", action='store_true', dest='dorfi',
+                help='Run RFIFIND (Default: Do not Run)')	
 
 	parser.add_option("--lodm", action='store', dest='lodm', default=0.0, type=float,
                 help="Heimdall: Low DM limit to search (Default: 0)")
@@ -116,10 +128,11 @@ if __name__ == "__main__":
 	intfrac = options.intfrac
 	max_percent = options.max_percent
 	mask = options.mask
-	sp = options.sp
+	#sp = options.sp
+	sp = True
 	lodm = options.lodm
 	hidm = options.hidm	
-	norfi = options.norfi
+	dorfi = options.dorfi
 	snr_cut = options.snr_cut
 	filter_cut = options.filter_cut
 	boxcar_max = options.boxcar_max	
@@ -133,7 +146,11 @@ if __name__ == "__main__":
 	os.system("header {0} -source_name -tstart -tsamp -nchans > {1}.hdr".format(fil_file, file_name))
 	hdr_file = open(hdr_file_name, "r")
         hdr_data = hdr_file.readlines()
-        source_name = hdr_data[0].strip("\n")
+        #source_name = hdr_data[0].strip("\n")
+	#source_name.replace(" ","_")
+	source_name = "fake"
+	#print source_name
+	#exit(0)
 	MJD = hdr_data[1].strip("\n").replace(".", "_")
 	if (len(MJD) - MJD.index("_") - 1) > 4: #check to see if the MJD has more than 4 decimal places
                 MJD = MJD[:MJD.index("_") + 5] #reduce the MJD to 4 decimal places
@@ -142,7 +159,7 @@ if __name__ == "__main__":
 	print base_name
 	if(os.path.isdir(base_name) is not True):	
 		os.system("mkdir %s" % (base_name))
-	if(norfi is not True):
+	if(dorfi is True):
 		rfi(fil_file, time, timesig, freqsig, chanfrac, intfrac, max_percent, mask, sp)
 	if(nosearch is not True):
 		 # IF running heimdall then remove old candidates 
