@@ -22,6 +22,8 @@ def candplots(basedir,fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,
 	os.system("rm *_all.cand")
 	os.system("rm *.ar")
 	os.system("coincidencer *.cand")	
+	os.system("trans_gen_overview.py -cands_file *_all.cand")
+	os.system("mv overview_1024x768.tmp.png %s.overview.png" % (source_name))
 	os.system("frb_detector_bl.py -cands_file *_all.cand -filter_cut %d -snr_cut %f -max_cands_per_sec %f -max_members_cut %f -verbose" % (filter_cut,snr_cut,maxCandSec,maxMem))
 	os.system("frb_detector_bl.py -cands_file *_all.cand -filter_cut %d -snr_cut %f -max_cands_per_sec %f -max_members_cut %f  > FRBcand" % (filter_cut,snr_cut,maxCandSec,maxMem))
 	if(os.stat("FRBcand").st_size is not 0):
@@ -53,15 +55,17 @@ def candplots(basedir,fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,
 		else:
 			print "No candidate found"
 			return
-		os.system("paz -r -b -L -m *.ar")
+		#os.system("paz -r -b -L -m *.ar")
 		os.system("psrplot -p F -j 'F 8, B 128' -D %s_frb_cand.ps/cps *.ar" % (source_name))
 		
 
 def heimdall_run(fil_file,dmlo,dmhi,base_name,boxcar_max):
 
 	print "Running Heimdal with %f to %f DM range" % (lodm,hidm)
-	
-	os.system("heimdall -f %s -dm %f %f -boxcar_max %f -output_dir %s/  -v" % (fil_file,dmlo,dmhi,boxcar_max,base_name));
+	#Test 
+	os.system("heimdall -zap_chans 1638 1726 -f %s -dm_tol 1.01 -dm %f %f -boxcar_max %f -output_dir %s/  -v" % (fil_file,dmlo,dmhi,boxcar_max,base_name));
+	#Orig
+	#os.system("heimdall -f %s -dm_tol 1.01 -dm %f %f -boxcar_max %f -output_dir %s/  -v" % (fil_file,dmlo,dmhi,boxcar_max,base_name));
 	return
 
 if __name__ == "__main__":
@@ -71,6 +75,8 @@ if __name__ == "__main__":
 	#parser = ArgumentParser(description = "Parser for inputs")
 	parser.add_option("--fil", action='store', dest='fil_file', type=str,
                 help="SIGPROC .fil file")
+	parser.add_option("--outdir", action='store', dest='outdir', default="",type=str,
+                help="Full Output directory where SOURCE_NAME_MJD folder will be created. (Default : .)")
 
 	parser.add_option("--time", action='store', dest='time', default=2.0, type=float,
                 help="RFIFIND: Seconds to integrate for stats and FFT calcs (Default: 2.0 seconds)")
@@ -85,13 +91,13 @@ if __name__ == "__main__":
 	parser.add_option("--max_percent", action='store', dest='max_percent', default=20.0, type=float,
                 help="Maximum percentage of flagged data allowed to pass through the filter. (Default: 20.0%)")
 	parser.add_option("--mask", action='store_true', dest='mask',
-                help='Use this flag to indicate whether a .mask file already exists for the given filterbank file.')
+                help='Use this flag to indicate whether a .mask file already exists for the given filterbank file. IT DOES NOT WORK FOR THIS VERSION YET SO DO NOT USE')
 	'''
 	parser.add_option("--dozap", action='store_true', dest='sp',
                 help='Use this flag to run zap (Default: Do not Run)')
 	'''
 	parser.add_option("--dorfi", action='store_true', dest='dorfi',
-                help='Run RFIFIND (Default: Do not Run)')	
+                help='Run RFIFIND (Default: Do not Run) IT DOES NOT WORK FOR THIS VERSION YET SO DO NOT USE --dorfi')
 
 	parser.add_option("--lodm", action='store', dest='lodm', default=0.0, type=float,
                 help="Heimdall: Low DM limit to search (Default: 0)")
@@ -108,8 +114,8 @@ if __name__ == "__main__":
                 help="Post Heimdall: Window size or filter cut for candidate selection (Default: 16.0)")
 	parser.add_option("--maxCsec", action='store', dest='maxCandSec', default=2.0, type=float,
                 help="Post Heimdall: Maximum allowed candidate per sec (Default: 2.0)")
-	parser.add_option("--max_members_cut", action='store', dest='maxMem', default=3.0, type=float,
-                help="Post Heimdall: Number of required memebers in a cluster for a real candidate (Default: 3.0)")
+	parser.add_option("--max_members_cut", action='store', dest='maxMem', default=10.0, type=float,
+                help="Post Heimdall: Number of required memebers in a cluster for a real candidate (Default: 10.0)")
 	parser.add_option("--noplot", action='store_true', dest='noplot',
                 help='Do not run plot candidates (Default: Run)')
 
@@ -121,6 +127,7 @@ if __name__ == "__main__":
                 sys.exit(1)
 
 	fil_file = os.path.abspath(options.fil_file)
+	fname = fil_file.split("/")[-1]
 	time = options.time
 	timesig = options.timesig
 	freqsig = options.freqsig
@@ -140,22 +147,33 @@ if __name__ == "__main__":
 	nosearch = options.nosearch
 	noplot = options.noplot
 	maxMem = options.maxMem
+	#outdir = options.outdir
 
-	file_name = fil_file[:-4]
-	hdr_file_name = file_name+".hdr"
-	os.system("header {0} -source_name -tstart -tsamp -nchans > {1}.hdr".format(fil_file, file_name))
+	if not options.outdir: outdir = os.getcwd()
+	else: 
+		outdir = options.outdir
+		if(os.path.isdir(outdir) is not True):       
+                	os.system("mkdir %s" % (outdir))
+			
+	print "Output will go to %s" % (outdir)					
+	
+	os.chdir(outdir)
+	
+	fname = fname[:-4]
+	hdr_file_name = fname+".hdr"
+	#print fname,hdr_file_name
+	os.system("header {0} -source_name -tstart -tsamp -nchans > {1}.hdr".format(fil_file, fname))
 	hdr_file = open(hdr_file_name, "r")
         hdr_data = hdr_file.readlines()
-        #source_name = hdr_data[0].strip("\n")
-	#source_name.replace(" ","_")
-	source_name = "fake"
+        source_name = hdr_data[0].strip("\n")
+	source_name.replace(" ","_")
+	#source_name = "fake"
 	#print source_name
-	#exit(0)
+
 	MJD = hdr_data[1].strip("\n").replace(".", "_")
 	if (len(MJD) - MJD.index("_") - 1) > 4: #check to see if the MJD has more than 4 decimal places
                 MJD = MJD[:MJD.index("_") + 5] #reduce the MJD to 4 decimal places
         base_name = source_name + "_" + MJD
-
 	print base_name
 	if(os.path.isdir(base_name) is not True):	
 		os.system("mkdir %s" % (base_name))
