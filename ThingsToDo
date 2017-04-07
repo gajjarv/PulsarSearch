@@ -1,2 +1,0 @@
-1. Make sure the RFI channels are not getting used while searching
-2. Make better use of candidates per second, filter window size and number of members cut

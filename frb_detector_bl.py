@@ -240,8 +240,8 @@ if __name__ == "__main__":
     if verbose:
       sys.stderr.write ( "Classified %i as hidden \n" % len(categories["hidden"]))
       sys.stderr.write ( "           %i as noise spikes\n" % len(categories["noise"]))
-      sys.stderr.write ( "           %i as coinc RFI [nbeam > %i]\n" % (len(categories["coinc_dumb"]), classifier.nbeams_cut))
-      sys.stderr.write ( "           %i as coinc RFI [mask_rule]\n" % len(categories["coinc_smart"]))
+      #sys.stderr.write ( "           %i as coinc RFI [nbeam > %i]\n" % (len(categories["coinc_dumb"]), classifier.nbeams_cut))
+      #sys.stderr.write ( "           %i as coinc RFI [mask_rule]\n" % len(categories["coinc_smart"]))
       sys.stderr.write ( "           %i as galactic spikes\n" % len(categories["galactic"]))
       sys.stderr.write ( "           %i as RFI storm\n" % rfi_storm)
       sys.stderr.write ( "           %i as valid FRB candidates\n" % len(categories["valid"]))

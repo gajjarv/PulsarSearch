@@ -32,14 +32,14 @@ def candplots(basedir,fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,
 		print "No candidate found"
 		return
 	#print frb_cands['time'],frb_cands['dm']
-	frb_cands = np.sort(frb_cands)	
-	frb_cands[:] = frb_cands[::-1]	
 
 	#Extract block to plot in seconds
-	extime = 2.0
+	extime = 1.0
 
 	if(noplot is not True):
 		if(frb_cands.size > 1):
+			frb_cands = np.sort(frb_cands)	
+			frb_cands[:] = frb_cands[::-1]	
 			for indx,frb in enumerate(frb_cands):
 				time = frb['time']
 				dm = frb['dm']
@@ -51,7 +51,7 @@ def candplots(basedir,fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,
 			dm = float(frb_cands['dm'])
 			stime = time-(extime/2)
                         if(stime<0): stime = 0
-			os.system("dspsrfil -S %f -c %f -T %f -t 12 -D %f  -O %04d_%fsec_DM%f -e ar %s" % (stime,extime,extime,dm,indx,time,dm,fil_file))		
+			os.system("dspsrfil -S %f -c %f -T %f -t 12 -D %f  -O 0000_%fsec_DM%f -e ar %s" % (stime,extime,extime,dm,time,dm,fil_file))		
 		else:
 			print "No candidate found"
 			return
@@ -166,7 +166,7 @@ if __name__ == "__main__":
 	hdr_file = open(hdr_file_name, "r")
         hdr_data = hdr_file.readlines()
         source_name = hdr_data[0].strip("\n")
-	source_name.replace(" ","_")
+	source_name = source_name.replace(" ","_")
 	#source_name = "fake"
 	#print source_name
 
