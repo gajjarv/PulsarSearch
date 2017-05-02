@@ -28,7 +28,7 @@ def rfi_filter(fil_file, time, timesig, freqsig, chanfrac, intfrac, max_percent,
 	source_name = hdr_data[0].strip("\n")
 	MJD = hdr_data[1].strip("\n").replace(".", "_")
 	if (len(MJD) - MJD.index("_") - 1) > 4: #check to see if the MJD has more than 4 decimal places
-		MJD = MJD[MJD.index("_") + 4] #reduce the MJD to 4 decimal places
+		MJD = MJD[:MJD.index("_") + 5] #reduce the MJD to 4 decimal places
 	base_name = source_name + "_" + MJD #create a base filename for files that will be created from the pipeline.
 	tsamp = hdr_data[2].strip("\n")
 	nchans = hdr_data[3].strip("\n")
@@ -38,7 +38,7 @@ def rfi_filter(fil_file, time, timesig, freqsig, chanfrac, intfrac, max_percent,
 	#Create a string for the name of the .mask file, to be used later.
 	mask_file = base_name + "_rfifind.mask"
 	#Run the rfi_check command from the rfi_quality_check.py script to see what percentage of the data is flagged.
-	percentage_flagged, percentage_bad_ints = rfi_quality_check.rfi_check(base_name, mask_file, time, nchans, tsamp, intfrac)
+	percentage_flagged, percentage_bad_ints = rfi_quality_check.rfi_check(base_name, mask_file, time, nchans, tsamp, chanfrac)
 	#See if the percentage of data flag exceeds the maximum allowed percentage input.
 	if percentage_flagged > max_percent:
 		print("File is bad. Too much data flagged.")
@@ -71,40 +71,39 @@ def rfi_filter(fil_file, time, timesig, freqsig, chanfrac, intfrac, max_percent,
 		return
 
 
-parser = ArgumentParser(description = "Parser for inputs")
-parser.add_argument("-fil", action='store', dest='fil_file', required=True, type=str,
-                help="The .fil filename")
-parser.add_argument("-time", action='store', dest='time', required=False, default=2.0, type=float,
-                help="Integration Time in seconds. Default is 2.0 seconds.")
-parser.add_argument("-timesig", action='store', dest='timesig', required=False, default=10.0, type=float,
-                help="Time of Signal in seconds. Default is 10.0 seconds.")
-parser.add_argument("-freqsig", action='store', dest='freqsig', required=False, default=4.0, type=float,
-                help="Frequency of Signal in Hz. Default is 4 Hz")
-parser.add_argument("-chanfrac", action='store', dest='chanfrac', required=False, default=0.5, type=float,
-                help="Threshold for Fraction of Channels Flagged. Default is 0.5.")
-parser.add_argument("-intfrac", action='store', dest='intfrac', required=False, default=0.3, type=float,
-                help="Threshold for Fraction of Intervals Flagged. Default is 0.3.")
-parser.add_argument("-max_percent", action='store', dest='max_percent', required=False, default=20.0, type=float,
-                help="Maximum percentage of flagged data allowed to pass through the filter. Default is 20.0 percent.")
-parser.add_argument("-mask", action='store_true', dest='mask',
-                help='Use this flag to indicate whether a .mask file already exists for the given filterbank file.')
-parser.add_argument("-sp", action='store_true', dest='sp',
-                help='Use this flag for single-pulse searches instead of pulsar searches.')
-
-
-args = parser.parse_args()
-
-fil_file = args.fil_file
-time = args.time
-timesig = args.timesig
-freqsig = args.freqsig
-chanfrac = args.chanfrac
-intfrac = args.intfrac
-max_percent = args.max_percent
-mask = args.mask
-sp = args.sp
-
 if __name__ == "__main__":
+
+	parser = ArgumentParser(description = "Parser for inputs")
+	parser.add_argument("-fil", action='store', dest='fil_file', required=True, type=str,
+	                help="The .fil filename")
+	parser.add_argument("-time", action='store', dest='time', required=False, default=2.0, type=float,
+	                help="Integration Time in seconds. Default is 2.0 seconds.")
+	parser.add_argument("-timesig", action='store', dest='timesig', required=False, default=10.0, type=float,
+	                help="Time of Signal in seconds. Default is 10.0 seconds.")
+	parser.add_argument("-freqsig", action='store', dest='freqsig', required=False, default=4.0, type=float,
+	                help="Frequency of Signal in Hz. Default is 4 Hz")
+	parser.add_argument("-chanfrac", action='store', dest='chanfrac', required=False, default=0.5, type=float,
+	                help="Threshold for Fraction of Channels Flagged. Default is 0.5.")
+	parser.add_argument("-intfrac", action='store', dest='intfrac', required=False, default=0.3, type=float,
+	                help="Threshold for Fraction of Intervals Flagged. Default is 0.3.")
+	parser.add_argument("-max_percent", action='store', dest='max_percent', required=False, default=20.0, type=float,
+	                help="Maximum percentage of flagged data allowed to pass through the filter. Default is 20.0 percent.")
+	parser.add_argument("-mask", action='store_true', dest='mask',
+	                help='Use this flag to indicate whether a .mask file already exists for the given filterbank file.')
+	parser.add_argument("-sp", action='store_true', dest='sp',
+	                help='Use this flag for single-pulse searches instead of pulsar searches.')
+
+	args = parser.parse_args()
+
+	fil_file = args.fil_file
+	time = args.time
+	timesig = args.timesig
+	freqsig = args.freqsig
+	chanfrac = args.chanfrac
+	intfrac = args.intfrac
+	max_percent = args.max_percent
+	mask = args.mask
+	sp = args.sp
 
 	rfi_filter(fil_file, time, timesig, freqsig, chanfrac, intfrac, max_percent, mask, sp)
 

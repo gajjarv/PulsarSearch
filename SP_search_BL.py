@@ -55,17 +55,18 @@ def candplots(basedir,fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,
 		else:
 			print "No candidate found"
 			return
-		#os.system("paz -r -b -L -m *.ar")
-		os.system("psrplot -p F -j 'F 8, B 128' -D %s_frb_cand.ps/cps *.ar" % (source_name))
+		os.system("paz -r -b -L -m *.ar")
+		#os.system("paz -Z '1775 1942' -m *.ar")
+		os.system("psrplot -p F -j 'F 32, B 128' -D %s_frb_cand.ps/cps *.ar" % (source_name))
 		
 
 def heimdall_run(fil_file,dmlo,dmhi,base_name,boxcar_max):
 
 	print "Running Heimdal with %f to %f DM range" % (lodm,hidm)
 	#Test 
-	os.system("heimdall -zap_chans 1638 1726 -f %s -dm_tol 1.01 -dm %f %f -boxcar_max %f -output_dir %s/  -v" % (fil_file,dmlo,dmhi,boxcar_max,base_name));
+	#os.system("heimdall -zap_chans 1775 1942 -f %s -dm_tol 1.01 -dm %f %f -boxcar_max %f -output_dir %s/  -v" % (fil_file,dmlo,dmhi,boxcar_max,base_name));
 	#Orig
-	#os.system("heimdall -f %s -dm_tol 1.01 -dm %f %f -boxcar_max %f -output_dir %s/  -v" % (fil_file,dmlo,dmhi,boxcar_max,base_name));
+	os.system("heimdall -f %s -dm_tol 1.01 -dm %f %f -boxcar_max %f -output_dir %s/  -v" % (fil_file,dmlo,dmhi,boxcar_max,base_name));
 	return
 
 if __name__ == "__main__":

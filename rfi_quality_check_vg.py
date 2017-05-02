@@ -6,6 +6,8 @@ import rfifind_bandpass_on
 import os
 from functools import reduce
 import numpy as np
+from time import sleep
+import sys
 
 def rfi_check(base_name, mask_file, time, nchans, tsamp, chanfrac):
 	#Create rfifind class and set the channels to zap.
@@ -19,9 +21,16 @@ def rfi_check(base_name, mask_file, time, nchans, tsamp, chanfrac):
 	os.system("mv pgplot.ps {0}.ps".format(base_name)) #Rename the .ps file that is outputted from the bandpass plotting function.
 
 	total_zaps = 0
-	for item in zapped:
-		total_zaps += item.size
-	kill_chans = list(reduce(np.intersect1d, zapped))
+	
+#	for item in zapped:
+#		total_zaps += item.size
+	zapcount = np.zeros(int(channels))
+	data = list(np.concatenate(zapped,axis=0))
+		
+	zapcount,edges = np.histogram(data,int(channels))
+	print zapcount 
+
+	#kill_chans = list(reduce(np.intersect1d, zapped))
 	avg_bad_chans = len(kill_chans) / channels #Give the average fraction of channels flagged across all intervals
 
 	chan_killfile_name = base_name + "_chan.kill"

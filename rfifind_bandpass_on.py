@@ -161,7 +161,7 @@ class rfifind:
         return np.concatenate((np.arange(nedge),
                                np.arange(nedge) + self.nchan-nedge))
 
-    def set_zap_chans(self, power=100.0, asigma=5.0, ssigma=2.0, plot=True,
+    def set_zap_chans(self, power=100.0, asigma=5.0, ssigma=2.0, plot=False,
                       edges=0.01, usemask=True, chans=[]):
         self.user_zap_chans = set(chans)
         self.pow_zap_chans = set(self.get_pow_zap_chans(power))
@@ -312,7 +312,7 @@ if __name__=="__main__":
                     asigma=2.0,
                     ssigma=2.0,
                     usemask=True,
-                    plot=True,
+                    plot=False,
                     chans=[])
     a.write_zap_chans()
     a.set_weights_and_offsets()

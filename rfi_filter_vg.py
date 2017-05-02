@@ -9,7 +9,7 @@ Example: python rfi_filter.py -fil GBT_Lband_PSR.fil -time 30.0 -timesig 10.0 -f
 """
 from argparse import ArgumentParser
 import os
-import rfi_quality_check
+import rfi_quality_check_vg as rfiqul
 import bird_wrapper
 import timeit
 
@@ -38,7 +38,7 @@ def rfi_filter(fil_file, time, timesig, freqsig, chanfrac, intfrac, max_percent,
 	#Create a string for the name of the .mask file, to be used later.
 	mask_file = base_name + "_rfifind.mask"
 	#Run the rfi_check command from the rfi_quality_check.py script to see what percentage of the data is flagged.
-	percentage_flagged, percentage_bad_ints = rfi_quality_check.rfi_check(base_name, mask_file, time, nchans, tsamp,chanfrac)
+	percentage_flagged, percentage_bad_ints = rfiqul.rfi_check(base_name, mask_file, time, nchans, tsamp,chanfrac)
 	#See if the percentage of data flag exceeds the maximum allowed percentage input.
 	if percentage_flagged > max_percent:
 		print("File is bad. Too much data flagged.")
@@ -78,13 +78,13 @@ if __name__ == "__main__":
 	parser.add_argument("-time", action='store', dest='time', required=False, default=2.0, type=float,
                 help="Integration Time (seconds) (Default: 2.0 seconds)")
 	parser.add_argument("-timesig", action='store', dest='timesig', required=False, default=10.0, type=float,
-                help="Time of Signal (seconds) (Default: 10.0 seconds)")
+                help="Sigma cut-off for time-domain broadband signal (Default: 10.0)")
 	parser.add_argument("-freqsig", action='store', dest='freqsig', required=False, default=4.0, type=float,
-                help="Frequency of Signal (Hz) (Default: 4 Hz)")
+                help="Sigma cut-off for narrowband signals (Default: 4)")
 	parser.add_argument("-chanfrac", action='store', dest='chanfrac', required=False, default=0.5, type=float,
-                help="Threshold for Fraction of Channels Flagged (Default: 0.5)")
+                help="Threshold for bad channels for an entire interval to be flagged (Default: 0.5)")
 	parser.add_argument("-intfrac", action='store', dest='intfrac', required=False, default=0.3, type=float,
-                help="Threshold for Fraction of Intervals Flagged (Default: 0.3)")
+                help="Threshold for bad interval to flag an entire channel  (Default: 0.3)")
 	parser.add_argument("-max_percent", action='store', dest='max_percent', required=False, default=20.0, type=float,
                 help="Maximum percentage of flagged data allowed to pass through the filter. (Default: 20.0%)")
 	parser.add_argument("-mask", action='store_true', dest='mask',
@@ -106,13 +106,4 @@ if __name__ == "__main__":
 	sp = args.sp
 
 	rfi_filter(fil_file, time, timesig, freqsig, chanfrac, intfrac, max_percent, mask, sp)
-
-
-
-
-
-
-
-
-
 
