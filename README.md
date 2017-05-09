@@ -1,15 +1,11 @@
-# PulsarSearch
 This is documentation on pulsar seach pipe-line
-
-This script carries out pulsar candidate search on the .sub??? files generated 
-from the make_subs_SAS_Ncore_Mmodes.sh. 
 
 The script requires following python import. 
 numpy, sifting, optparse, math, time, os, sys, glob
 
 ---------------------------------------------------------------------------
 To get help about usage : 
-python Pulsar_Search_LOFAR-v0.py --h 
+python Pulsar_Search_BL.py --h 
 ---------------------------------------------------------------------------
 Short Logical flow of the script 
 
@@ -25,15 +21,15 @@ Short Logical flow of the script
 		     pulsar using prepsubband. Does not work with 
 		     mpiprepsubband. 
 	--ddplan 1 : It used hard coded DDplan generated considering normal
-		     HBA observations. Does not work with mpiprepsubband.  
+		     observations. Does not work with mpiprepsubband.  
 	--ddplan 2 : It uses user input --lodm, --dmstep, --ndm.  
 
    Plan will be prepared here which will be used for mpi/prepsubband usage
 	
 3. RFI find with default hard coded block of 2048 which corresponds to ~ 2 sec
    for 1msec integration time. It creates mask and other files with suffix
-   "Rfifind_RSP?_output.*" This file will be created in the output dir. 
-    The log file named "Rfifind_RSP?_output.log" will be in the same output dir. 
+   "Rfifind_output.*" This file will be created in the output dir. 
+    The log file named "Rfifind_output.log" will be in the same output dir. 
 
 4. Prepsubband or mpiprepsubband 
    Depending upon --mpi 0 or 1, prepsubband and mpiprepsubband will be executed    
@@ -45,10 +41,11 @@ Short Logical flow of the script
    For mpiprepsubband this number should also be divisible by user supplied 
    (number of port - 1). 
 
-   This prog will generate several 
+   This prog will generate several time series for the entire  DM range. 
+ 
 5. Single_pulse_search.py : This needs all the .dat file created from the 
    prepsubband and it generates .singlepulse files for each .dat file. It also 
-   generates *_singlepulse.ps plot to see single pulses in the DM vs time plot.    
+   generates *_singlepulse.ps plot to visually see single pulses in the DM vs time plot.    
    Output dir also contains singlepulse.log file. 
 
 6. Realfft : This prog creates .fft file for each .dat time series file. 
@@ -93,7 +90,7 @@ Short Logical flow of the script
    period will be compared to a list of know pulsars. For this 
    list of known pulsar which in file "psr_cats.txt" will be used. 
    In this file all the strong pulsars above 40 mJy and within observable 
-   range of LOFAR as listed. One can add more pulsar into this list but 
+   range of GBT as /listed. One can add more pulsar into this list but 
    the format of the file should not change.  
    The criteria for calling 	   
    perticular candidate a known pulsar is hard coded in the script. 
@@ -124,22 +121,22 @@ Examples :
 
 1. To carry out quick search of the data
 
-python Pulsar_Search_LOFAR-v1.py --mpi 1 --np 8 --ddplan 2 --i /net/sub5/lse015/data4/LOFAR_PULSAR_ARCHIVE_lse015/20100724/L2010_08599_red/incoherentstokes/RSP0 --o DATA_NEW/L2010_08599/
+python Pulsar_Search_BL.py --mpi 1 --np 8 --ddplan 2 --i GBT_Lband_PSR.fil --o <your output directory>
 
-The input file should be given with full path to RSP.
+The input file should be given with full path. 
 If the output dir does not exist it will creat one.  
 If no --np option is given default 8 will be passed on to mpiprepsubband. 
 Also if no --lodm or --ndm are given it will take range from 0 - 150 dm with dm step of 1. 
 
 2. One can also give following type of option for finer dm search. 
 
-python Pulsar_Search_LOFAR-v1.py --mpi 1 --ddplan 2 --lodm 0.0 --ndm 1000 --dmstep 0.1 --i /net/sub5/lse015/data4/LOFAR_PULSAR_ARCHIVE_lse015/20100724/L2010_08599_red/incoherentstokes/RSP0 --o DATA_NEW/L2010_08599/
+python Pulsar_Search_BL.py --mpi 1 --ddplan 2 --lodm 0.0 --ndm 1000 --dmstep 0.1 --i GBT_Lband_PSR.fil --o <your output directory>
 
 This will search from 0 to 100 Dm using dm step of 0.1
 
 3. To run script using DDplan.py script following is an example. 
 
-python Pulsar_Search_LOFAR-v1.py --ddplan 0 --i /net/sub5/lse015/data4/LOFAR_PULSAR_ARCHIVE_lse015/20100724/L2010_08599_red/incoherentstokes/RSP0 --o DATA_NEW/L2010_08599/ 
+python Pulsar_Search_BL.py --ddplan 0 --i GBT_Lband_PSR.fil --o <your output direcory> 
 
 One cant use --mpi option here because that is not yet implimented in the script for --ddplan 0 option. 
 This will make DD plan from 0 to 1000 DM. 
@@ -148,5 +145,5 @@ This will make DD plan from 0 to 1000 DM.
 - Vishal Gajjar
 
 
-For more information write to vishalg@berkeley.edu or vishal.gajjar2002@gmail.com
+For more information write to vishalg@berkeley.edu
 ------------------------------------------------------------------------------------------------
