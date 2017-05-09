@@ -1,4 +1,4 @@
-This is documentation on pulsar seach pipe-line
+This is documentation on pulsar seach pipeline
 
 The script requires following python import. 
 numpy, sifting, optparse, math, time, os, sys, glob
