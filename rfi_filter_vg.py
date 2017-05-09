@@ -12,17 +12,20 @@ import os
 import rfi_quality_check_vg as rfiqul
 import bird_wrapper
 import timeit
+import sys
 
 def rfi_filter(fil_file, time, timesig, freqsig, chanfrac, intfrac, max_percent, mask, sp):
 	start = timeit.default_timer()
-
+	kill_chans_range = []
+	kill_time_range = []
 	#Gather name and MDJ from the .fil file name.
 	# """Name and MJD are hardcoded for now, until we involve SIGPROC."""
 	# pulsar_name = "DIAG_PSR_J0034-0721"
 	# pulsar_MJD = "57640_130983796298"
 	file_name = fil_file[:-4] #file_name is filterbank file without .fil extension
-	hdr_file_name = file_name+".hdr" #create name for .hdr file
-	os.system("header {0} -source_name -tstart -tsamp -nchans > {1}.hdr".format(fil_file, file_name)) #create .hdr file with header information from .fil file
+	hdrbase = file_name.split("/")[-1]
+	hdr_file_name = hdrbase+".hdr" #create name for .hdr file
+	os.system("header {0} -source_name -tstart -tsamp -nchans > {1}".format(fil_file, hdr_file_name)) #create .hdr file with header information from .fil file
 	hdr_file = open(hdr_file_name, "r")
 	hdr_data = hdr_file.readlines()
 	source_name = hdr_data[0].strip("\n")
@@ -38,7 +41,7 @@ def rfi_filter(fil_file, time, timesig, freqsig, chanfrac, intfrac, max_percent,
 	#Create a string for the name of the .mask file, to be used later.
 	mask_file = base_name + "_rfifind.mask"
 	#Run the rfi_check command from the rfi_quality_check.py script to see what percentage of the data is flagged.
-	percentage_flagged, percentage_bad_ints = rfiqul.rfi_check(base_name, mask_file, time, nchans, tsamp,chanfrac)
+	percentage_flagged, percentage_bad_ints,kill_chans,kill_chans_range,kill_time_range = rfiqul.rfi_check(base_name, mask_file, time, nchans, tsamp,chanfrac,intfrac)
 	#See if the percentage of data flag exceeds the maximum allowed percentage input.
 	if percentage_flagged > max_percent:
 		print("File is bad. Too much data flagged.")
@@ -57,8 +60,8 @@ def rfi_filter(fil_file, time, timesig, freqsig, chanfrac, intfrac, max_percent,
 		summary_file.write("{0}\n".format(fil_file))
 		summary_file.write("Channels: {0}\n".format(str(channels)))
 		summary_file.write("Intervals: {0}\n".format(str(intervals)))
-		summary_file.write("Number of Samples: {0}\n".format(str(tsamp)))
-		summary_file.write("Sample Time: {0} seconds\n".format(str(time)))
+		#summary_file.write("Number of Samples: {0}\n".format(str(tsamp)))
+		#summary_file.write("Sample Time: {0} seconds\n".format(str(time)))
 		summary_file.write("Percentage of Bad Data: {0}%\n".format(str(percentage_flagged)))
 		summary_file.write("Percentage of Bad Intervals: {0}%\n".format(str(percentage_bad_ints)))
 		summary_file.write("This filterbank file was analyzed using the rfifind program of PRESTO.\n")
@@ -68,7 +71,7 @@ def rfi_filter(fil_file, time, timesig, freqsig, chanfrac, intfrac, max_percent,
 		stop = timeit.default_timer()
 		summary_file.write("Runtime: {0} seconds.".format(str(stop - start)))
 		summary_file.close()
-		return
+		return kill_chans,kill_chans_range,kill_time_range
 
 
 if __name__ == "__main__":
@@ -91,7 +94,12 @@ if __name__ == "__main__":
                 help='Use this flag to indicate whether a .mask file already exists for the given filterbank file.')
 	parser.add_argument("-sp", action='store_true', dest='sp',
                 help='Use this flag for single-pulse searches instead of pulsar searches.')
-
+	'''		
+	if(len(sys.argv) < 2):
+		print "No input given\n"
+		parser.print_help()
+		sys.exit(1)
+	'''
 
 	args = parser.parse_args()
 
