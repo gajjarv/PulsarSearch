@@ -58,7 +58,7 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 			if(any(l<=time<=u for (l,u) in kill_time_range)):
 				print "Candidate inside bad-time range"
 			else:
-				os.system("dspsrfil -S %f -c %f -T %f -t 12 -D %f  -O 0000_%fsec_DM%f -e ar %s" % (stime,extime,extime,dm,time,dm,fil_file))		
+				os.system("dspsrfil -cepoch=start -S %f -c %f -T %f -t 12 -D %f  -O 0000_%fsec_DM%f -e ar %s" % (stime,extime,extime,dm,time,dm,fil_file))		
 		else:
 			print "No candidate found"
 			return
@@ -87,7 +87,7 @@ def heimdall_run(fil_file,dmlo,dmhi,base_name,boxcar_max,dorfi,kill_chan_range):
 		#print kill_chan_range
 		for r in kill_chan_range:
 			zapchan = zapchan + " -zap_chans " + r 
-		cmd = "heimdall -f %s -dm_tol 1.01 -dm %f %f -boxcar_max %f -output_dir %s/  -v %s" % (fil_file,dmlo,dmhi,boxcar_max,base_name,zapchan)		
+		cmd = "heimdall -f %s -scrunching 1 -scrunching_tol 1.05 -rfi_tol 3 -dm_nbits 32 -dm_pulse_width 1000 -dm_tol 1.01 -dm %f %f -boxcar_max %f -output_dir %s/  -v %s" % (fil_file,dmlo,dmhi,boxcar_max,base_name,zapchan)		
 		#print cmd
 		os.system(cmd)
 	else:
