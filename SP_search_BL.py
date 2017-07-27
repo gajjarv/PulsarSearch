@@ -49,7 +49,7 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 				if(any(l<=time<=u for (l,u) in kill_time_range)):
 					print "Candidate inside bad-time range"
 				else:
-					os.system("dspsrfil -S %f -c %f -T %f -t 12 -D %f  -O %04d_%fsec_DM%f -e ar %s" % (stime,extime,extime,dm,indx,time,dm,fil_file))
+					os.system("dspsrfil -S %f -c %f -T %f -D %f  -O %04d_%fsec_DM%f -e ar %s" % (stime,extime,extime,dm,indx,time,dm,fil_file))
 		elif(frb_cands.size):
 			time = float(frb_cands['time'])
 			dm = float(frb_cands['dm'])
@@ -58,7 +58,8 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 			if(any(l<=time<=u for (l,u) in kill_time_range)):
 				print "Candidate inside bad-time range"
 			else:
-				os.system("dspsrfil -cepoch=start -S %f -c %f -T %f -t 12 -D %f  -O 0000_%fsec_DM%f -e ar %s" % (stime,extime,extime,dm,time,dm,fil_file))		
+				
+				os.system("dspsrfil -cepoch=start -S %f -c %f -T %f -D %f  -O 0000_%fsec_DM%f -e ar %s" % (stime,extime,extime,dm,time,dm,fil_file))		
 		else:
 			print "No candidate found"
 			return
@@ -88,12 +89,14 @@ def heimdall_run(fil_file,dmlo,dmhi,base_name,boxcar_max,dorfi,kill_chan_range):
 		for r in kill_chan_range:
 			zapchan = zapchan + " -zap_chans " + r 
 		# After talking to AJ and SO
-		# cmd = "heimdall -f %s -scrunching 1 -scrunching_tol 1.05 -rfi_tol 3 -dm_nbits 32 -dm_pulse_width 1000 -dm_tol 1.01 -dm %f %f -boxcar_max %f -output_dir %s/  -v %s" % (fil_file,dmlo,dmhi,boxcar_max,base_name,zapchan)		
-		cmd = "heimdall -f %s -scrunching 1 -scrunching_tol 1.05 -rfi_tol 3 -dm_nbits 32 -dm_pulse_width 1000 -dm_tol 1.05 -dm %f %f -boxcar_max %f -output_dir %s/  -v %s" % (fil_file,dmlo,dmhi,boxcar_max,base_name,zapchan)		
-		#print cmd
+		#cmd = "heimdall -f %s -scrunching 1 -scrunching_tol 1.05 -rfi_tol 5 -dm_nbits 32 -dm_pulse_width 1000 -dm_tol 1.05 -dm %f %f -boxcar_max %f -output_dir %s/  -v %s" % (fil_file,dmlo,dmhi,boxcar_max,base_name,zapchan)		
+		cmd = "heimdall -f %s -scrunching 1 -rfi_tol 10 -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s  -v %s" % (fil_file,dmlo,dmhi,boxcar_max,outdir,zapchan)		
+		print cmd
 		os.system(cmd)
 	else:
-		os.system("heimdall -f %s -dm_tol 1.01 -dm %f %f -boxcar_max %f -output_dir %s/  -v" % (fil_file,dmlo,dmhi,boxcar_max,base_name));
+		# After talking to AJ and SO
+		os.system("heimdall -f %s -scrunching 1 -rfi_tol 10 -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s -v" % (fil_file,dmlo,dmhi,boxcar_max,outdir));
+		#os.system("heimdall -f %s -dm_tol 1.01 -dm %f %f -boxcar_max %f -output_dir %s/  -v" % (fil_file,dmlo,dmhi,boxcar_max,base_name));
 	return
 
 if __name__ == "__main__":
@@ -119,13 +122,13 @@ if __name__ == "__main__":
 	parser.add_option("--max_percent", action='store', dest='max_percent', default=20.0, type=float,
                 help="Maximum percentage of flagged data allowed to pass through the filter. (Default: 20.0%)")
 	parser.add_option("--mask", action='store_true', dest='mask',
-                help='Use this flag to indicate whether a .mask file already exists for the given filterbank file. IT DOES NOT WORK FOR THIS VERSION YET SO DO NOT USE')
+                help='Use this flag to indicate whether a .mask file already exists for the given filterbank file.')
 	'''
 	parser.add_option("--dozap", action='store_true', dest='sp',
                 help='Use this flag to run zap (Default: Do not Run)')
 	'''
 	parser.add_option("--dorfi", action='store_true', dest='dorfi',
-                help='Run RFIFIND (Default: Do not Run) IT DOES NOT WORK FOR THIS VERSION YET SO DO NOT USE --dorfi')
+                help='Run RFIFIND (Default: Do not Run)')
 
 	parser.add_option("--lodm", action='store', dest='lodm', default=0.0, type=float,
                 help="Heimdall: Low DM limit to search (Default: 0)")
@@ -202,7 +205,8 @@ if __name__ == "__main__":
 	if (len(MJD) - MJD.index("_") - 1) > 4: #check to see if the MJD has more than 4 decimal places
                 MJD = MJD[:MJD.index("_") + 5] #reduce the MJD to 4 decimal places
         base_name = source_name + "_" + MJD
-	print "Output will go to %s/%s"  % (outdir,base_name)
+	outdir = outdir + "/" + base_name 
+	print "Output will go to %s"  % (outdir)
 	if(os.path.isdir(base_name) is not True):	
 		os.system("mkdir %s" % (base_name))
 	basedir = os.getcwd() + "/" + base_name
@@ -216,8 +220,8 @@ if __name__ == "__main__":
 		kill_time_range = []
 	if(nosearch is not True):
 		 # IF running heimdall then remove old candidates 
-                os.system("rm %s/*.cand" % (base_name))
-		heimdall_run(fil_file,lodm,hidm,base_name,boxcar_max,dorfi,kill_chan_range)
+                os.system("rm %s/*.cand" % (outdir))
+		heimdall_run(fil_file,lodm,hidm,outdir,boxcar_max,dorfi,kill_chan_range)
 	#os.system("mv %s.* %s" % (base_name,base_name))
 	#if(os.path.isfile("*.cand") is True):
 	if filter(os.path.isfile,glob.glob("*.cand")):

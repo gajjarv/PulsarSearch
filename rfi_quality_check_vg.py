@@ -88,7 +88,7 @@ def rfi_check(base_name, mask_file, rfitime, nchans, totime, chanfrac,intfrac):
 
 	#Calculate the percentage of channel-interval spaces that have been zapped.
 	percent_flagged = (float(total_zaps) / (channels * intervals)) * 100
-	print "%.0f%% of the data (%.0f%% chans and %.0f%% interval) was flagged for RFI." % (int(percent_flagged),int(avg_bad_chans*100),int(percentage_bad_ints*100))
+	print "%.1f%% of the data (%.1f%% chans and %.1f%% interval) was flagged for RFI." % (float(percent_flagged),float(avg_bad_chans*100),float(percentage_bad_ints*100))
 	return percent_flagged, percentage_bad_ints,kill_chans,kill_chans_range,kill_time_range
 
 
