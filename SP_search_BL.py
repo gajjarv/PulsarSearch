@@ -14,24 +14,36 @@ from rfi_filter_vg import rfi_filter as rfi
 import numpy as np
 import glob
 from itertools import chain
+sys.path.insert(0,'/home/vgajjar/SP_search_wrapper/PulsarSearch/robert_sp/')
+import sp_cand_find as sp
 
-def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range):
-	#os.chdir(basedir)
-	#os.system("cd %s" % (basedir))
-	#print "Inside : %s" % (basedir) 
-	os.system("rm *_all.cand")
-	os.system("rm *.ar")
-	os.system("coincidencer *.cand")	
-	os.system("trans_gen_overview.py -cands_file *_all.cand")
-	os.system("mv overview_1024x768.tmp.png %s.overview.png" % (source_name))
-	os.system("frb_detector_bl.py -cands_file *_all.cand -filter_cut %d -snr_cut %f -max_cands_per_sec %f -min_members_cut %f -verbose" % (filter_cut,snr_cut,maxCandSec,minMem))
-	os.system("frb_detector_bl.py -cands_file *_all.cand -filter_cut %d -snr_cut %f -max_cands_per_sec %f -min_members_cut %f  > FRBcand" % (filter_cut,snr_cut,maxCandSec,minMem))
-	if(os.stat("FRBcand").st_size is not 0):
-		frb_cands = np.loadtxt("FRBcand",dtype={'names': ('snr','time','samp_idx','dm','filter','prim_beam'),'formats': ('f4', 'f4', 'i4','f4','i4','i4')})
+def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands):
+	if(nogpu is not True):
+		#os.chdir(basedir)
+		#os.system("cd %s" % (basedir))
+		#print "Inside : %s" % (basedir) 
+		os.system("rm *_all.cand")
+		os.system("rm *.ar")
+		os.system("coincidencer *.cand")	
+		os.system("trans_gen_overview.py -cands_file *_all.cand")
+		os.system("mv overview_1024x768.tmp.png %s.overview.png" % (source_name))
+		os.system("frb_detector_bl.py -cands_file *_all.cand -filter_cut %d -snr_cut %f -max_cands_per_sec %f -min_members_cut %f -verbose" % (filter_cut,snr_cut,maxCandSec,minMem))
+		os.system("frb_detector_bl.py -cands_file *_all.cand -filter_cut %d -snr_cut %f -max_cands_per_sec %f -min_members_cut %f  > FRBcand" % (filter_cut,snr_cut,maxCandSec,minMem))
+		if(os.stat("FRBcand").st_size is not 0):
+			frb_cands = np.loadtxt("FRBcand",dtype={'names': ('snr','time','samp_idx','dm','filter','prim_beam'),'formats': ('f4', 'f4', 'i4','f4','i4','i4')})
+		else:
+			print "No candidate found"
+			return
+		#print frb_cands['time'],frb_cands['dm']
 	else:
-		print "No candidate found"
-		return
-	#print frb_cands['time'],frb_cands['dm']
+		if(gcands is not ""):
+			dt = np.dtype(dtype={'names': ('snr','time','samp_idx','dm','filter','prim_beam'),'formats': ('f4', 'f4', 'i4','f4','i4','i4')})
+			frb_cands = np.zeros(len(gcands),dt)
+			for i,dd in enumerate(gcands):
+				frb_cands[i] = np.array([(dd.sigma,dd.time,dd.sample,dd.dm,dd.dfact,0)][0],dt)
+		else:
+			print "No candidate found"
+			return
 
 	#Extract block to plot in seconds
 	extime = 1.0
@@ -77,7 +89,7 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 		os.system("psrplot -p F -j 'D, F 32, B 128' -D %s_frb_cand.ps/cps *.ar" % (source_name))
 		
 
-def heimdall_run(fil_file,dmlo,dmhi,base_name,boxcar_max,dorfi,kill_chan_range):
+def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range):
 
 	print "Running Heimdal with %f to %f DM range" % (lodm,hidm)
 	#Test 
@@ -98,6 +110,61 @@ def heimdall_run(fil_file,dmlo,dmhi,base_name,boxcar_max,dorfi,kill_chan_range):
 		os.system("heimdall -f %s -scrunching 1 -rfi_tol 10 -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s -v" % (fil_file,dmlo,dmhi,boxcar_max,outdir));
 		#os.system("heimdall -f %s -dm_tol 1.01 -dm %f %f -boxcar_max %f -output_dir %s/  -v" % (fil_file,dmlo,dmhi,boxcar_max,base_name));
 	return
+
+def PRESTOsp(fil_file,dmlo,dmhi,base_name,snr_cut,mask_file,basename):
+	
+	print "Running PRESTO with %f to %f DM range" % (lodm,hidm)	
+	if mask_file:
+		cmd = "prepsubband %s -lodm %f -numdms %d -dmstep 1 -mask %s -o prepsubband" % (fil_file,dmlo,dmhi-dmlo,mask_file)
+	else:
+		cmd = "prepsubband %s -lodm %f -numdms %d -dmstep 1 -o prepsubband" % (fil_file,dmlo,dmhi-dmlo)	
+
+	os.system(cmd)
+	
+	#Run single pulse search on the .dat files
+	tbin = 1.0 # Seconds. Time window to compare candidates 
+	nhits_max = 300
+	dm_min = dmlo
+	dm_max = dmhi
+	#snr_cut  = 6.0
+
+	fullfile = '%s_full.txt' %basename
+	allfile  = '%s_all.txt' %basename
+	tmp_file = '%s_FRBcand.txt' %basename
+	search_file  = '%s_good.txt' %basename
+	top_file  = '%s_top.txt' %basename
+
+	cmd = "single_pulse_search.py prepsubband*.dat"
+	os.system(cmd)	
+	cmd = "cat prepsubband*.singlepulse > All_cand.singlepulse"
+	os.system(cmd)
+	cand_file = "All_cand.singlepulse"
+	#print cand_file
+	#import IPython; IPython.embed()
+	#sys.exit()
+	sys.path.insert(0,'/home/vgajjar/SP_search_wrapper/PulsarSearch/robert_sp/')
+	import sp_cand_find as sp	
+	cands = sp.cands_from_file(cand_file, 0)
+	print("%d total candidates" %len(cands))
+	cands = sp.find_duplicates(cands, tbin, 1000.0)
+
+   	sp.write_cands( fullfile, cands )
+    	ndupes = np.array([ dd.nhits for dd in cands ])
+    	yy = np.where( (ndupes > 0) & (ndupes <= nhits_max) )[0]
+    	all_cands = [ cands[ii] for ii in yy ]
+    	sp.write_cands( allfile, all_cands )
+
+    	dms = np.array([ dd.dm for dd in cands ])
+	snrs = np.array([ dd.sigma for dd in cands ])
+    	xx = np.where( (ndupes > 0) & (ndupes <= nhits_max) & (dms >= dm_min) & (dms <= dm_max) & (snrs >= snr_cut))[0]
+    	gcands = [ cands[ii] for ii in xx ]
+
+	print("%d good candidates" %len(gcands))
+    	sp.write_cands(tmp_file, gcands)
+    	sp.make_nhits_plot(ndupes, nhits_max, basename)	
+	return gcands	
+
+#def candplots_nogpu(fil_file,source_name,noplot,kill_chans,kill_time_range):	
 
 if __name__ == "__main__":
 
@@ -149,6 +216,8 @@ if __name__ == "__main__":
                 help="Post Heimdall: Number of required minimum memebers in a cluster for a real candidate (Default: 10.0)")
 	parser.add_option("--noplot", action='store_true', dest='noplot',
                 help='Do not run plot candidates (Default: Run)')
+        parser.add_option("--nogpu", action='store_true', dest='nogpu',
+                help='Run single_pulse_search.py (no heimdall)')
 
 	options,args = parser.parse_args()
 
@@ -178,6 +247,7 @@ if __name__ == "__main__":
 	nosearch = options.nosearch
 	noplot = options.noplot
 	minMem = options.minMem
+	nogpu = options.nogpu
 	#outdir = options.outdir
 
 	if not options.outdir: outdir = os.getcwd()
@@ -213,18 +283,25 @@ if __name__ == "__main__":
 	os.system("mv %s.hdr %s/" % (fname,basedir))
 	os.chdir(basedir)
 	if(dorfi is True):
-		kill_chans,kill_chan_range,kill_time_range = rfi(fil_file, time, timesig, freqsig, chanfrac, intfrac, max_percent, mask, sp)
+		kill_chans,kill_chan_range,kill_time_range,mask_file = rfi(fil_file, time, timesig, freqsig, chanfrac, intfrac, max_percent, mask, sp)
 	else : 
 		kill_chans = []
 		kill_chan_range = []
 		kill_time_range = []
+		mask_file = ""
 	if(nosearch is not True):
 		 # IF running heimdall then remove old candidates 
                 os.system("rm %s/*.cand" % (outdir))
-		heimdall_run(fil_file,lodm,hidm,outdir,boxcar_max,dorfi,kill_chan_range)
-	#os.system("mv %s.* %s" % (base_name,base_name))
-	#if(os.path.isfile("*.cand") is True):
-	if filter(os.path.isfile,glob.glob("*.cand")):
-		candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range)
-	else:	print "No heimdall candidate found"
+		if(nogpu is not True):
+			heimdall_run(fil_file,lodm,hidm,outdir,boxcar_max,dorfi,kill_chan_range)
+			#os.system("mv %s.* %s" % (base_name,base_name))
+			#if(os.path.isfile("*.cand") is True):
+			if filter(os.path.isfile,glob.glob("*.cand")):
+				gcands = []
+				candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands)
+			else:	print "No heimdall candidate found"
+		else:
+			gcands = PRESTOsp(fil_file,lodm,hidm,outdir,snr_cut,mask_file,base_name)
+			candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands)
 
+	

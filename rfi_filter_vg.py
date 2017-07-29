@@ -71,7 +71,7 @@ def rfi_filter(fil_file, time, timesig, freqsig, chanfrac, intfrac, max_percent,
 		stop = timeit.default_timer()
 		summary_file.write("Runtime: {0} seconds.".format(str(stop - start)))
 		summary_file.close()
-		return kill_chans,kill_chans_range,kill_time_range
+		return kill_chans,kill_chans_range,kill_time_range,mask_file
 
 
 if __name__ == "__main__":
