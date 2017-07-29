@@ -36,6 +36,7 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 			return
 		#print frb_cands['time'],frb_cands['dm']
 	else:
+		os.system("rm *.ar")
 		if(gcands is not ""):
 			dt = np.dtype(dtype={'names': ('snr','time','samp_idx','dm','filter','prim_beam'),'formats': ('f4', 'f4', 'i4','f4','i4','i4')})
 			frb_cands = np.zeros(len(gcands),dt)
@@ -119,14 +120,13 @@ def PRESTOsp(fil_file,dmlo,dmhi,base_name,snr_cut,mask_file,basename):
 	else:
 		cmd = "prepsubband %s -lodm %f -numdms %d -dmstep 1 -o prepsubband" % (fil_file,dmlo,dmhi-dmlo)	
 
-	os.system(cmd)
+	#os.system(cmd)
 	
 	#Run single pulse search on the .dat files
 	tbin = 1.0 # Seconds. Time window to compare candidates 
 	nhits_max = 300
 	dm_min = dmlo
 	dm_max = dmhi
-	#snr_cut  = 6.0
 
 	fullfile = '%s_full.txt' %basename
 	allfile  = '%s_all.txt' %basename
@@ -135,13 +135,12 @@ def PRESTOsp(fil_file,dmlo,dmhi,base_name,snr_cut,mask_file,basename):
 	top_file  = '%s_top.txt' %basename
 
 	cmd = "single_pulse_search.py prepsubband*.dat"
-	os.system(cmd)	
+
+	#os.system(cmd)	
+
 	cmd = "cat prepsubband*.singlepulse > All_cand.singlepulse"
 	os.system(cmd)
 	cand_file = "All_cand.singlepulse"
-	#print cand_file
-	#import IPython; IPython.embed()
-	#sys.exit()
 	sys.path.insert(0,'/home/vgajjar/SP_search_wrapper/PulsarSearch/robert_sp/')
 	import sp_cand_find as sp	
 	cands = sp.cands_from_file(cand_file, 0)
@@ -160,7 +159,9 @@ def PRESTOsp(fil_file,dmlo,dmhi,base_name,snr_cut,mask_file,basename):
     	gcands = [ cands[ii] for ii in xx ]
 
 	print("%d good candidates" %len(gcands))
-    	sp.write_cands(tmp_file, gcands)
+	if(len(gcands)):
+    		sp.write_cands(tmp_file, gcands)
+	else: 	print "Nothing to plot"	
     	sp.make_nhits_plot(ndupes, nhits_max, basename)	
 	return gcands	
 
