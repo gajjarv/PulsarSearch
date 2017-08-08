@@ -1,3 +1,5 @@
 Pulsar search: active : v3
 SP search : active : v2
-v3 : Version before the without GPU (no heimdall)
+v4 : Version before the without GPU (no heimdall)
+v5:: Version with PRESTO and single_pulse_search.py package.
+v6: A good working verion but does not remove zero DM candidates. Next version.  
