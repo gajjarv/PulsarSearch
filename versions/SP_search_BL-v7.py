@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 """
-Take .fil file as an input file and does single pulse search
+Take in a Filterbank file (.fil) and check how much of it is flagged for RFI.
+If the fraction of the data is less than the given threshold, 
+then create a .bird file and .zap file.
 """
 from argparse import ArgumentParser
 import os,sys,math
@@ -21,13 +23,10 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import COMMASPACE, formatdate
 import subprocess as sb
-from sigpyproc.Readers import FilReader
-
-def dm_delay(fl, fh, DM):
-    kdm = 4148.808 # MHz^2 / (pc cm^-3)
-    return abs(kdm * DM * (1.0 / (fl * fl) - 1 / (fh * fh)))
 
 def emailsend(send_to,subject,msgtxt,files,candtxt):
+
+
 	msg = MIMEMultipart()
 	msg['From'] = 'blfrbcand@gmail.com'
 	msg['To'] = send_to
@@ -56,7 +55,7 @@ def emailsend(send_to,subject,msgtxt,files,candtxt):
 	print("email sent")
 
 
-def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh):
+def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands):
 	if(nogpu is not True):
 		#os.chdir(basedir)
 		#os.system("cd %s" % (basedir))
@@ -75,8 +74,8 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 			return
 		#print frb_cands['time'],frb_cands['dm']
 	else:
+		os.system("rm *.ar")
 		if(gcands is not ""):
-			os.system("rm *.ar")
 			dt = np.dtype(dtype={'names': ('snr','time','samp_idx','dm','filter','prim_beam'),'formats': ('f4', 'f4', 'i4','f4','i4','i4')})
 			frb_cands = np.zeros(len(gcands),dt)
 			for i,dd in enumerate(gcands):
@@ -85,42 +84,16 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 			print "No candidate found"
 			return
 
-	#Extract block factor plot in seconds, fixed
-	extimefact = 2.0
-	#print frb_cands
+	#Extract block to plot in seconds, fixed
+	extime = 1.0
 	
 	if(noplot is not True):
-		if(frb_cands.size >= 1):
-			if(frb_cands.size>1):
-				frb_cands = np.sort(frb_cands)
-				frb_cands[:] = frb_cands[::-1]
-			for indx,frb in enumerate(frb_cands):
-                                time = frb['time']
-                                dm = frb['dm']
-                                # Extract according to the DM delay     
-                                extime = extimefact*dm_delay(fl,fh,dm)
-                                if extime < 1.0: extime = 1.0
-                                stime = time-(extime/2)
-                                if(stime<0): stime = 0
-                                #if(any(l<=stime<=u for (l,u) in kill_time_ranges)):
-                                if(any(l<=time<=u for (l,u) in kill_time_range)):
-                                        print "Candidate inside bad-time range"
-                                else:
-                                        if(indx<100): os.system("dspsrfil -cepoch=start -S %f -c %f -T %f -D %f  -O %04d_%fsec_DM%f -e ar %s" % (stime,extime,extime,dm,indx,time,dm,fil_file))		
-		else:
-			print "No candidate found"
-			return
-
-		'''
 		if(frb_cands.size > 1):
 			frb_cands = np.sort(frb_cands)	
 			frb_cands[:] = frb_cands[::-1]	
 			for indx,frb in enumerate(frb_cands):
 				time = frb['time']
 				dm = frb['dm']
-				# Extract according to the DM delay	
-				extime = extimefact*dm_delay(fl,fh,dm)			
-				if extime < 1.0: extime = 1.0
 				stime = time-(extime/2)
 				if(stime<0): stime = 0
 				#if(any(l<=stime<=u for (l,u) in kill_time_ranges)):
@@ -132,18 +105,16 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 		elif(frb_cands.size):
 			time = float(frb_cands['time'])
 			dm = float(frb_cands['dm'])
-
-			# Extract according to the DM delay     
-                        extime = extimefact*dm_delay(fl,fh,dm)
-                        if extime < 1.0: extime = 1.0
 			stime = time-(extime/2)
                         if(stime<0): stime = 0
 			if(any(l<=time<=u for (l,u) in kill_time_range)):
 				print "Candidate inside bad-time range"
 			else:
+				
 				os.system("dspsrfil -cepoch=start -S %f -c %f -T %f -D %f  -O 0000_%fsec_DM%f -e ar %s" % (stime,extime,extime,dm,time,dm,fil_file))		
-		'''
-
+		else:
+			print "No candidate found"
+			return
 		# If no kill_chans, do an automatic smoothing
 		temp = ""
 		#os.system("paz -r -b -L -m *.ar")
@@ -152,6 +123,7 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 			temp = "paz -z \"" + temp	+ "\" -m *.ar"
 			print temp
 			os.system(temp)	
+		#os.system()
 		#os.system("paz -r -b -L -m *.ar")
 		#os.system("paz -Z '1775 1942' -m *.ar")
 		os.system("psrplot -p F -j 'D, F 32, B 128' -D %s_frb_cand.ps/cps *.ar" % (source_name))
@@ -179,7 +151,7 @@ def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range):
 		#os.system("heimdall -f %s -dm_tol 1.01 -dm %f %f -boxcar_max %f -output_dir %s/  -v" % (fil_file,dmlo,dmhi,boxcar_max,base_name));
 	return
 
-def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosearch):
+def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nodedisp):
 	
 	print "Running PRESTO with %f to %f DM range" % (lodm,hidm)	
 
@@ -189,7 +161,7 @@ def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosear
 	#DM Step
 	dmstep = 1	
 
-	if not nosearch:
+	if not nodedisp:
 		cmd = "rm *.dat prepsub*.inf *.singlepulse" 
 		os.system(cmd)
 
@@ -199,7 +171,7 @@ def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosear
 		else:
 			cmd = "prepsubband %s -lodm 0 -numdms 1 -dmstep 1 -o prepsubband" % (fil_file)
 		
-		if not nosearch: os.system(cmd)
+		if not nodedisp: os.system(cmd)
 
 
 	for d in range(int(dmlo),int(dmhi),dmr):
@@ -210,7 +182,25 @@ def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosear
 			cmd = "prepsubband %s -lodm %f -numdms %d -dmstep %d -mask %s -o prepsubband" % (fil_file,d,dmhi1-d,dmstep,mask_file)
 		else:
 			cmd = "prepsubband %s -lodm %f -numdms %d -dmstep %d -o prepsubband" % (fil_file,d,dmhi1-d,dmstep)		
-		if not nosearch: os.system(cmd)
+		if not nodedisp: os.system(cmd)
+	'''
+	if mask_file:
+		for d in range(int(dmlo),int(dmhi),dmr):
+			if(d+dmr>dmhi): dmhi1 = dmhi
+			else: dmhi1 = d+dmr
+			if(d>1000): dmstep = dmstep + 1	
+			cmd = "prepsubband %s -lodm %f -numdms %d -dmstep %d -mask %s -o prepsubband" % (fil_file,d,dmhi1-d,dmstep,mask_file)
+			#print cmd
+			if not nodedisp: os.system(cmd)
+	else:
+		for d in range(int(dmlo),int(dmhi),dmr):
+                        if(d+dmr>dmhi): dmhi1 = dmhi
+                        else: dmhi1 = d+dmr
+			if(d>1000): dmstep = dmstep + 1
+			cmd = "prepsubband %s -lodm %f -numdms %d -dmstep %d -o prepsubband" % (fil_file,d,dmhi1-d,dmstep)	
+			#print cmd
+			if not nodedisp: os.system(cmd)
+	'''
 
 	#Run single pulse search on the .dat files
 	tbin = 2.0 # Seconds. Time window to compare candidates 
@@ -224,7 +214,7 @@ def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosear
 
 	cmd = "single_pulse_search.py prepsubband*.dat -m 300"
 
-	if not nosearch: os.system(cmd)	
+	if not nodedisp: os.system(cmd)	
 
 	cmd = "cat prepsubband*.singlepulse > All_cand.singlepulse"
 	os.system(cmd)
@@ -235,34 +225,32 @@ def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosear
 	print("%d total candidates" %len(cands))
 	cands = sp.find_duplicates(cands, tbin, 1000.0)
 
-	if(len(cands)):
-		if zerodm:
-                	zdm = []
-                	dupdms = np.array([ dd.dupes_dms for dd in cands ])
-                	for i,d in enumerate(dupdms):
-                        	if(0.0 not in d): zdm.append(i)
-                	cands = [cands[ii] for ii in zdm]
 
-	   	sp.write_cands( fullfile, cands )
-    		ndupes = np.array([ dd.nhits for dd in cands ])
-		#print 	dupes
-    		yy = np.where( (ndupes > 0) & (ndupes <= nhits_max) )[0]
-		#print len(yy)
-	    	all_cands = [ cands[ii] for ii in yy ]
-    		if len(all_cands): sp.write_cands( allfile, all_cands )
+	if zerodm:
+                zdm = []
+                dupdms = np.array([ dd.dupes_dms for dd in cands ])
+                for i,d in enumerate(dupdms):
+                        if(0.0 not in d): zdm.append(i)
+                cands = [cands[ii] for ii in zdm]
+
+   	sp.write_cands( fullfile, cands )
+    	ndupes = np.array([ dd.nhits for dd in cands ])
+	#print ndupes
+    	yy = np.where( (ndupes > 0) & (ndupes <= nhits_max) )[0]
+	#print len(yy)
+    	all_cands = [ cands[ii] for ii in yy ]
+    	if len(all_cands): sp.write_cands( allfile, all_cands )
 	
-	    	dms = np.array([ dd.dm for dd in cands ])
-		snrs = np.array([ dd.sigma for dd in cands ])
-	    	xx = np.where( (ndupes > 0) & (ndupes <= nhits_max) & (dms >= dm_min) & (dms <= dm_max) & (snrs >= snr_cut))[0]
-    		gcands = [ cands[ii] for ii in xx ]
+    	dms = np.array([ dd.dm for dd in cands ])
+	snrs = np.array([ dd.sigma for dd in cands ])
+    	xx = np.where( (ndupes > 0) & (ndupes <= nhits_max) & (dms >= dm_min) & (dms <= dm_max) & (snrs >= snr_cut))[0]
+    	gcands = [ cands[ii] for ii in xx ]
 
-		print("%d good candidates" %len(gcands))
-		if(len(gcands)):
-    			sp.write_cands(tmp_file, gcands)
-	    		sp.make_nhits_plot(ndupes, nhits_max, base_name)	
-		else: 	print "Nothing to plot"	
-	else:
-		gcands = []
+	print("%d good candidates" %len(gcands))
+	if(len(gcands)):
+    		sp.write_cands(tmp_file, gcands)
+    		sp.make_nhits_plot(ndupes, nhits_max, base_name)	
+	else: 	print "Nothing to plot"	
 
 	return gcands	
 
@@ -307,6 +295,8 @@ if __name__ == "__main__":
                 help="Heimdall: Boxcar maximum window size to search (Default: 16)")
 	parser.add_option("--nosearch", action='store_true', dest='nosearch',
                 help='Do not run Heimdall (Default: Run)')
+	parser.add_option("--nodedisp", action='store_true', dest='nodedisp',
+                help='Do not run prepsubband and single_pulse_search.py (Default: Run)')
 
 	parser.add_option("--snr_cut", action='store', dest='snr_cut', default=6.0, type=float,
                 help="Post Heimdall: SNR cut for candidate selection (Default: 6.0)")	
@@ -354,6 +344,7 @@ if __name__ == "__main__":
 	boxcar_max = options.boxcar_max	
 	maxCandSec = options.maxCandSec
 	nosearch = options.nosearch
+	nodedisp = options.nodedisp
 	noplot = options.noplot
 	minMem = options.minMem
 	nogpu = options.nogpu
@@ -370,18 +361,10 @@ if __name__ == "__main__":
 	#print "Output will go to %s" % (outdir)					
 	
 	os.chdir(outdir)
-
-	f = FilReader(fil_file)
-	nchan = f.header['nchans']
-	fch1 = f.header['fch1']
-	foff = f.header['foff']	
-	
-	fh = fch1
-	fl = fch1 + (foff*nchan)
 	
 	fname = fname[:-4]
 	hdr_file_name = fname+".hdr"
-	#print fname,hdr_file_name	
+	#print fname,hdr_file_name
 	os.system("header {0} -source_name -tstart -tsamp -nchans > {1}.hdr".format(fil_file, fname))
 	hdr_file = open(hdr_file_name, "r")
         hdr_data = hdr_file.readlines()
@@ -409,21 +392,20 @@ if __name__ == "__main__":
 		kill_chan_range = []
 		kill_time_range = []
 		mask_file = ""
-	if(nogpu is not True):
-		if(nosearch is not True):
-			# IF running heimdall then remove old candidates 
-                	os.system("rm %s/*.cand" % (outdir))
+	if(nosearch is not True):
+		 # IF running heimdall then remove old candidates 
+                os.system("rm %s/*.cand" % (outdir))
+		if(nogpu is not True):
 			heimdall_run(fil_file,lodm,hidm,outdir,boxcar_max,dorfi,kill_chan_range)
 			#os.system("mv %s.* %s" % (base_name,base_name))
 			#if(os.path.isfile("*.cand") is True):
-
-		if filter(os.path.isfile,glob.glob("*.cand")):
-			gcands = []
-			candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh)
-		else:	print "No heimdall candidate found"
-	else:
-		gcands = PRESTOsp(fil_file,lodm,hidm,outdir,snr_cut,zerodm,mask_file,base_name,nosearch)
-		candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh)
+			if filter(os.path.isfile,glob.glob("*.cand")):
+				gcands = []
+				candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands)
+			else:	print "No heimdall candidate found"
+		else:
+			gcands = PRESTOsp(fil_file,lodm,hidm,outdir,snr_cut,zerodm,mask_file,base_name,nodedisp)
+			candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands)
 
 	if(email is True):
 		pdffile = source_name + "_frb_cand.pdf"
