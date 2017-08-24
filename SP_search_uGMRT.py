@@ -88,14 +88,12 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 	#Extract block factor plot in seconds, fixed
 	extimefact = 2.0
 	#print frb_cands
-	#print frb_cands.size
 	
 	if(noplot is not True):
 		if(frb_cands.size >= 1):
 			if(frb_cands.size>1):
 				frb_cands = np.sort(frb_cands)
 				frb_cands[:] = frb_cands[::-1]
-			if(frb_cands.size==1): frb_cands = [frb_cands]
 			for indx,frb in enumerate(frb_cands):
                                 time = frb['time']
                                 dm = frb['dm']
@@ -109,7 +107,7 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
                                 if(any(l<=time<=u for (l,u) in kill_time_range)):
                                         print "Candidate inside bad-time range"
                                 else:
-                                        if(indx<100): os.system("dspsrfil -cepoch=start -S %f -c %f -T %f -D %f  -O %04d_%fsec_DM%f -e ar %s" % (stime,extime,extime,dm,indx,time,dm,fil_file))		
+                                        if(indx<100): os.system("dspsrfil -cepoch=start -set name=Unknown -S %f -c %f -T %f -D %f  -O %04d_%fsec_DM%f -e ar %s" % (stime,extime,extime,dm,indx,time,dm,fil_file))		
 		else:
 			print "No candidate found"
 			return
@@ -156,9 +154,9 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 			print temp
 			os.system(temp)	
 		#os.system("paz -r -b -L -m *.ar")
-		#os.system("paz -Z '1775 1942' -m *.ar")	
+		#os.system("paz -Z '1775 1942' -m *.ar")
 		
-		os.system("psrplot -p F -j 'D, F %d, B %d' -D %s_frb_cand.ps/cps *.ar" % (source_name,tbin,fbin))
+		os.system("psrplot -p F -j 'D, F 32, B 128' -D %s_frb_cand.ps/cps *.ar" % (source_name))
 		
 
 def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range):
@@ -174,12 +172,12 @@ def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range):
 			zapchan = zapchan + " -zap_chans " + r 
 		# After talking to AJ and SO
 		#cmd = "heimdall -f %s -scrunching 1 -scrunching_tol 1.05 -rfi_tol 5 -dm_nbits 32 -dm_pulse_width 1000 -dm_tol 1.05 -dm %f %f -boxcar_max %f -output_dir %s/  -v %s" % (fil_file,dmlo,dmhi,boxcar_max,base_name,zapchan)		
-		cmd = "heimdall -f %s -scrunching 1 -rfi_tol 10 -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s  -v %s" % (fil_file,dmlo,dmhi,boxcar_max,outdir,zapchan)		
+		cmd = "heimdall -f %s -scrunching 1 -rfi_tol 10 -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s  -nsamps_gulp 500000 -v %s" % (fil_file,dmlo,dmhi,boxcar_max,outdir,zapchan)		
 		print cmd
 		os.system(cmd)
 	else:
 		# After talking to AJ and SO
-		os.system("heimdall -f %s -scrunching 1 -rfi_tol 10 -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s -v" % (fil_file,dmlo,dmhi,boxcar_max,outdir));
+		os.system("heimdall -f %s -scrunching 1 -rfi_tol 10 -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s -v -nsamps_gulp 500000" % (fil_file,dmlo,dmhi,boxcar_max,outdir));
 		#os.system("heimdall -f %s -dm_tol 1.01 -dm %f %f -boxcar_max %f -output_dir %s/  -v" % (fil_file,dmlo,dmhi,boxcar_max,base_name));
 	return
 
@@ -318,7 +316,7 @@ if __name__ == "__main__":
                 help="Post Heimdall: Window size or filter cut for candidate selection (Default: 16.0)")
 	parser.add_option("--maxCsec", action='store', dest='maxCandSec', default=2.0, type=float,
                 help="Post Heimdall: Maximum allowed candidate per sec (Default: 2.0)")
-	parser.add_option("--min_members_cut", action='store', dest='minMem', default=3.0, type=float,
+	parser.add_option("--min_members_cut", action='store', dest='minMem', default=10.0, type=float,
                 help="Post Heimdall: Number of required minimum memebers in a cluster for a real candidate (Default: 10.0)")
 	parser.add_option("--noplot", action='store_true', dest='noplot',
                 help='Do not run plot candidates (Default: Run)')
@@ -390,7 +388,7 @@ if __name__ == "__main__":
 	hdr_file = open(hdr_file_name, "r")
         hdr_data = hdr_file.readlines()
         source_name = hdr_data[0].strip("\n")
-	if source_name == "": source_name = "Unknown"
+	if source_name == "": source_name = "Unknown_uGMRT"
 	source_name = source_name.replace(" ","_")
 	#source_name = "fake"
 	#print source_name

@@ -32,6 +32,7 @@ def rfi_filter(fil_file, time, timesig, freqsig, chanfrac, intfrac, max_percent,
 	MJD = hdr_data[1].strip("\n").replace(".", "_")
 	if (len(MJD) - MJD.index("_") - 1) > 4: #check to see if the MJD has more than 4 decimal places
 		MJD = MJD[:MJD.index("_") + 5] #reduce the MJD to 4 decimal places
+	if source_name == "": source_name = "Unknown"
 	base_name = source_name + "_" + MJD #create a base filename for files that will be created from the pipeline.
 	tsamp = hdr_data[2].strip("\n")
 	nchans = hdr_data[3].strip("\n")
