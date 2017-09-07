@@ -94,6 +94,7 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 			if(frb_cands.size>1):
 				frb_cands = np.sort(frb_cands)
 				frb_cands[:] = frb_cands[::-1]
+			if(frb_cands.size==1): frb_cands = [frb_cands]
 			for indx,frb in enumerate(frb_cands):
                                 time = frb['time']
                                 dm = frb['dm']
@@ -112,39 +113,6 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 			print "No candidate found"
 			return
 
-		'''
-		if(frb_cands.size > 1):
-			frb_cands = np.sort(frb_cands)	
-			frb_cands[:] = frb_cands[::-1]	
-			for indx,frb in enumerate(frb_cands):
-				time = frb['time']
-				dm = frb['dm']
-				# Extract according to the DM delay	
-				extime = extimefact*dm_delay(fl,fh,dm)			
-				if extime < 1.0: extime = 1.0
-				stime = time-(extime/2)
-				if(stime<0): stime = 0
-				#if(any(l<=stime<=u for (l,u) in kill_time_ranges)):
-				if(any(l<=time<=u for (l,u) in kill_time_range)):
-					print "Candidate inside bad-time range"
-				else:
-					if(indx<100): os.system("dspsrfil -cepoch=start -S %f -c %f -T %f -D %f  -O %04d_%fsec_DM%f -e ar %s" % (stime,extime,extime,dm,indx,time,dm,fil_file))
-
-		elif(frb_cands.size):
-			time = float(frb_cands['time'])
-			dm = float(frb_cands['dm'])
-
-			# Extract according to the DM delay     
-                        extime = extimefact*dm_delay(fl,fh,dm)
-                        if extime < 1.0: extime = 1.0
-			stime = time-(extime/2)
-                        if(stime<0): stime = 0
-			if(any(l<=time<=u for (l,u) in kill_time_range)):
-				print "Candidate inside bad-time range"
-			else:
-				os.system("dspsrfil -cepoch=start -S %f -c %f -T %f -D %f  -O 0000_%fsec_DM%f -e ar %s" % (stime,extime,extime,dm,time,dm,fil_file))		
-		'''
-
 		# If no kill_chans, do an automatic smoothing
 		temp = ""
 		#os.system("paz -r -b -L -m *.ar")
@@ -153,10 +121,10 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 			temp = "paz -z \"" + temp	+ "\" -m *.ar"
 			print temp
 			os.system(temp)	
-		#os.system("paz -r -b -L -m *.ar")
+		os.system("paz -r -b -L -m *.ar")
 		#os.system("paz -Z '1775 1942' -m *.ar")
 		
-		os.system("psrplot -p F -j 'D, F 32, B 128' -D %s_frb_cand.ps/cps *.ar" % (source_name))
+		os.system("psrplot -p F -j 'D, F 8, B 32' -D %s_frb_cand.ps/cps *.ar" % (source_name))
 		
 
 def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range):

@@ -38,8 +38,9 @@ def emailsend(send_to,subject,msgtxt,files,candtxt):
 	password = 'breakthrough'
 
 	msg.attach(MIMEText(msgtxt))
-	with open(candtxt) as fp:
-		msg.attach(MIMEText(fp.read()))
+	if candtxt:
+		with open(candtxt) as fp:
+			msg.attach(MIMEText(fp.read()))
 
 	for f in files or []:
 		with open(f, "rb") as fil:
@@ -157,8 +158,9 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 			os.system(temp)	
 		#os.system("paz -r -b -L -m *.ar")
 		#os.system("paz -Z '1775 1942' -m *.ar")	
-		
-		os.system("psrplot -p F -j 'D, F %d, B %d' -D %s_frb_cand.ps/cps *.ar" % (source_name,tbin,fbin))
+		tbin = 1024
+		fbin = 32	
+		os.system("psrplot -p F -j 'D, F %d, B %d' -D %s_frb_cand.ps/cps *.ar" % (fbin,tbin,source_name))
 		
 
 def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range):
@@ -203,8 +205,8 @@ def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosear
 		else:
 			cmd = "prepsubband %s -lodm 0 -numdms 1 -dmstep 1 -o prepsubband" % (fil_file)
 		
-		if not nosearch: os.system(cmd)
-
+		#if not nosearch: os.system(cmd)
+		os.system(cmd)
 
 	for d in range(int(dmlo),int(dmhi),dmr):
 		if(d+dmr>dmhi): dmhi1 = dmhi
@@ -432,7 +434,9 @@ if __name__ == "__main__":
 
 	if(email is True):
 		pdffile = source_name + "_frb_cand.pdf"
-		cmd = "convert *.ps %s" % (pdffile)
+		psfile = source_name + "_frb_cand.ps"
+		#cmd = "convert *.ps %s" % (pdffile)
+		cmd = "ps2pdf %s %s" % (psfile,pdffile)
 		os.system(cmd)
 		pdffile = [pdffile]
 		subject = "Broadband candidates from %s" % (base_name)
