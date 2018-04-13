@@ -1,7 +1,7 @@
 import numpy as np
 import infodata
 from scipy.signal import medfilt
-from Pgplot import *
+#from Pgplot import *
 import os
 
 """

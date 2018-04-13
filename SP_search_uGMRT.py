@@ -34,12 +34,15 @@ def emailsend(send_to,subject,msgtxt,files,candtxt):
 	msg['Date'] = formatdate(localtime=True)
 	msg['Subject'] = subject
 
-	username = 'blfrbcand@gmail.com'
-	password = 'breakthrough'
+	username = 'ugmrtfrbcand@gmail.com'
+	password = 'uGMRTFRB'
 
+	print "preparing email.."
 	msg.attach(MIMEText(msgtxt))
-	with open(candtxt) as fp:
-		msg.attach(MIMEText(fp.read()))
+	
+	if candtxt:
+		with open(candtxt) as fp:
+			msg.attach(MIMEText(fp.read()))
 
 	for f in files or []:
 		with open(f, "rb") as fil:
@@ -47,13 +50,17 @@ def emailsend(send_to,subject,msgtxt,files,candtxt):
 			part['Content-Disposition'] = 'attachment; filename="%s"' % basename(f)
 			msg.attach(part)
 
-	server = smtplib.SMTP('smtp.gmail.com:587')
-	server.ehlo()
-	server.starttls()
-	server.login(username,password)
-	server.sendmail(msg['From'], msg['To'], msg.as_string())
-	server.quit()
-	print("email sent")
+	try:	
+		server = smtplib.SMTP("smtp.gmail.com",465)
+		print "Before sending"
+		server.ehlo()
+		server.starttls()
+		server.login(username,password)
+		server.sendmail(msg['From'], msg['To'], msg.as_string())
+		server.quit()
+		print("email sent")
+	except:
+		print "failed to send email"
 
 
 def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh):
@@ -64,10 +71,10 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 		os.system("rm *_all.cand")
 		os.system("rm *.ar")
 		os.system("coincidencer *.cand")	
-		os.system("trans_gen_overview.py -cands_file *_all.cand")
+		os.system("trans_gen_overview.py  -dm_cut 6 -cands_file *_all.cand")
 		os.system("mv overview_1024x768.tmp.png %s.overview.png" % (source_name))
-		os.system("frb_detector_bl.py -cands_file *_all.cand -filter_cut %d -snr_cut %f -max_cands_per_sec %f -min_members_cut %f -verbose" % (filter_cut,snr_cut,maxCandSec,minMem))
-		os.system("frb_detector_bl.py -cands_file *_all.cand -filter_cut %d -snr_cut %f -max_cands_per_sec %f -min_members_cut %f  > FRBcand" % (filter_cut,snr_cut,maxCandSec,minMem))
+		os.system("frb_detector_bl.py  -gdm 6 -cands_file *_all.cand -filter_cut %d -snr_cut %f -max_cands_per_sec %f -min_members_cut %f -verbose" % (filter_cut,snr_cut,maxCandSec,minMem))
+		os.system("frb_detector_bl.py  -gdm 6 -cands_file *_all.cand -filter_cut %d -snr_cut %f -max_cands_per_sec %f -min_members_cut %f  > FRBcand" % (filter_cut,snr_cut,maxCandSec,minMem))
 		if(os.stat("FRBcand").st_size is not 0):
 			frb_cands = np.loadtxt("FRBcand",dtype={'names': ('snr','time','samp_idx','dm','filter','prim_beam'),'formats': ('f4', 'f4', 'i4','f4','i4','i4')})
 		else:
@@ -86,9 +93,14 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 			return
 
 	#Extract block factor plot in seconds, fixed
-	extimefact = 2.0
+	extimefact = 2.0 
+	# Plot 1 second of data
+	extimeplot = 1.0 
 	#print frb_cands
-	
+	#print frb_cands.size
+	# For Filter widths startting from 2^0 to 2^12=4096
+	widths = [2048,2048,2048,1024,1024,512,512,256,256,128,128,64,32]
+
 	if(noplot is not True):
 		if(frb_cands.size >= 1):
 			if(frb_cands.size>1):
@@ -98,18 +110,26 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 			for indx,frb in enumerate(frb_cands):
                                 time = frb['time']
                                 dm = frb['dm']
-                                # Extract according to the DM delay     
+				tbin = widths[frb['filter']]	
+				if(frb['snr']>30): fbin = 512
+				if(frb['snr']<30 and frb['snr']>20): fbin = 256
+				if(frb['snr']<20 and frb['snr']>10): fbin = 64
+				if(frb['snr']<10): fbin = 32	
+                                # Extract according to the DM delay    
                                 extime = extimefact*dm_delay(fl,fh,dm)
                                 if extime < 1.0: extime = 1.0
-				#extime=2.0
-                                stime = time-(extime/2)
+				#extime=1.0
+                                stime = time-(extimeplot/2)
                                 if(stime<0): stime = 0
                                 #if(any(l<=stime<=u for (l,u) in kill_time_ranges)):
                                 if(any(l<=time<=u for (l,u) in kill_time_range)):
                                         print "Candidate inside bad-time range"
                                 else:
-                                        if(indx<100): os.system("dspsrfil -cepoch=start -set name=Unknown -S %f -c %f -T %f -D %f  -O %04d_%fsec_DM%f -e ar %s" % (stime,extime,extime,dm,indx,time,dm,fil_file))		
-		else:
+                                        if(indx<300): 
+						#os.system("dspsr -cepoch=start -N uGMRTcand -S %f -c %f -T %f -D %f  -O %04d_%fsec_DM%f -e ar %s" % (stime,extime,extime,dm,indx,time,dm,fil_file))						
+						os.system("dspsr -cepoch=start -N uGMRTcand -nsub 1 -K -b %f -L %f -S %f -c %f -T %f -D %f -O %04d_%fsec_DM%f -e ar %s -j 'F %f' " % (tbin,extimeplot,stime,extimeplot,extime,dm,indx,time,dm,fil_file,fbin))       
+			
+   		else:
 			print "No candidate found"
 			return
 
@@ -117,14 +137,15 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 		temp = ""
 		#os.system("paz -r -b -L -m *.ar")
 		if kill_chans: 	
-			for k in kill_chans: temp = temp +" "+str(k)
+			for k in kill_chans: 
+				if(k!=2048): temp = temp +" "+str(k)
 			temp = "paz -z \"" + temp	+ "\" -m *.ar"
 			print temp
 			os.system(temp)	
-		os.system("paz -r -b -L -m *.ar")
-		#os.system("paz -Z '1775 1942' -m *.ar")
-		
-		os.system("psrplot -p F -j 'D, F 8, B 32' -D %s_frb_cand.ps/cps *.ar" % (source_name))
+		#os.system("paz -r -b -L -m *.ar")
+		#os.system("paz -Z '1775 1942' -m *.ar")	
+		# Here I am not yet sure about why dspsr skips a few block so pulse could be either in File 0001 or 0002
+		os.system("psrplot -p F -j 'D' -D %s_frb_cand.ps/cps -c 'x:unit=ms' *_0001.ar *_0002.ar" % (source_name))
 		
 
 def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range):
@@ -139,14 +160,12 @@ def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range):
 		for r in kill_chan_range:
 			zapchan = zapchan + " -zap_chans " + r 
 		# After talking to AJ and SO
-		#cmd = "heimdall -f %s -scrunching 1 -scrunching_tol 1.05 -rfi_tol 5 -dm_nbits 32 -dm_pulse_width 1000 -dm_tol 1.05 -dm %f %f -boxcar_max %f -output_dir %s/  -v %s" % (fil_file,dmlo,dmhi,boxcar_max,base_name,zapchan)		
-		cmd = "heimdall -f %s -scrunching 1 -rfi_tol 10 -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s  -nsamps_gulp 500000 -v %s" % (fil_file,dmlo,dmhi,boxcar_max,outdir,zapchan)		
+		cmd = "heimdall -f %s -rfi_tol 10 -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s   -v %s -dm_tol 1.5 " % (fil_file,dmlo,dmhi,boxcar_max,outdir,zapchan)		
 		print cmd
 		os.system(cmd)
 	else:
 		# After talking to AJ and SO
-		os.system("heimdall -f %s -scrunching 1 -rfi_tol 10 -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s -v -nsamps_gulp 500000" % (fil_file,dmlo,dmhi,boxcar_max,outdir));
-		#os.system("heimdall -f %s -dm_tol 1.01 -dm %f %f -boxcar_max %f -output_dir %s/  -v" % (fil_file,dmlo,dmhi,boxcar_max,base_name));
+		os.system("heimdall -f %s -rfi_tol 10 -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s  -dm_tol 1.5  -v" % (fil_file,dmlo,dmhi,boxcar_max,outdir));
 	return
 
 def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosearch):
@@ -157,7 +176,9 @@ def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosear
 	dmr = int(500)
 
 	#DM Step
-	dmstep = 1	
+	dmstep = 1
+	#Number of subbands	
+	nsub = 4096
 
 	if not nosearch:
 		cmd = "rm *.dat prepsub*.inf *.singlepulse" 
@@ -165,26 +186,26 @@ def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosear
 
 	if zerodm:
 		if mask_file:
-			cmd = "prepsubband %s -lodm 0 -numdms 1 -dmstep 1 -mask %s -o prepsubband" % (fil_file,mask_file)
+			cmd = "prepsubband %s -lodm 0 -nsub %d -numdms 1 -dmstep 1 -mask %s -o prepsubband" % (fil_file,nsub,mask_file)
 		else:
-			cmd = "prepsubband %s -lodm 0 -numdms 1 -dmstep 1 -o prepsubband" % (fil_file)
+			cmd = "prepsubband %s -lodm 0 -nsub %d  -numdms 1 -dmstep 1 -o prepsubband" % (fil_file,nsub)
 		
-		if not nosearch: os.system(cmd)
-
+		#if not nosearch: os.system(cmd)
+		os.system(cmd)
 
 	for d in range(int(dmlo),int(dmhi),dmr):
 		if(d+dmr>dmhi): dmhi1 = dmhi
 		else: dmhi1 = d+dmr
 		if(d>1000): dmstep = dmstep + 1
 		if mask_file:
-			cmd = "prepsubband %s -lodm %f -numdms %d -dmstep %d -mask %s -o prepsubband" % (fil_file,d,dmhi1-d,dmstep,mask_file)
+			cmd = "prepsubband %s -lodm %f -numdms %d -nsub %d -dmstep %d -mask %s -o prepsubband" % (fil_file,d,dmhi1-d,nsub,dmstep,mask_file)
 		else:
-			cmd = "prepsubband %s -lodm %f -numdms %d -dmstep %d -o prepsubband" % (fil_file,d,dmhi1-d,dmstep)		
+			cmd = "prepsubband %s -lodm %f -numdms %d -nsub %d -dmstep %d -o prepsubband" % (fil_file,d,dmhi1-d,nsub,dmstep)		
 		if not nosearch: os.system(cmd)
 
 	#Run single pulse search on the .dat files
-	tbin = 2.0 # Seconds. Time window to compare candidates 
-	nhits_max = 500
+	tint = 1 # Seconds. Time window to compare candidates 
+	nhits_max = 12000
 	dm_min = dmlo
 	dm_max = dmhi
 
@@ -192,7 +213,7 @@ def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosear
 	allfile  = '%s_clean_cand.txt' %base_name
 	tmp_file = '%s_FRBcand.txt' %base_name
 
-	cmd = "single_pulse_search.py prepsubband*.dat -m 300"
+	cmd = "single_pulse_search.py -m 0.01 -b -t %f prepsubband*.dat" % (snr_cut)
 
 	if not nosearch: os.system(cmd)	
 
@@ -203,7 +224,7 @@ def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosear
 	import sp_cand_find as sp	
 	cands = sp.cands_from_file(cand_file, 0)
 	print("%d total candidates" %len(cands))
-	cands = sp.find_duplicates(cands, tbin, 1000.0)
+	cands = sp.find_duplicates(cands, tint, 1000.0)
 
 	if(len(cands)):
 		if zerodm:
@@ -237,6 +258,18 @@ def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosear
 	return gcands	
 
 #def candplots_nogpu(fil_file,source_name,noplot,kill_chans,kill_time_range):	
+
+def downsample(fil_file):
+	basename = ".".join(fil_file.split(".")[:-1])
+	tmp = basename + "_2add.fil"
+	cmd = "decimate -c 1 -t 2 %s > %s " % (fil_file,tmp) # Decimate
+	print cmd
+	os.system(cmd)
+	cmd = "uGMRT_FilFix.py %s" % (tmp) # Fix header problems
+	print cmd
+	os.system(cmd)
+	# Return new file name
+	return ".".join(fil_file.split(".")[:-1])+"_2add_DS1.fil"
 
 if __name__ == "__main__":
 
@@ -273,18 +306,18 @@ if __name__ == "__main__":
                 help="Heimdall: Low DM limit to search (Default: 0)")
         parser.add_option("--hidm", action='store', dest='hidm', default=1000.0, type=float,
                 help="Heimdall: High DM limit to search (Default: 1000)")
-        parser.add_option("--boxcar_max", action='store', dest='boxcar_max', default=16, type=float,
-                help="Heimdall: Boxcar maximum window size to search (Default: 16)")
+        parser.add_option("--boxcar_max", action='store', dest='boxcar_max', default=512, type=float,
+                help="Heimdall: Boxcar maximum window size to search (Default: 512)")
 	parser.add_option("--nosearch", action='store_true', dest='nosearch',
                 help='Do not run Heimdall (Default: Run)')
 
-	parser.add_option("--snr_cut", action='store', dest='snr_cut', default=6.0, type=float,
-                help="Post Heimdall: SNR cut for candidate selection (Default: 6.0)")	
+	parser.add_option("--snr_cut", action='store', dest='snr_cut', default=8.0, type=float,
+                help="Post Heimdall: SNR cut for candidate selection (Default: 8.0)")	
 	parser.add_option("--filter_cut", action='store', dest='filter_cut', default=16.0, type=int,
                 help="Post Heimdall: Window size or filter cut for candidate selection (Default: 16.0)")
 	parser.add_option("--maxCsec", action='store', dest='maxCandSec', default=2.0, type=float,
                 help="Post Heimdall: Maximum allowed candidate per sec (Default: 2.0)")
-	parser.add_option("--min_members_cut", action='store', dest='minMem', default=10.0, type=float,
+	parser.add_option("--min_members_cut", action='store', dest='minMem', default=3.0, type=float,
                 help="Post Heimdall: Number of required minimum memebers in a cluster for a real candidate (Default: 10.0)")
 	parser.add_option("--noplot", action='store_true', dest='noplot',
                 help='Do not run plot candidates (Default: Run)')
@@ -296,7 +329,8 @@ if __name__ == "__main__":
 	parser.add_option("--email", action='store_true', dest='email',
                 help='Send candidate file over email (no email)')	
 	
-
+	parser.add_option("--nodsamp", action='store_true', dest='nodsamp',
+                help='Do not downsample; For current GMRT files,it is required (default: do downsample)')
 
 	options,args = parser.parse_args()
 
@@ -304,8 +338,12 @@ if __name__ == "__main__":
                 print 'Input file required.'
                 print parser.print_help()
                 sys.exit(1)
-
+	
+	nodsamp = options.nodsamp
 	fil_file = os.path.abspath(options.fil_file)
+	# For GMRT, downsample by 2 and new file created 
+	if(nodsamp is not True): fil_file = downsample(fil_file)	
+
 	fname = fil_file.split("/")[-1]
 	time = options.time
 	timesig = options.timesig
@@ -356,7 +394,8 @@ if __name__ == "__main__":
 	hdr_file = open(hdr_file_name, "r")
         hdr_data = hdr_file.readlines()
         source_name = hdr_data[0].strip("\n")
-	if source_name == "": source_name = "Unknown_uGMRT"
+	if source_name == "": 
+		source_name = fname.split(".")[0]
 	source_name = source_name.replace(" ","_")
 	#source_name = "fake"
 	#print source_name
@@ -398,8 +437,17 @@ if __name__ == "__main__":
 
 	if(email is True):
 		pdffile = source_name + "_frb_cand.pdf"
-		cmd = "convert *.ps %s" % (pdffile)
+		psfile = source_name + "_frb_cand.ps"
+		pngfile = source_name + ".overview.png"
+		#cmd = "convert *.ps %s" % (pdffile)
+		cmd = "ps2pdf %s %s" % (psfile,pdffile)
 		os.system(cmd)
+		cmd = "/home/gajjar/gdrive upload %s" % (pdffile)
+		os.system(cmd)
+		cmd = "/home/gajjar/gdrive upload %s" % (pngfile)
+		os.system(cmd)
+		'''
+		# Email is not working so just uploading it to google drive
 		pdffile = [pdffile]
 		subject = "Broadband candidates from %s" % (base_name)
 		cmd = "mjd2cal %s" % (MJDfloat)	
@@ -410,4 +458,6 @@ if __name__ == "__main__":
 		#print msgtxt,subject
 		#candtxt = "DIAG_FRB130729_57913_0488_FRBcand.txt"
 		candtxt = ""	
-		emailsend(send_to,subject,msgtxt,pdffile,candtxt)
+		#emailsend(send_to,subject,msgtxt,pdffile,candtxt)
+		'''
+
