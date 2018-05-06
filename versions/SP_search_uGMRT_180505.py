@@ -22,7 +22,6 @@ from email.mime.text import MIMEText
 from email.utils import COMMASPACE, formatdate
 import subprocess as sb
 from sigpyproc.Readers import FilReader
-from PlotCand import extractPlotCand
 
 def dm_delay(fl, fh, DM):
     kdm = 4148.808 # MHz^2 / (pc cm^-3)
@@ -68,7 +67,7 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 	if(nogpu is not True):
 		#os.chdir(basedir)
 		#os.system("cd %s" % (basedir))
-		#print "Inside : %s" % (basedir)
+		#print "Inside : %s" % (basedir) 
 		os.system("rm *_all.cand")
 		os.system("rm *.ar")
 		os.system("coincidencer *.cand")	
@@ -93,9 +92,61 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 			print "No candidate found"
 			return
 
-        tint = 0.000128
+	#Extract block factor plot in seconds, fixed
+	extimefact = 2.0 
+	# Plot 1 second of data
+	extimeplot = 1.0 
+	#print frb_cands
+	#print frb_cands.size
+	# For Filter widths startting from 2^0 to 2^12=4096
+	widths = [2048,2048,2048,1024,1024,512,512,256,256,128,128,64,32]
 
-        extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,kill_time_range,kill_chans,source_name):                    
+	if(noplot is not True):
+		if(frb_cands.size >= 1):
+			if(frb_cands.size>1):
+				frb_cands = np.sort(frb_cands)
+				frb_cands[:] = frb_cands[::-1]
+			if(frb_cands.size==1): frb_cands = [frb_cands]
+			for indx,frb in enumerate(frb_cands):
+                                time = frb['time']
+                                dm = frb['dm']
+				tbin = widths[frb['filter']]	
+				if(frb['snr']>30): fbin = 512
+				if(frb['snr']<30 and frb['snr']>20): fbin = 256
+				if(frb['snr']<20 and frb['snr']>10): fbin = 64
+				if(frb['snr']<10): fbin = 32	
+                                # Extract according to the DM delay    
+                                extime = extimefact*dm_delay(fl,fh,dm)
+                                if extime < 1.0: extime = 1.0
+				#extime=1.0
+                                stime = time-(extimeplot/2)
+                                if(stime<0): stime = 0
+                                #if(any(l<=stime<=u for (l,u) in kill_time_ranges)):
+                                if(any(l<=time<=u for (l,u) in kill_time_range)):
+                                        print "Candidate inside bad-time range"
+                                else:
+                                        if(indx<300): 
+						#os.system("dspsr -cepoch=start -N uGMRTcand -S %f -c %f -T %f -D %f  -O %04d_%fsec_DM%f -e ar %s" % (stime,extime,extime,dm,indx,time,dm,fil_file))	    
+                                                os.system("dspsr -cepoch=start -N uGMRTcand -b %f -S %f -c %f -T %f -D %f -O %04d_%fsec_DM%f -e ar %s -j 'F %f' " % (tbin,stime,extimeplot,extime,dm,indx,time,dm,fil_file,fbin))       
+			
+   		else:
+			print "No candidate found"
+			return
+
+		# If no kill_chans, do an automatic smoothing
+		temp = ""
+		#os.system("paz -r -b -L -m *.ar")
+		if kill_chans: 	
+			for k in kill_chans: 
+				if(k!=2048): temp = temp +" "+str(k)
+			temp = "paz -z \"" + temp	+ "\" -m *.ar"
+			print temp
+			os.system(temp)	
+		#os.system("paz -r -b -L -m *.ar")
+		#os.system("paz -Z '1775 1942' -m *.ar")	
+		# Here I am not yet sure about why dspsr skips a few block so pulse could be either in File 0001 or 0002
+		os.system("psrplot -p F -j 'D' -D %s_frb_cand.ps/cps -c 'x:unit=ms' *_0001.ar *_0002.ar" % (source_name))
+		
 
 def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range):
 
