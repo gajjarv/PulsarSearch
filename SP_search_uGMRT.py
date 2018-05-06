@@ -95,7 +95,7 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 
         tint = 0.000128
 
-        extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,kill_time_range,kill_chans,source_name):                    
+        extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,kill_time_range,kill_chans,source_name)                    
 
 def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range):
 
