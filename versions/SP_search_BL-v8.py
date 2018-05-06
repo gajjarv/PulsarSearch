@@ -115,7 +115,39 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 			print "No candidate found"
 			return
 
-		
+		'''
+		if(frb_cands.size > 1):
+			frb_cands = np.sort(frb_cands)	
+			frb_cands[:] = frb_cands[::-1]	
+			for indx,frb in enumerate(frb_cands):
+				time = frb['time']
+				dm = frb['dm']
+				# Extract according to the DM delay	
+				extime = extimefact*dm_delay(fl,fh,dm)			
+				if extime < 1.0: extime = 1.0
+				stime = time-(extime/2)
+				if(stime<0): stime = 0
+				#if(any(l<=stime<=u for (l,u) in kill_time_ranges)):
+				if(any(l<=time<=u for (l,u) in kill_time_range)):
+					print "Candidate inside bad-time range"
+				else:
+					if(indx<100): os.system("dspsrfil -cepoch=start -S %f -c %f -T %f -D %f  -O %04d_%fsec_DM%f -e ar %s" % (stime,extime,extime,dm,indx,time,dm,fil_file))
+
+		elif(frb_cands.size):
+			time = float(frb_cands['time'])
+			dm = float(frb_cands['dm'])
+
+			# Extract according to the DM delay     
+                        extime = extimefact*dm_delay(fl,fh,dm)
+                        if extime < 1.0: extime = 1.0
+			stime = time-(extime/2)
+                        if(stime<0): stime = 0
+			if(any(l<=time<=u for (l,u) in kill_time_range)):
+				print "Candidate inside bad-time range"
+			else:
+				os.system("dspsrfil -cepoch=start -S %f -c %f -T %f -D %f  -O 0000_%fsec_DM%f -e ar %s" % (stime,extime,extime,dm,time,dm,fil_file))		
+		'''
+
 		# If no kill_chans, do an automatic smoothing
 		temp = ""
 		#os.system("paz -r -b -L -m *.ar")
@@ -144,12 +176,12 @@ def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range):
 			zapchan = zapchan + " -zap_chans " + r 
 		# After talking to AJ and SO
 		#cmd = "heimdall -f %s -scrunching 1 -scrunching_tol 1.05 -rfi_tol 5 -dm_nbits 32 -dm_pulse_width 1000 -dm_tol 1.05 -dm %f %f -boxcar_max %f -output_dir %s/  -v %s" % (fil_file,dmlo,dmhi,boxcar_max,base_name,zapchan)		
-		cmd = "heimdall -f %s -rfi_tol 10 -dm_tol 1.5 -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s  -v %s" % (fil_file,dmlo,dmhi,boxcar_max,outdir,zapchan)		
+		cmd = "heimdall -f %s -scrunching 1 -rfi_tol 10 -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s  -nsamps_gulp 10000  -v %s" % (fil_file,dmlo,dmhi,boxcar_max,outdir,zapchan)		
 		print cmd
 		os.system(cmd)
 	else:
 		# After talking to AJ and SO
-		os.system("heimdall -f %s -dm_tol 1.5 -rfi_tol 10 -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s  -v" % (fil_file,dmlo,dmhi,boxcar_max,outdir));
+		os.system("heimdall -f %s -scrunching 1 -rfi_tol 10 -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s  -nsamps_gulp 10000   -v" % (fil_file,dmlo,dmhi,boxcar_max,outdir));
 		#os.system("heimdall -f %s -dm_tol 1.01 -dm %f %f -boxcar_max %f -output_dir %s/  -v" % (fil_file,dmlo,dmhi,boxcar_max,base_name));
 	return
 
