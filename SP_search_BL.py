@@ -348,7 +348,7 @@ if __name__ == "__main__":
 	f = FilReader(fil_file)
 	nchan = f.header['nchans']
 	fch1 = f.header['fch1']
-	foff = f.header['foff']	
+	foff = f.header['foff']
 	
 	fh = fch1
 	fl = fch1 + (foff*nchan)

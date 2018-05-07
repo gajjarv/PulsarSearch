@@ -35,7 +35,8 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint):
         #widths = [2048,2048,2048,1024,1024,512,512,256,256,128,128,64,32]
         #tbin = widths[filter]
         bin_width = tint * (2 ** filter)
-        tbin = int(extime / bin_width)
+	#So that we have at least 4 bins on pulse
+        tbin = 4*int(extime / bin_width)
         if tbin < 16:
             tbin = 16
 
@@ -56,7 +57,7 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint):
 
         return tbin,fbin,extime,frac  
 
-def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,kill_time_range,kill_chans,source_name):
+def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name):
         
         # Half of this time will be subtracted from the Heimdall candidate time
         extimeplot = 1.0
@@ -76,6 +77,7 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,kill_time_range,kill_ch
         
                                 stime = time-(extimeplot/2)
                                 if(stime<0): stime = 0
+				if(stime+extime>=Ttot): extime=Ttot-stime
                                 #if(any(l<=stime<=u for (l,u) in kill_time_ranges)):
                                 if(any(l<=time<=u for (l,u) in kill_time_range)):
                                         print "Candidate inside bad-time range"
@@ -127,8 +129,9 @@ if __name__ == "__main__":
     fh = 500
     noplot=0
     tint=0.000128
+    Ttot = 20 # Total length of the file	
     kill_time_range=[]
     kill_chans=[]
     source_name="Fake"
 
-    extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,kill_time_range,kill_chans,source_name)
+    extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name)

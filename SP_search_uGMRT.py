@@ -12,7 +12,7 @@ from rfi_filter_vg import rfi_filter as rfi
 import numpy as np
 import glob
 from itertools import chain
-sys.path.insert(0,'/home/vgajjar/SP_search_wrapper/PulsarSearch/robert_sp/')
+sys.path.insert(0,'/home/vishal/PulsarSearch/robert_sp/')
 import sp_cand_find as sp
 import smtplib
 from os.path import basename
@@ -64,7 +64,7 @@ def emailsend(send_to,subject,msgtxt,files,candtxt):
 		print "failed to send email"
 
 
-def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh):
+def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot):
 	if(nogpu is not True):
 		#os.chdir(basedir)
 		#os.system("cd %s" % (basedir))
@@ -93,9 +93,7 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 			print "No candidate found"
 			return
 
-        tint = 0.000128
-
-        extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,kill_time_range,kill_chans,source_name)                    
+        extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name)                    
 
 def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range):
 
@@ -332,6 +330,10 @@ if __name__ == "__main__":
 	nchan = f.header['nchans']
 	fch1 = f.header['fch1']
 	foff = f.header['foff']	
+	tint = f.header['tsamp']	
+	Ttot = f.header['tobs']
+
+	print nchan,fch1,foff,tint,Ttot
 	
 	fh = fch1
 	fl = fch1 + (foff*nchan)
@@ -378,11 +380,11 @@ if __name__ == "__main__":
 
 		if filter(os.path.isfile,glob.glob("*.cand")):
 			gcands = []
-			candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh)
+			candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot)
 		else:	print "No heimdall candidate found"
 	else:
 		gcands = PRESTOsp(fil_file,lodm,hidm,outdir,snr_cut,zerodm,mask_file,base_name,nosearch)
-		candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh)
+		candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot)
 
 	if(email is True):
 		pdffile = source_name + "_frb_cand.pdf"
