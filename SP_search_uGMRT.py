@@ -72,7 +72,7 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 		os.system("rm *_all.cand")
 		os.system("rm *.ar")
 		os.system("coincidencer *.cand")	
-		os.system("trans_gen_overview.py  -dm_cut 6 -cands_file *_all.cand")
+		os.system("trans_gen_overview_uGMRT.py  -dm_cut 6 -cands_file *_all.cand")
 		os.system("mv overview_1024x768.tmp.png %s.overview.png" % (source_name))
 		os.system("frb_detector_bl.py  -gdm 6 -cands_file *_all.cand -filter_cut %d -snr_cut %f -max_cands_per_sec %f -min_members_cut %f -verbose" % (filter_cut,snr_cut,maxCandSec,minMem))
 		os.system("frb_detector_bl.py  -gdm 6 -cands_file *_all.cand -filter_cut %d -snr_cut %f -max_cands_per_sec %f -min_members_cut %f  > FRBcand" % (filter_cut,snr_cut,maxCandSec,minMem))
@@ -333,7 +333,11 @@ if __name__ == "__main__":
 	tint = f.header['tsamp']	
 	Ttot = f.header['tobs']
 
-	print nchan,fch1,foff,tint,Ttot
+	print "\n Nchan : " + str(nchan) + \
+	      "\n High Freq (MHz) : " + str(fch1) + \
+	      "\n Chan. Bandwidth (MHz) : " + str(foff) + \
+	      "\n Integration time : " + str(tint) + \
+	      "\n Total time : " + str(Ttot) + "\n"
 	
 	fh = fch1
 	fl = fch1 + (foff*nchan)

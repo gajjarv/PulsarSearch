@@ -36,7 +36,11 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint):
         #tbin = widths[filter]
         bin_width = tint * (2 ** filter)
 	#So that we have at least 4 bins on pulse
-        tbin = 4*int(extime / bin_width)
+	if filter < 4 and snr > 20:
+	        tbin = 8*int(extime / bin_width)
+	else:
+		tbin = 4*int(extime / bin_width)
+	
         if tbin < 16:
             tbin = 16
 
@@ -50,8 +54,8 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint):
             fbin = 512
 
         # Fraction of extraction to plot each time calc
-        if tbin>1024:
-            frac = np.linspace(0,1,np.ceil(tbin/1024.0))    
+        if tbin>512:
+            frac = np.linspace(0,1,np.ceil(tbin/512.0))    
         else:
             frac = np.array([0,1])
 
@@ -73,7 +77,7 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
                                 dm = frb['dm']
 
                                 tbin,fbin,extime,frac=plotParaCalc(frb['snr'],frb['filter'],dm,fl,fh,tint)
-                                print tbin,fbin,extime,frac
+                                #print tbin,fbin,extime,frac
         
                                 stime = time-(extimeplot/2)
                                 if(stime<0): stime = 0
@@ -82,7 +86,7 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
                                 if(any(l<=time<=u for (l,u) in kill_time_range)):
                                         print "Candidate inside bad-time range"
                                 else:
-                                        if(indx<300):
+                                        if(indx<100):
                                                 candname = '%04d' % (indx) + "_" + '%.3f' % (time) + "sec_DM" + '%.2f' % (dm) 
                                                 cmd = "dspsr -cepoch=start -N uGMRTcand" + \
                                                         " -b " + str(tbin) +   \
@@ -104,12 +108,14 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
                                                         print temp
                                                         os.system(temp)
                                                 #os.system("paz -r -b -L -m *.ar")
+						os.system("running_mean_sub *.ar");
                                                 for i,j in pairwise(frac):
                                                     cmd = "psrplot -p F -j 'D' " + \
                                                           " -c x:unit=ms -c above:c='' " + \
                                                           " -c 'x:range=(%f,%f)' " % (i,j) + \
-                                                          " -c 'freq:cmap:map=alien'" + \
-                                                          " -D %s_%.2f.ps/cps %s.ar" % (candname,i,candname)
+                                                          " -c 'freq:cmap:map=heat' " + \
+							  " -c 'freq:crop=0.9' " + \
+                                                          " -D %s_%.2f.ps/cps %s.norm" % (candname,i,candname)
                                                     print cmd
                                                     os.system(cmd)
                                                     
