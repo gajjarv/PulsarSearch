@@ -1,8 +1,8 @@
+#!/usr/bin/env python
 # A separate function to extract and plot
 # heimdall candidate 
 # This script is a modified version of the heimdall plotting scipt 'trans_freq_time.py' 
 # 
-
 
 import os,sys,math
 import numpy as np
@@ -19,7 +19,7 @@ def pairwise(iterable):
 
 def plotParaCalc(snr,filter,dm,fl,fh,tint):
         #Extract block factor plot in seconds
-        extimefact = 2.0
+        extimefact = 1.0
 
         # Total extract time Calc
         # Extract according to the DM delay    
@@ -95,31 +95,33 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
                                                         " -T " + str(extime) + \
                                                         " -D " + str(dm) + \
                                                         " -O " + candname + " -e ar " + \
-                                                        fil_file + \
-                                                        " -j \'F " + str(fbin) + "\'" 
+                                                        fil_file  
                                                 print cmd        
                                                 os.system(cmd)                 
-                                                # If no kill_chans, do an automatic smoothing
+                                                # If kill_chans, do first manual and then an automatic smoothing for remaining channels
                                                 temp = ""
                                                 if kill_chans:
-                                                    for k in kill_chans:
-                                                        if(k!=2048): temp = temp +" "+str(k)
-                                                        temp = "paz -z \"" + temp       + "\" -m *.ar"
-                                                        print temp
-                                                        os.system(temp)
-                                                #os.system("paz -r -b -L -m *.ar")
+                                                    for k in kill_chans: 
+						    	if(k!=2048): temp = temp +" "+str(k)
+                                                    temp = "paz -z \"" + temp       + "\" -m *.ar"
+                                                    print temp
+                                                    os.system(temp)
+                                                    os.system("paz -r -b -L -m *.ar")
+
+						# Correct the variable baseline, this script writes out .norm files 	
 						os.system("running_mean_sub *.ar");
+
                                                 for i,j in pairwise(frac):
-                                                    cmd = "psrplot -p F -j 'D' " + \
-                                                          " -c x:unit=ms -c above:c='' " + \
+                                                    cmd = "psrplot -p F -j 'D, F %d' "  % (int(fbin)) +  \
+                                                          " -c  x:unit=ms -c above:c=\'\' " + \
                                                           " -c 'x:range=(%f,%f)' " % (i,j) + \
                                                           " -c 'freq:cmap:map=heat' " + \
 							  " -c 'freq:crop=0.9' " + \
                                                           " -D %s_%.2f.ps/cps %s.norm" % (candname,i,candname)
                                                     print cmd
                                                     os.system(cmd)
-                                                    
-                        cmd = "psjoin *sec*DM*.ps > %s_FRB_cand.ps" % (source_name)
+                        
+			cmd = "gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dSAFER -sOutputFile=%s_frb_cand.pdf *sec*DM*.ps" % (source_name)	                            
                         os.system(cmd)
                         print cmd
                     
@@ -129,15 +131,19 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
 
 if __name__ == "__main__":
 
-    fil_file = sys.argv[1]
-    frb_cands = np.loadtxt("FRBcand",dtype={'names': ('snr','time','samp_idx','dm','filter','prim_beam'),'formats': ('f4', 'f4', 'i4','f4','i4','i4')})
-    fl = 301
-    fh = 500
+    fil_file = str(sys.argv[1]) # Filterbank file
+    FinalList = str(sys.argv[2]) # Final list of candidate (output of FRB_detector_Fast.py)
+     
+    frb_cands = np.loadtxt(FinalList,dtype={'names': ('snr','time','samp_idx','dm','filter','prim_beam'),'formats': ('f4', 'f4', 'i4','f4','i4','i4')})
+
+    fl = 1100
+    fh = 1500
     noplot=0
     tint=0.000128
-    Ttot = 20 # Total length of the file	
+    Ttot = 20 # Total length of the file        
     kill_time_range=[]
     kill_chans=[]
     source_name="Fake"
 
     extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name)
+

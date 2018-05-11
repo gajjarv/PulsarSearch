@@ -36,7 +36,8 @@ def rfi_check(base_name, mask_file, rfitime, nchans, totime, chanfrac,intfrac):
 
 	for i in range(int(nchans)): 
 		#if(cdata[i] > nbadtime): kill_chans.append(i)
-		if(cdata[i] > nbadtime): kill_chans.append(int(nchans)-i)
+		# Output channel number is inverted to the original channel ordering, following corrects it (subtrating 1 if channel goes from 0 to nchan-1)
+		if(cdata[i] > nbadtime): kill_chans.append(int(nchans)-i-1)
 				
 	avg_bad_chans = len(kill_chans) / channels #Give the average fraction of channels flagged across all intervals
 	
