@@ -75,8 +75,11 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
                         for indx,frb in enumerate(frb_cands):
                                 time = frb['time']
                                 dm = frb['dm']
+				filter = frb['filter']
+				width = tint * (2 ** filter)*(10**3) # Width in msec
+				snr = frb['snr']
 
-                                tbin,fbin,extime,frac=plotParaCalc(frb['snr'],frb['filter'],dm,fl,fh,tint)
+                                tbin,fbin,extime,frac=plotParaCalc(snr,filter,dm,fl,fh,tint)
                                 #print tbin,fbin,extime,frac
         
                                 stime = time-(extimeplot/2)
@@ -115,7 +118,9 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
 
                                                 for i,j in pairwise(frac):
                                                     cmd = "psrplot -p F -j 'D, F %d' "  % (int(fbin)) +  \
-                                                          " -c  x:unit=ms -c above:c=\'\' " + \
+							  " -c  'flux:below:l = SNR: %.2f'" % (float(snr)) + \
+							  " -c  'flux:below:r = Wid: %.2f ms'" % (float(width)) + \
+                                                          " -c  x:unit=ms -c above:c='' " + \
                                                           " -c 'x:range=(%f,%f)' " % (i,j) + \
                                                           " -c 'freq:cmap:map=heat' " + \
 							  " -c 'freq:crop=0.9' " + \
