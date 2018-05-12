@@ -107,12 +107,12 @@ def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range):
 		for r in kill_chan_range:
 			zapchan = zapchan + " -zap_chans " + r 
 		# After talking to AJ and SO
-		cmd = "heimdall -f %s -rfi_tol 10 -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s   -v %s -dm_tol 1.5 " % (fil_file,dmlo,dmhi,boxcar_max,outdir,zapchan)		
+		cmd = "heimdall -f %s -rfi_tol 10 -dm_nbits 32 -dm_pulse_width 1024  -baseline_length 10 -dm %f %f -boxcar_max %f -output_dir %s   -v %s -dm_tol 1.5 " % (fil_file,dmlo,dmhi,boxcar_max,outdir,zapchan)		
 		print cmd
 		os.system(cmd)
 	else:
 		# After talking to AJ and SO
-		os.system("heimdall -f %s -rfi_tol 10 -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s  -dm_tol 1.5  -v" % (fil_file,dmlo,dmhi,boxcar_max,outdir));
+		os.system("heimdall -f %s -rfi_tol 10 -dm_nbits 32  -dm_pulse_width 1024  -baseline_length 10 -dm %f %f -boxcar_max %f -output_dir %s  -dm_tol 1.5  -v" % (fil_file,dmlo,dmhi,boxcar_max,outdir));
 	return
 
 def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosearch):
@@ -253,8 +253,8 @@ if __name__ == "__main__":
                 help="Heimdall: Low DM limit to search (Default: 0)")
         parser.add_option("--hidm", action='store', dest='hidm', default=1000.0, type=float,
                 help="Heimdall: High DM limit to search (Default: 1000)")
-        parser.add_option("--boxcar_max", action='store', dest='boxcar_max', default=512, type=float,
-                help="Heimdall: Boxcar maximum window size to search (Default: 512)")
+        parser.add_option("--boxcar_max", action='store', dest='boxcar_max', default=256, type=float,
+                help="Heimdall: Boxcar maximum window size to search (Default: 256)")
 	parser.add_option("--nosearch", action='store_true', dest='nosearch',
                 help='Do not run Heimdall (Default: Run)')
 
