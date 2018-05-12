@@ -103,7 +103,7 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
                                                 if kill_chans:
                                                     for k in kill_chans: 
 						    	if(k!=2048): temp = temp +" "+str(k)
-                                                    temp = "paz -z \"" + temp       + "\" -m *.ar"
+                                                    temp = "paz -z \"" + temp       + "\" -m %s.ar"
                                                     print temp
                                                     os.system(temp)
                                                     os.system("paz -r -b -L -m *.ar")
