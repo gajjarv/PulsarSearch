@@ -103,13 +103,15 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
                                                 if kill_chans:
                                                     for k in kill_chans: 
 						    	if(k!=2048): temp = temp +" "+str(k)
-                                                    temp = "paz -z \"" + temp       + "\" -m %s.ar"
-                                                    print temp
-                                                    os.system(temp)
-                                                    os.system("paz -r -b -L -m *.ar")
+                                                    cmd = "paz -z \"" + temp       + "\" -m %s.ar" % (candname)
+                                                    print cmd
+                                                    os.system(cmd)
+						    cmd = "paz -r -b -L -m %s.ar" % (candname) 	
+                                                    os.system(cmd)
 
 						# Correct the variable baseline, this script writes out .norm files 	
-						os.system("running_mean_sub *.ar");
+						cmd = "running_mean_sub %s.ar" % (candname)
+						os.system(cmd)
 
                                                 for i,j in pairwise(frac):
                                                     cmd = "psrplot -p F -j 'D, F %d' "  % (int(fbin)) +  \
