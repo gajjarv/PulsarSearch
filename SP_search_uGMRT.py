@@ -70,7 +70,7 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 		#os.system("cd %s" % (basedir))
 		#print "Inside : %s" % (basedir)
 		os.system("rm *_all.cand")
-		os.system("rm *.ar")
+		os.system("rm *.ar *.norm")
 		os.system("coincidencer *.cand")	
 		os.system("trans_gen_overview_uGMRT.py  -dm_cut 6 -cands_file *_all.cand")
 		os.system("mv overview_1024x768.tmp.png %s.overview.png" % (source_name))
@@ -84,7 +84,7 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 		#print frb_cands['time'],frb_cands['dm']
 	else:
 		if(gcands is not ""):
-			os.system("rm *.ar")
+			os.system("rm *.ar *.norm")
 			dt = np.dtype(dtype={'names': ('snr','time','samp_idx','dm','filter','prim_beam'),'formats': ('f4', 'f4', 'i4','f4','i4','i4')})
 			frb_cands = np.zeros(len(gcands),dt)
 			for i,dd in enumerate(gcands):
