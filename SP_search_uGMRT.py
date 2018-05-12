@@ -392,11 +392,11 @@ if __name__ == "__main__":
 
 	if(email is True):
 		pdffile = source_name + "_frb_cand.pdf"
-		psfile = source_name + "_frb_cand.ps"
+		#psfile = source_name + "_frb_cand.ps"
 		pngfile = source_name + ".overview.png"
 		#cmd = "convert *.ps %s" % (pdffile)
-		cmd = "ps2pdf %s %s" % (psfile,pdffile)
-		os.system(cmd)
+		#cmd = "ps2pdf %s %s" % (psfile,pdffile)
+		#os.system(cmd)
 		cmd = "/home/gajjar/gdrive upload %s" % (pdffile)
 		os.system(cmd)
 		cmd = "/home/gajjar/gdrive upload %s" % (pngfile)

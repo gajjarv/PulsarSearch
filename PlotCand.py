@@ -122,11 +122,10 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
                                                           " -D %s_%.2f.ps/cps %s.norm" % (candname,i,candname)
                                                     print cmd
                                                     os.system(cmd)
-                        
-			cmd = "gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dSAFER -sOutputFile=%s_frb_cand.pdf *sec*DM*.ps" % (source_name)	                            
-                        os.system(cmd)
+
+		        cmd = "gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dSAFER -sOutputFile=%s_frb_cand.pdf *sec*DM*.ps" % (source_name)	  
                         print cmd
-                    
+                        os.system(cmd)
                 else:
                         print "No candidate found"
                         return
