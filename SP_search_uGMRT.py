@@ -107,12 +107,12 @@ def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range):
 		for r in kill_chan_range:
 			zapchan = zapchan + " -zap_chans " + r 
 		# After talking to AJ and SO
-		cmd = "heimdall -f %s -rfi_tol 10 -dm_nbits 32 -dm_pulse_width 1024  -baseline_length 10 -dm %f %f -boxcar_max %f -output_dir %s   -v %s -dm_tol 1.5 " % (fil_file,dmlo,dmhi,boxcar_max,outdir,zapchan)		
+		cmd = "heimdall -f %s -rfi_tol 10 -dm_nbits 32 -dm_pulse_width 1024  -dm %f %f -boxcar_max %f -output_dir %s  %s -dm_tol 1.15 " % (fil_file,dmlo,dmhi,boxcar_max,outdir,zapchan)		
 		print cmd
 		os.system(cmd)
 	else:
 		# After talking to AJ and SO
-		os.system("heimdall -f %s -rfi_tol 10 -dm_nbits 32  -dm_pulse_width 1024  -baseline_length 10 -dm %f %f -boxcar_max %f -output_dir %s  -dm_tol 1.5  -v" % (fil_file,dmlo,dmhi,boxcar_max,outdir));
+		os.system("heimdall -f %s -rfi_tol 10 -dm_nbits 32  -dm_pulse_width 1024  -dm %f %f -boxcar_max %f -output_dir %s  -dm_tol 1.15  " % (fil_file,dmlo,dmhi,boxcar_max,outdir));
 	return
 
 def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosearch):
@@ -260,8 +260,8 @@ if __name__ == "__main__":
 
 	parser.add_option("--snr_cut", action='store', dest='snr_cut', default=8.0, type=float,
                 help="Post Heimdall: SNR cut for candidate selection (Default: 8.0)")	
-	parser.add_option("--filter_cut", action='store', dest='filter_cut', default=16.0, type=int,
-                help="Post Heimdall: Window size or filter cut for candidate selection (Default: 16.0)")
+	parser.add_option("--filter_cut", action='store', dest='filter_cut', default=8.0, type=int,
+                help="Post Heimdall: Window size or filter cut for candidate selection (Default: 8.0)")
 	parser.add_option("--maxCsec", action='store', dest='maxCandSec', default=2.0, type=float,
                 help="Post Heimdall: Maximum allowed candidate per sec (Default: 2.0)")
 	parser.add_option("--min_members_cut", action='store', dest='minMem', default=3.0, type=float,

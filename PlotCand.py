@@ -37,9 +37,9 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint):
         bin_width = tint * (2 ** filter)
 	#So that we have at least 4 bins on pulse
 	if filter <= 4 and snr > 20:
-	        tbin = 8*int(extime / bin_width)
+	        tbin = 4*int(extime / bin_width)
 	else:
-		tbin = 4*int(extime / bin_width)
+		tbin = 2*int(extime / bin_width)
 	
         if tbin < 16:
             tbin = 16
@@ -89,7 +89,7 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
                                 if(any(l<=time<=u for (l,u) in kill_time_range)):
                                         print "Candidate inside bad-time range"
                                 else:
-                                        if(indx<100):
+                                        if(indx<1000):
                                                 candname = '%04d' % (indx) + "_" + '%.3f' % (time) + "sec_DM" + '%.2f' % (dm) 
                                                 cmd = "dspsr -cepoch=start -N uGMRTcand" + \
                                                         " -b " + str(tbin) +   \
