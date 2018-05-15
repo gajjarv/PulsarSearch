@@ -206,7 +206,7 @@ def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosear
 
 #def candplots_nogpu(fil_file,source_name,noplot,kill_chans,kill_time_range):	
 
-def downsample(fil_file):
+def downsample(fil_file,inbits,inchans):
 	basename = ".".join(fil_file.split(".")[:-1])
 	tmp = basename + "_2add.fil"
 	cmd = "decimate -c 1 -t 2 %s > %s " % (fil_file,tmp) # Decimate
@@ -288,6 +288,7 @@ if __name__ == "__main__":
 	
 	nodsamp = options.nodsamp
 	fil_file = os.path.abspath(options.fil_file)
+
 	# For GMRT, downsample by 2 and new file created 
 	if(nodsamp is not True): fil_file = downsample(fil_file)	
 
@@ -392,10 +393,7 @@ if __name__ == "__main__":
 
 	if(email is True):
 		pdffile = source_name + "_frb_cand.pdf"
-		#psfile = source_name + "_frb_cand.ps"
 		pngfile = source_name + ".overview.png"
-		#cmd = "convert *.ps %s" % (pdffile)
-		#cmd = "ps2pdf %s %s" % (psfile,pdffile)
 		#os.system(cmd)
 		cmd = "/home/gajjar/gdrive upload %s" % (pdffile)
 		os.system(cmd)
