@@ -27,7 +27,7 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint):
         p = os.popen(cmd)
         cand_band_smear = p.readline().strip()
         p.close()
-        extime=extimefact*float(cand_band_smear)
+        extime= extimefact/2 + extimefact*float(cand_band_smear)
         if extime < 1.0: extime = 1.0
 
         # Tbin calc
@@ -91,7 +91,7 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
                                 else:
                                         if(indx<1000):
                                                 candname = '%04d' % (indx) + "_" + '%.3f' % (time) + "sec_DM" + '%.2f' % (dm) 
-                                                cmd = "dspsr -cepoch=start -N uGMRTcand" + \
+                                                cmd = "dspsr -cepoch=start -N %s" % (source_name) + \
                                                         " -b " + str(tbin) +   \
                                                         " -S " + str(stime) +  \
                                                         " -c " + str(extime) + \

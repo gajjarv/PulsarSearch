@@ -101,7 +101,7 @@ def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range):
 		for r in kill_chan_range:
 			zapchan = zapchan + " -zap_chans " + r 
 		# After talking to AJ and SO
-		cmd = "heimdall -f %s -rfi_tol 10 -dm_tol 1.15 -dm_pulse_width 1024  -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s  -v %s" % (fil_file,dmlo,dmhi,boxcar_max,outdir,zapchan)		
+		cmd = "heimdall -f %s -rfi_tol 10 -dm_tol 1.15 -dm_pulse_width 1024  -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s -v %s" % (fil_file,dmlo,dmhi,boxcar_max,outdir,zapchan)		
 		print cmd
 		os.system(cmd)
 	else:
@@ -206,13 +206,13 @@ def downsample(fil_file,inbits,inchans):
 
 	if(inbits>8 and inchans < 4097):
 		outf = basename + "_8bit.fil"
-		cmd = "sum_fil %s -o %s -obits 8 -qlen 10000" % (fil_file,outf)
+		cmd = "/home/obs/sw/bl_sigproc/src/sum_fil %s -o %s -obits 8 -qlen 10000" % (fil_file,outf)
 	if(inbits>8 and inchans > 4096):
 		outf = basename + "_8bit_4chan.fil"
-		cmd = "sum_fil %s -o %s -obits 8 -qlen 10000 -fcollapse 4" % (fil_file,outf)
+		cmd = "/home/obs/sw/bl_sigproc/src/sum_fil %s -o %s -obits 8 -qlen 10000 -fcollapse 4" % (fil_file,outf)
 	if(inbits < 9 and inchans > 4096):
 		outf = basename + "_4chan.fil"
-		cmd = "sum_fil %s -o %s -qlen 10000 -fcollapse 4" % (fil_file,outf)
+		cmd = "/home/obs/sw/bl_sigproc/src/sum_fil %s -o %s -qlen 10000 -fcollapse 4" % (fil_file,outf)
 	if(inbits < 9 and inchans < 4097):
 		outf = fil_file
 
