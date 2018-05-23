@@ -27,7 +27,7 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint):
         p = os.popen(cmd)
         cand_band_smear = p.readline().strip()
         p.close()
-        extime= extimefact/2 + extimefact*float(cand_band_smear)
+        extime = extimefact/2 + extimefact*float(cand_band_smear)
         if extime < 1.0: extime = 1.0
 
         # Tbin calc
@@ -82,7 +82,8 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
                                 tbin,fbin,extime,frac=plotParaCalc(snr,filter,dm,fl,fh,tint)
                                 #print tbin,fbin,extime,frac
         
-                                stime = time-(extimeplot/2)
+                                stime = time-(extimeplot*0.1) # Go 10% back data
+
                                 if(stime<0): stime = 0
 				if(stime+extime>=Ttot): extime=Ttot-stime
                                 #if(any(l<=stime<=u for (l,u) in kill_time_ranges)):
