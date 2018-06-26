@@ -110,7 +110,7 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
                                 if(any(l<=time<=u for (l,u) in kill_time_range)):
                                         print "Candidate inside bad-time range"
                                 else:
-                                        if(indx<500): os.system("dspsrfil -cepoch=start -S %f -c %f -T %f -D %f  -O %04d_%fsec_DM%f -e ar %s" % (stime,extime,extime,dm,indx,time,dm,fil_file))		
+                                        if(indx<500): os.system("dspsr -cepoch=start -S %f -c %f -T %f -D %f  -O %04d_%fsec_DM%f -e ar %s" % (stime,extime,extime,dm,indx,time,dm,fil_file))		
 		else:
 			print "No candidate found"
 			return
@@ -131,7 +131,7 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 				if(any(l<=time<=u for (l,u) in kill_time_range)):
 					print "Candidate inside bad-time range"
 				else:
-					if(indx<100): os.system("dspsrfil -cepoch=start -S %f -c %f -T %f -D %f  -O %04d_%fsec_DM%f -e ar %s" % (stime,extime,extime,dm,indx,time,dm,fil_file))
+					if(indx<100): os.system("dspsr -cepoch=start -S %f -c %f -T %f -D %f  -O %04d_%fsec_DM%f -e ar %s" % (stime,extime,extime,dm,indx,time,dm,fil_file))
 
 		elif(frb_cands.size):
 			time = float(frb_cands['time'])
@@ -145,7 +145,7 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 			if(any(l<=time<=u for (l,u) in kill_time_range)):
 				print "Candidate inside bad-time range"
 			else:
-				os.system("dspsrfil -cepoch=start -S %f -c %f -T %f -D %f  -O 0000_%fsec_DM%f -e ar %s" % (stime,extime,extime,dm,time,dm,fil_file))		
+				os.system("dspsr -cepoch=start -S %f -c %f -T %f -D %f  -O 0000_%fsec_DM%f -e ar %s" % (stime,extime,extime,dm,time,dm,fil_file))		
 		'''
 
 		# If no kill_chans, do an automatic smoothing
