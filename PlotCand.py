@@ -46,8 +46,8 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint):
 
         #Fbin Calc
         fbin = int(round(math.pow(float(snr)/4.0,2)))
-        if fbin < 2:
-            fbin = 2
+        if fbin < 16:
+            fbin = 16
         fbin_base2 = int(round(math.log(fbin,2)))
         fbin = pow(2,fbin_base2)
         if fbin > 512:

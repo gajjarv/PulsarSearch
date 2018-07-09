@@ -206,7 +206,7 @@ def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosear
 
 #def candplots_nogpu(fil_file,source_name,noplot,kill_chans,kill_time_range):	
 
-def downsample(fil_file,inbits,inchans):
+def downsample(fil_file):
 	basename = ".".join(fil_file.split(".")[:-1])
 	tmp = basename + "_2add.fil"
 	cmd = "decimate -c 1 -t 2 %s > %s " % (fil_file,tmp) # Decimate
