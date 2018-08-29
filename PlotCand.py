@@ -115,9 +115,25 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
 
 						# Correct the variable baseline, this script writes out .norm files 	
 						cmd = "running_mean_sub %s.ar" % (candname)
-						os.system(cmd)
+						#os.system(cmd)
+
+                                                cmd = "pam --setnbin %d -m %s.ar" % (fbin,candname)
+                                                print cmd
+                                                os.system(cmd)
 
                                                 for i,j in pairwise(frac):
+                                                    cmd = "psrplot -N 1x3 -p flux -p freq -p freq " + \
+                                                          " -j ':1:dedisperse,F %d' -j ':2:F %d' " % (int(fbin),int(fbin)) + \
+                                                          " -j :0:dedisperse -j :0:fscrunch " + \
+                                                          " -c ':0:x:range=(%f,%f)' -c ':1:x:range=(%f,%f)'" % (i,j,i,j) + \
+                                                          " -c ':2:x:range=(%f,%f)'" % (i,j) + \
+                                                          " -c ':0:set=pub,below:l=SNR: %.2f,ch=2,below:r=Wid: %.2f'" % (float(snr),float(width))  + \
+                                                          " -c ':1:y:view=(0.1,1.3)' -c ':2:y:view=(0.1,1.3)'" + \
+                                                          " -c ':2:x:unit=ms' " + \
+                                                          " -c ':1:cmap:map=heat' -c ':2:cmap:map=heat' -c ':2:crop=0.9' -c ':2:crop=0.9'" + \
+                                                          " -D %s_%.2f.ps/cps %s.norm " % (candname,i,candname)
+
+                                                    '''
                                                     cmd = "psrplot -p F -j 'D, F %d' "  % (int(fbin)) +  \
 							  " -c  'flux:below:l = SNR: %.2f'" % (float(snr)) + \
 							  " -c  'flux:below:r = Wid: %.2f ms'" % (float(width)) + \
@@ -126,6 +142,7 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
                                                           " -c 'freq:cmap:map=heat' " + \
 							  " -c 'freq:crop=0.9' " + \
                                                           " -D %s_%.2f.ps/cps %s.norm" % (candname,i,candname)
+                                                    '''      
                                                     print cmd
                                                     os.system(cmd)
 
@@ -143,10 +160,10 @@ if __name__ == "__main__":
      
     frb_cands = np.loadtxt(FinalList,dtype={'names': ('snr','time','samp_idx','dm','filter','prim_beam'),'formats': ('f4', 'f4', 'i4','f4','i4','i4')})
 
-    fl = 1100
-    fh = 1500
+    fl = 300
+    fh = 500
     noplot=0
-    tint=0.000128
+    tint=0.000163
     Ttot = 20 # Total length of the file        
     kill_time_range=[]
     kill_chans=[]
