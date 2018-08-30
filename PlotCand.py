@@ -54,8 +54,8 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint):
             fbin = 512
 
         # Fraction of extraction to plot each time calc
-        if tbin>512:
-            frac = np.linspace(0,1,np.ceil(tbin/512.0))    
+        if tbin>1024:
+            frac = np.linspace(0,1,np.ceil(tbin/1024.0))    
         else:
             frac = np.array([0,1])
 
