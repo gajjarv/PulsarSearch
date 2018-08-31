@@ -1,2 +1,4 @@
 v1 : Basic version without RFI 
 v2 : It runs with RFIFIND and zaps channels and time interval
+
+_PKS.py is same as _BL.py but with some changes to the heimdall command

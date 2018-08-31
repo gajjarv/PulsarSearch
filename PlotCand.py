@@ -35,6 +35,7 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint):
         #widths = [2048,2048,2048,1024,1024,512,512,256,256,128,128,64,32]
         #tbin = widths[filter]
         bin_width = tint * (2 ** filter)
+
 	#So that we have at least 4 bins on pulse
 	if filter <= 4 and snr > 20:
 	        tbin = 4*int(extime / bin_width)
@@ -43,6 +44,10 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint):
 	
         if tbin < 16:
             tbin = 16
+
+	if tint > (extime/tbin):
+	   tbin = int(extime/tint)	
+
 
         #Fbin Calc
         fbin = int(round(math.pow(float(snr)/4.0,2)))
