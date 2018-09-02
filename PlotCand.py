@@ -17,7 +17,7 @@ def pairwise(iterable):
     next(b, None)
     return izip(a, b)
 
-def plotParaCalc(snr,filter,dm,fl,fh,tint):
+def plotParaCalc(snr,filter,dm,fl,fh,tint,nchan):
         #Extract block factor plot in seconds
         extimefact = 1.0
 
@@ -48,7 +48,6 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint):
 	if tint > (extime/tbin):
 	   tbin = int(extime/tint)	
 
-
         #Fbin Calc
         fbin = int(round(math.pow(float(snr)/4.0,2)))
         if fbin < 16:
@@ -58,15 +57,18 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint):
         if fbin > 512:
             fbin = 512
 
+	if(nchan%fbin):
+		fbin = nchan/2**np.argmin([abs(fbin-nchan/2**i) for i in range(0,10)]) # If the fbin is not modulo of number of channel, we select closed modulo nchan		
+
         # Fraction of extraction to plot each time calc
-        if tbin>1024:
-            frac = np.linspace(0,1,np.ceil(tbin/1024.0))    
+        if tbin>512:
+            frac = np.linspace(0,1,np.ceil(tbin/512.0))    
         else:
             frac = np.array([0,1])
 
         return tbin,fbin,extime,frac  
 
-def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name):
+def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan):
         
         # Half of this time will be subtracted from the Heimdall candidate time
         extimeplot = 1.0
@@ -84,7 +86,7 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
 				width = tint * (2 ** filter)*(10**3) # Width in msec
 				snr = frb['snr']
 
-                                tbin,fbin,extime,frac=plotParaCalc(snr,filter,dm,fl,fh,tint)
+                                tbin,fbin,extime,frac=plotParaCalc(snr,filter,dm,fl,fh,tint,nchan)
                                 #print tbin,fbin,extime,frac
         
                                 stime = time-(extimeplot*0.1) # Go 10% back data
