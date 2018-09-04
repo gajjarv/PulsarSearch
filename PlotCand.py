@@ -10,6 +10,7 @@ import glob
 from itertools import chain
 from os.path import basename
 from itertools import tee, izip
+from sigpyproc.Readers import FilReader
 
 def pairwise(iterable):
     "s -> (s0,s1), (s1,s2), (s2, s3), ..."
@@ -172,14 +173,27 @@ if __name__ == "__main__":
      
     frb_cands = np.loadtxt(FinalList,dtype={'names': ('snr','time','samp_idx','dm','filter','prim_beam'),'formats': ('f4', 'f4', 'i4','f4','i4','i4')})
 
-    fl = 300
-    fh = 500
+    #uGMRT
+    #fl = 300
+    #fh = 500
+    #FAST
+    fl = 1100
+    fh = 1500
     noplot=0
     tint=0.000163
     Ttot = 20 # Total length of the file        
     kill_time_range=[]
     kill_chans=[]
     source_name="Fake"
+
+    f = FilReader(fil_file)
+    nchan = f.header['nchans']
+    fch1 = f.header['fch1']
+    foff = f.header['foff']
+    tint = f.header['tsamp']
+    Ttot = f.header['tobs']
+    fh = fch1
+    fl = fch1 + (foff*nchan)
 
     extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name)
 
