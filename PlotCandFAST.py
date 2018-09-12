@@ -66,7 +66,9 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint,nchan):
             frac = np.linspace(0,1,np.ceil(tbin/512.0))    
         else:
             frac = np.array([0,1])
-
+	
+	#For FAST
+	frac = np.array([0,1])	
         return tbin,fbin,extime,frac  
 
 def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan):
