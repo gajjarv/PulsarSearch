@@ -12,7 +12,7 @@ from os.path import basename
 from itertools import tee, izip
 import matplotlib.pyplot as plt
 import psrchive as psr
-#from sigpyproc.Readers import FilReader
+from sigpyproc.Readers import FilReader
 
 def find_nearidx(array,val):
         idx = (np.abs(array-val)).argmin()
