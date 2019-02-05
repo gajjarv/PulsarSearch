@@ -1,0 +1,3 @@
+#!/bin/bash
+file="$@"
+./SP_search_BL.py $file
