@@ -9,7 +9,9 @@ V9 : Better plot with DM vs SNR plot (active)
 PlotCand: active v1
 v1: Basic version
 v2: With improve diagnostic plot 
-v3 : Also with DM vs phase (active)  
+v3 : Also with DM vs phase 
+v4: Fixed a bug with candidate found at the edge of the file, copied this for next version with negative DM
+plots (active) 
 
 SPANDAK is a bigger wrapper which will SP_search_BL or other inside
 The reason to have a separate wrapper is to do negative DM search enable. 

@@ -100,13 +100,13 @@ def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range):
 		#print kill_chan_range
 		for r in kill_chan_range:
 			zapchan = zapchan + " -zap_chans " + r 
-		# After talking to AJ and SO
-		cmd = "heimdall -f %s -rfi_tol 10 -dm_tol 1.15 -dm_pulse_width 100 -scrunching_tol 1.01  -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s -v %s" % (fil_file,dmlo,dmhi,boxcar_max,outdir,zapchan)		
+		# After talking to AJ and SO and after much testing I found that 'rfi_no_narrow' works better. 
+		cmd = "heimdall -f %s -rfi_tol 10 -dm_tol 1.15 -dm_pulse_width 100 -scrunching_tol 1.01 -rfi_no_narrow -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s -v %s" % (fil_file,dmlo,dmhi,boxcar_max,outdir,zapchan)		
 		print cmd
 		os.system(cmd)
 	else:
 		# After talking to AJ and SO
-		os.system("heimdall -f %s -dm_tol 1.15 -rfi_tol 10 -dm_pulse_width 100 -scrunching_tol 1.01 -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s  -v" % (fil_file,dmlo,dmhi,boxcar_max,outdir));
+		os.system("heimdall -f %s -dm_tol 1.15 -rfi_tol 10 -dm_pulse_width 100 -scrunching_tol 1.01 -rfi_no_narrow  -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s  -v" % (fil_file,dmlo,dmhi,boxcar_max,outdir));
 	return
 
 def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosearch):
@@ -250,6 +250,8 @@ if __name__ == "__main__":
 	'''
 	parser.add_option("--dorfi", action='store_true', dest='dorfi',
                 help='Run RFIFIND (Default: Do not Run)')
+	parser.add_option("--negDM", action='store_true', dest='negdm',
+                help='Do all four types of negative search (Default: Do not Run)')
 
 	parser.add_option("--lodm", action='store', dest='lodm', default=0.0, type=float,
                 help="Heimdall: Low DM limit to search (Default: 0)")
@@ -324,6 +326,7 @@ if __name__ == "__main__":
 	nogpu = options.nogpu
 	zerodm = options.zerodm
 	email = options.email
+	negdm = options.negdm
 	#outdir = options.outdir
 
 	if not options.outdir: outdir = os.getcwd()
