@@ -108,13 +108,13 @@ def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range):
 		#print kill_chan_range
 		for r in kill_chan_range:
 			zapchan = zapchan + " -zap_chans " + r 
-		# After talking to AJ and SO
-		cmd = "heimdall -f %s -rfi_tol 10 -scrunching_tol 1.01 -dm_nbits 32 -dm_pulse_width 1024  -dm %f %f -boxcar_max %f -output_dir %s  %s -dm_tol 1.15 " % (fil_file,dmlo,dmhi,boxcar_max,outdir,zapchan)		
+		# After talking to AJ and SO  much testing I found that 'rfi_no_narrow' works better. 
+		cmd = "heimdall -f %s -rfi_tol 10 -scrunching_tol 1.01 -dm_nbits 32 -dm_pulse_width 1024 -rfi_no_narrow  -dm %f %f -boxcar_max %f -output_dir %s  %s -dm_tol 1.15 " % (fil_file,dmlo,dmhi,boxcar_max,outdir,zapchan)		
 		print cmd
 		os.system(cmd)
 	else:
 		# After talking to AJ and SO
-		os.system("heimdall -f %s -rfi_tol 10 scrunching_tol 1.01 -dm_nbits 32  -dm_pulse_width 1024  -dm %f %f -boxcar_max %f -output_dir %s  -dm_tol 1.15  " % (fil_file,dmlo,dmhi,boxcar_max,outdir));
+		os.system("heimdall -f %s -rfi_tol 10 scrunching_tol 1.01 -dm_nbits 32 -rfi_no_narrow -dm_pulse_width 1024  -dm %f %f -boxcar_max %f -output_dir %s  -dm_tol 1.15  " % (fil_file,dmlo,dmhi,boxcar_max,outdir));
 	return
 
 def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosearch):

@@ -10,10 +10,7 @@ import glob
 from itertools import chain
 from os.path import basename
 from itertools import tee, izip
-import matplotlib
-#matplotlib.use('pdf')
 import matplotlib.pyplot as plt
-#plt.ioff()
 import psrchive as psr
 from sigpyproc.Readers import FilReader
 
@@ -47,30 +44,6 @@ def dedispblock(ar,lodm,hidm):
     toplot = [list(i) for i in zip(*toplot)]
     toplot = np.transpose(toplot)
     return toplot,taxis
-
-def negDMplot(ar,FTdirection,nchan):
-    fpsr = psr.Archive_load(ar)
-    fpsr.remove_baseline()
-    ds = fpsr.get_data().squeeze()
-    w = fpsr.get_weights().flatten()
-    w = w/np.max(w) # Normalized it
-    idx = np.where(w==0)[0]
-    ds = np.multiply(ds, w[np.newaxis,:,np.newaxis]) # Apply it
-    ds[:,idx,:] = np.nan
-    data = ds[0,:,:]
-    if FTdirection == 'nT': 
-    	ndata = data[...,::-1]
-	print "Will be flipped in Time"
-    elif FTdirection == 'nF': 
-	ndata = data[::-1,...]
-	print "Will be flipped in freq" 
-    elif FTdirection == 'nTnF': 
-	ndata = data[::-1,::-1]
-	print "Will be flipped in time and freq"
-    else: 
-	ndata = data 
-	print "No flip"
-    return ndata
 
 def pairwise(iterable):
     "s -> (s0,s1), (s1,s2), (s2, s3), ..."
@@ -193,6 +166,7 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
                                                 
                                                 ar = candname + ".norm"
 
+                                
                                                 lodm = int(dm-(dm*0.15))
                                                 if lodm < 0: lodm = 0
                                                 hidm = int(dm+(dm*0.15))
@@ -216,42 +190,46 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
                                                           " -c ':1:cmap:map=heat' -c ':2:cmap:map=heat' -c ':1:crop=0.9' -c ':2:crop=0.9'" + \
                                                           " -D %s_%.2f.ps/cps %s.norm " % (candname,i,candname)
 
+                                                    #Old plotting technique
+                                                    '''
+                                                    cmd = "psrplot -p F -j 'D, F %d' "  % (int(fbin)) +  \
+							  " -c  'flux:below:l = SNR: %.2f'" % (float(snr)) + \
+							  " -c  'flux:below:r = Wid: %.2f ms'" % (float(width)) + \
+                                                          " -c  x:unit=ms -c above:c='' " + \
+                                                          " -c 'x:range=(%f,%f)' " % (i,j) + \
+                                                          " -c 'freq:cmap:map=heat' " + \
+							  " -c 'freq:crop=0.9' " + \
+                                                          " -D %s_%.2f.ps/cps %s.norm" % (candname,i,candname)
+                                                    '''      
                                                     print cmd
                                                     os.system(cmd)
 
-                                                    #DM vs time plot
+                                                    #DM vs time plot 
                                                     plt.rcParams["figure.figsize"] = (20,8)
                                                     plt.rcParams.update({'font.size':22})
                                                     #plt.set_cmap('gray')
-						    fig1 = plt.figure(1)	 
-						    ax1 = fig1.add_subplot(1,1,1)
-                                                    ax1.set_xlabel("Time (msec)")
-                                                    ax1.set_ylabel("DM")
+                                                    plt.xlabel("Time (msec)")
+                                                    plt.ylabel("DM")
                                                     lti = int(np.floor(len(taxis)*i))
                                                     lhi = int(np.ceil(len(taxis)*j))
                                                     if(lhi>=len(taxis)): lhi = len(taxis)-1
                                                     lt = taxis[lti]
                                                     lh = taxis[lhi]
-                                                    ax1.imshow(toplot[:,lti:lhi],extent=[lt,lh,lodm,hidm],origin='lower',aspect='auto')
-                                                    pngfile = candname + ".dmspace_%.2f.png" % (i)
-						    fig1.savefig(pngfile,format='png',bbox_inches='tight')	
-						    #Negative DM plots if required      
-                                                    FTdirection = source_name.split("_")[0]
-                                                    if FTdirection in ['nT','nF','nTnF']:
-							print "Will be plotting original axis direction" 
-							fig2 = plt.figure(2)
-							ax2=fig2.add_subplot(1,1,1)
-							ax2.set_xlabel("Time (msec)")	
-                                                        ndata=negDMplot(ar,FTdirection,fbin)
-							ax2.set_ylabel("Frequency (channels)")
-							ax2.imshow(ndata[:,lti:lhi],extent=[lt,lh,0,fbin],aspect='auto',interpolation='none')
-							npngfile = candname + ".ndm_%.2f.png" % (i)
-							fig2.savefig(npngfile,format='png',bbox_inches='tight')
-							cmd = "convert -rotate 90 %s_%.2f.ps +append \( -trim -resize 560x700 %s +append \) -append \( -trim -resize 560x700 %s +append \) -append %s_%.2f.pdf" % (candname,i,npngfile,pngfile,candname,i)
-                                                        os.system(cmd)
-						    else:	
-                                                    	cmd = "convert -rotate 90 %s_%.2f.ps +append \( -trim -resize 560x700 %s +append \) -append %s_%.2f.pdf" % (candname,i,pngfile,candname,i)
-                                                    	os.system(cmd)
+                                                    #plt.xlim(lti,lhi)
+                                                    plt.imshow(toplot[:,lti:lhi],extent=[lt,lh,lodm,hidm],origin='lower',aspect='auto')
+                                                    #plt.imshow(toplot,origin='lower',aspect='auto')
+                                                    psfile = candname + ".dmspace_%.2f.ps" % (i)
+						    print psfile
+						    try:	
+                                                    	plt.savefig(psfile,format='ps',bbox_inches='tight')
+						    except:
+							#TODO: Not sure why sometimes savefig fails
+							print "Problem with saving DM space ps file"
+						    #plt.show()
+						    print psfile
+                                                    cmd = "convert -rotate 90 %s_%.2f.ps +append \( -trim -resize 560x700 %s +append \) -append %s_%.2f.pdf" % (candname,i,psfile,candname,i)
+                                                    os.system(cmd)
+
 
 		        cmd = "gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dSAFER -sOutputFile=%s_frb_cand.pdf *sec*DM*.pdf" % (source_name)	  
                         print cmd

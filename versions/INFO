@@ -5,7 +5,13 @@ v5:: Version with PRESTO and single_pulse_search.py package.
 v6: A good working verion but does not remove zero DM candidates. Next version. 
 V7 : With PRESTO, removes zerodm candidates (Next version should have ploting based on the candidate DM and SNR)
 V8 : Copy before cleaning and better plotting tool
+V9 : Better plot with DM vs SNR plot (active)
 PlotCand: active v1
 v1: Basic version
 v2: With improve diagnostic plot 
-v3 : Also with DM vs phase (active)  
+v3 : Also with DM vs phase 
+v4: Fixed a bug with candidate found at the edge of the file, copied this for next version with negative DM
+plots (active) 
+
+SPANDAK is a bigger wrapper which will SP_search_BL or other inside
+The reason to have a separate wrapper is to do negative DM search enable. 
