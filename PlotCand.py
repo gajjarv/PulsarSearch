@@ -10,7 +10,10 @@ import glob
 from itertools import chain
 from os.path import basename
 from itertools import tee, izip
+import matplotlib
+#matplotlib.use('pdf')
 import matplotlib.pyplot as plt
+#plt.ioff()
 import psrchive as psr
 from sigpyproc.Readers import FilReader
 

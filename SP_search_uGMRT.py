@@ -2,6 +2,8 @@
 """
 Take .fil file as an input file and does single pulse search
 """
+import matplotlib
+matplotlib.use("pdf")
 from argparse import ArgumentParser
 import os,sys,math
 import rfi_quality_check
