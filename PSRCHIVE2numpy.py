@@ -16,7 +16,7 @@ timef = ".".join(fname.split(".")[:-1])+".time.npy"
 #DM
 dm = 563
 #output nchan
-NCHAN = 256
+NCHAN = 128
 
 
 #-- load file and dedisperse --#
