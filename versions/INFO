@@ -5,7 +5,8 @@ v5:: Version with PRESTO and single_pulse_search.py package.
 v6: A good working verion but does not remove zero DM candidates. Next version. 
 V7 : With PRESTO, removes zerodm candidates (Next version should have ploting based on the candidate DM and SNR)
 V8 : Copy before cleaning and better plotting tool
-V9 : Better plot with DM vs SNR plot (active)
+V9 : Better plot with DM vs SNR plot 
+V10: Heimdall command improved with rfi_no_narrow placed (active)
 PlotCand: active v1
 v1: Basic version
 v2: With improve diagnostic plot 

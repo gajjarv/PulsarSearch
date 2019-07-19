@@ -112,16 +112,31 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint,nchan):
 
         #Fbin Calc
         fbin = int(round(math.pow(float(snr)/4.0,2)))
-        if fbin < 16:
-            fbin = 16
-        fbin_base2 = int(round(math.log(fbin,2)))
-        fbin = pow(2,fbin_base2)
-        if fbin > 512:
-            fbin = 512
 
-	if(nchan%fbin):
-		fbin = nchan/2**np.argmin([abs(fbin-nchan/2**i) for i in range(0,10)]) 
+	
+	#if nchan is not power of 2, get fbin modulo of nchan
+	i=0
+	while nchan%(fbin+i): i+=1
+	fbin+=i
+
+	if fbin<16:
+	    i=0
+            while nchan%(16+i): i+=1
+            fbin=i+16
+
+        #fbin_base2 = int(round(math.log(fbin,2)))
+        #fbin = pow(2,fbin_base2)
+        if fbin > 512:
+            #fbin = 512
+	    i=0 
+            while nchan%(512-i): i+=1
+            fbin=512-i
+
+	'''
+	if(nchan%float(fbin)):
 		# If the fbin is not modulo of number of channel, we select closed modulo nchan		
+		fbin = nchan/2**np.argmin([abs(float(fbin)-nchan/2**i) for i in range(0,10)]) 
+	'''
 
         # Fraction of extraction to plot each time calc
         if tbin>512:

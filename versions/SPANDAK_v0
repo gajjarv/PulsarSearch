@@ -1,0 +1,37 @@
+#!/bin/bash
+fullinput="$@"
+if [[ -z "${fullinput// }" ]]; then
+	 echo "Input required"
+fi
+
+file=`echo $fullinput | awk -F'--fil' '{print$2}' | awk '{print$1}'`
+
+
+
+
+
+lpart=`echo $fullinput | awk -F'--fil' '{print$1}' `
+rpart=`echo $fullinput | awk -F'--fil' '{print$2}' | awk '{for(i=2;i<=NF;i++)printf("%s ",$i)}'`
+if [[ $fullinput == *"--negDM"* ]]; then
+	echo "Only artificial DM search will be conducted for three different dispersion types!"
+	echo "For regular DM search, remove --negDM option."
+	cmd="/home/vgajjar/bl_sigproc/src/filedit --flipTime $file"
+	$cmd
+	cmd="SP_search_BL.py $lpart --fil outfile.fil $rpart"
+	$cmd
+	cmd="rm outfile.fil"
+	$cmd
+	cmd="/home/vgajjar/bl_sigproc/src/filedit --flipFreq $file"
+        $cmd
+        cmd="SP_search_BL.py $lpart --fil outfile.fil $rpart"
+        $cmd
+	cmd="rm outfile.fil"
+        $cmd
+        cmd="/home/vgajjar/bl_sigproc/src/filedit --flipFreq --flipTime $file"
+        $cmd
+        cmd="SP_search_BL.py $lpart --fil outfile.fil $rpart"
+        $cmd
+else
+	cmd="SP_search_BL.py $fullinput"
+	$cmd
+fi
