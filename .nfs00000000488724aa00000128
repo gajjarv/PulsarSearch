@@ -23,7 +23,7 @@ if [[ $fullinput == *"--subBand"* ]]; then
 	while [ $i -lt $nsub ]; do
 		highf=`bc -l <<< $fch1+$foff*$i*$subsize`
 		lowf=`bc -l <<< $fch1+$foff*$i*$subsize+$foff*$subsize`
-		outfil=`echo "sub"$i".fil"`
+		outfil=`echo "_sub"$i".fil"`
 		cmd="bldice -f $file -b $highf -e $lowf -o $outfil -x .fil"	
 		echo $cmd	
 		$cmd
