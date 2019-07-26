@@ -88,9 +88,10 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint,nchan):
         p = os.popen(cmd)
         cand_band_smear = p.readline().strip()
         p.close()
-        extime = extimefact/2 + extimefact*float(cand_band_smear)
+        #extime = extimefact/2 + extimefact*float(cand_band_smear)
+	extime = 3*float(cand_band_smear)
         if extime < 1.0: extime = 1.0
-
+	
         # Tbin calc
         # For Filter widths startting from 2^0 to 2^12=4096
         #widths = [2048,2048,2048,1024,1024,512,512,256,256,128,128,64,32]
@@ -144,7 +145,7 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint,nchan):
         else:
             frac = np.array([0,1])
 
-        return tbin,fbin,extime,frac  
+        return tbin,fbin,extime,frac,cand_band_smear 
 
 def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan):
         
@@ -164,10 +165,11 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
 				width = tint * (2 ** filter)*(10**3) # Width in msec
 				snr = frb['snr']
 
-                                tbin,fbin,extime,frac=plotParaCalc(snr,filter,dm,fl,fh,tint,nchan)
+                                tbin,fbin,extime,frac,cand_band_smear=plotParaCalc(snr,filter,dm,fl,fh,tint,nchan)
                                 #print tbin,fbin,extime,frac
         
-                                stime = time-(extimeplot*0.1) # Go 10% back data
+                                #stime = time-(extimeplot*0.1) # Go 10% back data
+				stime = time - float(cand_band_smear)	
 
                                 if(stime<0): stime = 0
 				if(stime+extime>=Ttot): extime=Ttot-stime
@@ -215,44 +217,48 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
                                                 toplot,taxis = dedispblock(ar,lodm,hidm)
                                                 #plt.show()
 
-                                                for i,j in pairwise(frac):
-                                                    #New plotting technique
-                                                    cmd = "psrplot -N 1x3 -p flux -p freq -p freq " + \
-                                                          " -j ':1:dedisperse,F %d' -j ':2:F %d' " % (int(fbin),int(fbin)) + \
-                                                          " -j :0:dedisperse -j :0:fscrunch " + \
-                                                          " -c ':0:x:range=(%f,%f)' -c ':1:x:range=(%f,%f)'" % (i,j,i,j) + \
-                                                          " -c ':2:x:range=(%f,%f)'" % (i,j) + \
-                                                          " -c ':1:y:view=(0.1,1.13)' -c ':2:y:view=(0.13,1.08)'" + \
-                                                          " -c ':0:set=pub,below:l=SNR: %.2f,ch=2,below:r=Wid: %.2f'" % (float(snr),float(width))  + \
-                                                          " -c ':0:above:c=$file'" + \
-                                                          " -c ':1:set=pub,above:c= ,ch=2,y:reverse=1'" + \
-                                                          " -c ':2:set=pub,above:c= ,ch=2'" + \
-                                                          " -c ':2:x:unit=ms,y:reverse=1' " + \
-                                                          " -c ':1:cmap:map=heat' -c ':2:cmap:map=heat' -c ':1:crop=0.9' -c ':2:crop=0.9'" + \
-                                                          " -D %s_%.2f.ps/cps %s.norm " % (candname,i,candname)
+                                                #for i,j in pairwise(frac):
+                                                #New plotting technique
+						#i,j=zoomselect(tbin,fbin,extime,frac,cand_band_smear)
+						i = 0.42
+						j = 0.52
 
-                                                    print cmd
-                                                    os.system(cmd)
+                                                cmd = "psrplot -N 1x3 -p flux -p freq -p freq " + \
+                                                      " -j ':1:dedisperse,F %d' -j ':2:F %d' " % (int(fbin),int(fbin)) + \
+                                                      " -j :0:dedisperse -j :0:fscrunch " + \
+                                                      " -c ':0:x:range=(%f,%f)' -c ':1:x:range=(%f,%f)'" % (i,j,i,j) + \
+                                                      " -c ':2:x:range=(%f,%f)'" % (i,j) + \
+                                                      " -c ':1:y:view=(0.1,1.13)' -c ':2:y:view=(0.13,1.08)'" + \
+                                                      " -c ':0:set=pub,below:l=SNR: %.2f,ch=2,below:r=Wid: %.2f'" % (float(snr),float(width))  + \
+                                                      " -c ':0:above:c=$file'" + \
+                                                      " -c ':1:set=pub,above:c= ,ch=2,y:reverse=1'" + \
+                                                      " -c ':2:set=pub,above:c= ,ch=2'" + \
+                                                      " -c ':2:x:unit=ms,y:reverse=1' " + \
+                                                      " -c ':1:cmap:map=heat' -c ':2:cmap:map=heat' -c ':1:crop=0.9' -c ':2:crop=0.9'" + \
+                                                      " -D %s_%.2f.ps/cps %s.norm " % (candname,i,candname)
 
-                                                    #DM vs time plot
-                                                    plt.rcParams["figure.figsize"] = (20,8)
-                                                    plt.rcParams.update({'font.size':22})
-                                                    #plt.set_cmap('gray')
-						    fig1 = plt.figure(1)	 
-						    ax1 = fig1.add_subplot(1,1,1)
-                                                    ax1.set_xlabel("Time (msec)")
-                                                    ax1.set_ylabel("DM")
-                                                    lti = int(np.floor(len(taxis)*i))
-                                                    lhi = int(np.ceil(len(taxis)*j))
-                                                    if(lhi>=len(taxis)): lhi = len(taxis)-1
-                                                    lt = taxis[lti]
-                                                    lh = taxis[lhi]
-                                                    ax1.imshow(toplot[:,lti:lhi],extent=[lt,lh,lodm,hidm],origin='lower',aspect='auto')
-                                                    pngfile = candname + ".dmspace_%.2f.png" % (i)
-						    fig1.savefig(pngfile,format='png',bbox_inches='tight')	
-						    #Negative DM plots if required      
-                                                    FTdirection = source_name.split("_")[0]
-                                                    if FTdirection in ['nT','nF','nTnF']:
+                                                print cmd
+                                                os.system(cmd)
+
+                                                #DM vs time plot
+                                                plt.rcParams["figure.figsize"] = (20,8)
+                                                plt.rcParams.update({'font.size':22})
+                                                #plt.set_cmap('gray')
+						fig1 = plt.figure(1)	 
+						ax1 = fig1.add_subplot(1,1,1)
+                                                ax1.set_xlabel("Time (msec)")
+                                                ax1.set_ylabel("DM")
+                                                lti = int(np.floor(len(taxis)*i))
+                                                lhi = int(np.ceil(len(taxis)*j))
+                                                if(lhi>=len(taxis)): lhi = len(taxis)-1
+                                                lt = taxis[lti]
+                                                lh = taxis[lhi]
+                                                ax1.imshow(toplot[:,lti:lhi],extent=[lt,lh,lodm,hidm],origin='lower',aspect='auto')
+                                                pngfile = candname + ".dmspace_%.2f.png" % (i)
+						fig1.savefig(pngfile,format='png',bbox_inches='tight')	
+						#Negative DM plots if required      
+                                                FTdirection = source_name.split("_")[0]
+                                                if FTdirection in ['nT','nF','nTnF']:
 							print "Will be plotting original axis direction" 
 							fig2 = plt.figure(2)
 							ax2=fig2.add_subplot(1,1,1)
@@ -264,7 +270,7 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
 							fig2.savefig(npngfile,format='png',bbox_inches='tight')
 							cmd = "convert -rotate 90 %s_%.2f.ps +append \( -trim -resize 560x700 %s +append \) -append \( -trim -resize 560x700 %s +append \) -append %s_%.2f.pdf" % (candname,i,npngfile,pngfile,candname,i)
                                                         os.system(cmd)
-						    else:	
+						else:	
                                                     	cmd = "convert -rotate 90 %s_%.2f.ps +append \( -trim -resize 560x700 %s +append \) -append %s_%.2f.pdf" % (candname,i,pngfile,candname,i)
                                                     	os.system(cmd)
 
