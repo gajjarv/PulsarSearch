@@ -88,16 +88,15 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint,nchan):
         p = os.popen(cmd)
         cand_band_smear = p.readline().strip()
         p.close()
-        #extime = extimefact/2 + extimefact*float(cand_band_smear)
+        extime = extimefact/2 + extimefact*float(cand_band_smear)
+        if extime < 1.0: extime = 1.0
 
         # Tbin calc
         # For Filter widths startting from 2^0 to 2^12=4096
         #widths = [2048,2048,2048,1024,1024,512,512,256,256,128,128,64,32]
         #tbin = widths[filter]
         bin_width = tint * (2 ** filter)
-
-	extime = 3.5*float(cand_band_smear) 
-        #if extime < 1.0: extime = 1.0
+	
 	
 	#So that we have at least 4 bins on pulse
 	if filter <= 4 and snr > 20:
@@ -139,14 +138,13 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint,nchan):
 		fbin = nchan/2**np.argmin([abs(float(fbin)-nchan/2**i) for i in range(0,10)]) 
 	'''
 
-	
         # Fraction of extraction to plot each time calc
         if tbin>512:
-            frac = np.linspace(0.3,0.6,np.ceil(tbin/512.0)) 
+            frac = np.linspace(0,1,np.ceil(tbin/512.0)) 
         else:
-            frac = np.array([0.3,0.6])
+            frac = np.array([0,1])
 
-        return tbin,fbin,extime,frac,cand_band_smear 
+        return tbin,fbin,extime,frac  
 
 def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan):
         
@@ -159,9 +157,6 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
                                 frb_cands = np.sort(frb_cands)
                                 frb_cands[:] = frb_cands[::-1]
                         if(frb_cands.size==1): frb_cands = [frb_cands]
-			cmd = "rm *.png *.ps *.pdf"
-			print cmd
-			os.system(cmd)	
                         for indx,frb in enumerate(frb_cands):
                                 time = frb['time']
                                 dm = frb['dm']
@@ -169,16 +164,15 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
 				width = tint * (2 ** filter)*(10**3) # Width in msec
 				snr = frb['snr']
 
-                                tbin,fbin,extime,frac,cand_band_smear=plotParaCalc(snr,filter,dm,fl,fh,tint,nchan)
+                                tbin,fbin,extime,frac=plotParaCalc(snr,filter,dm,fl,fh,tint,nchan)
                                 #print tbin,fbin,extime,frac
         
-                                #stime = time-(extimeplot*0.1) # Go 10% back data
-				stime = time - float(cand_band_smear)*1.5	
+                                stime = time-(extimeplot*0.1) # Go 10% back data
 
                                 if(stime<0): stime = 0
 				if(stime+extime>=Ttot): extime=Ttot-stime
-                                if(any(l<=time<=u for (l,u) in kill_time_range) or extime < 0.0):
-                                #if(any(l<=time<=u for (l,u) in kill_time_range) or extime < 1.0):
+                                #if(any(l<=stime<=u for (l,u) in kill_time_ranges)):
+                                if(any(l<=time<=u for (l,u) in kill_time_range) or extime < 1.0):
                                         print "Candidate inside bad-time range"
                                 else:
                                         if(indx<1000):
@@ -222,61 +216,64 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
                                                 #plt.show()
 
                                                 for i,j in pairwise(frac):
-                                                #New plotting technique
-						#i,j=zoomselect(tbin,0.3,0.5)
-						#i = 0.45
-						#j = 0.65
+                                                    #New plotting technique
+                                                    cmd = "psrplot -N 1x3 -p flux -p freq -p freq " + \
+                                                          " -j ':1:dedisperse,F %d' -j ':2:F %d' " % (int(fbin),int(fbin)) + \
+                                                          " -j :0:dedisperse -j :0:fscrunch " + \
+                                                          " -c ':0:x:range=(%f,%f)' -c ':1:x:range=(%f,%f)'" % (i,j,i,j) + \
+                                                          " -c ':2:x:range=(%f,%f)'" % (i,j) + \
+                                                          " -c ':1:y:view=(0.1,1.13)' -c ':2:y:view=(0.13,1.08)'" + \
+                                                          " -c ':0:set=pub,below:l=SNR: %.2f,ch=2,below:r=Wid: %.2f'" % (float(snr),float(width))  + \
+                                                          " -c ':0:above:c=$file'" + \
+                                                          " -c ':1:set=pub,above:c= ,ch=2,y:reverse=1'" + \
+                                                          " -c ':2:set=pub,above:c= ,ch=2'" + \
+                                                          " -c ':2:x:unit=ms,y:reverse=1' " + \
+                                                          " -c ':1:cmap:map=heat' -c ':2:cmap:map=heat' -c ':1:crop=0.9' -c ':2:crop=0.9'" + \
+                                                          " -D %s_%.2f.ps/cps %s.norm " % (candname,i,candname)
 
-                                                	cmd = "psrplot -N 1x3 -p flux -p freq -p freq " + \
-	                                                      " -j ':1:dedisperse,F %d' -j ':2:F %d' " % (int(fbin),int(fbin)) + \
-        	                                              " -j :0:dedisperse -j :0:fscrunch " + \
-               		                                      " -c ':0:x:range=(%f,%f)' -c ':1:x:range=(%f,%f)'" % (i,j,i,j) + \
-                         	                              " -c ':2:x:range=(%f,%f)'" % (i,j) + \
-                                	                      " -c ':1:y:view=(0.1,1.13)' -c ':2:y:view=(0.13,1.08)'" + \
-                                        	              " -c ':0:set=pub,below:l=SNR: %.2f,ch=2,below:r=Wid: %.2f'" % (float(snr),float(width))  + \
-                                                	      " -c ':0:above:c=$file'" + \
-	                                                      " -c ':1:set=pub,above:c= ,ch=2,y:reverse=1'" + \
-        	                                              " -c ':2:set=pub,above:c= ,ch=2'" + \
-                	                                      " -c ':2:x:unit=ms,y:reverse=1' " + \
-                        	                              " -c ':1:cmap:map=heat' -c ':2:cmap:map=heat' -c ':1:crop=0.9' -c ':2:crop=0.9'" + \
-                                	                      " -D %s_%.2f.ps/cps %s.norm " % (candname,i,candname)
+                                                    print cmd
+                                                    os.system(cmd)
 
-                                        	        print cmd
-                                                	os.system(cmd)
+                                                    #DM vs time plot
+                                                    plt.rcParams["figure.figsize"] = (20,8)
+                                                    plt.rcParams.update({'font.size':22})
+                                                    #plt.set_cmap('gray')
+						    fig1 = plt.figure(1)	 
+						    ax1 = fig1.add_subplot(1,1,1)
+                                                    ax1.set_xlabel("Time (msec)")
+                                                    ax1.set_ylabel("DM")
+                                                    lti = int(np.floor(len(taxis)*i))
+                                                    lhi = int(np.ceil(len(taxis)*j))
+                                                    if(lhi>=len(taxis)): lhi = len(taxis)-1
+                                                    lt = taxis[lti]
+                                                    lh = taxis[lhi]
+                                                    ax1.imshow(toplot[:,lti:lhi],extent=[lt,lh,lodm,hidm],origin='lower',aspect='auto')
+						    #For testing
+						    #ax1.axvline(((extime-0.5)/2 - 0.1)*1000,0,1,ls='--',lw=3,c='red')	
+						    #ax1.axvline((time-stime+0.673478*0.39)*1000,0,1,ls='--',lw=3,c='red')
+						    #ax1.set_xlim(lt,lh)
+						    
 
-	                                                #DM vs time plot
-        	                                        plt.rcParams["figure.figsize"] = (20,8)
-                	                                plt.rcParams.update({'font.size':22})
-                        	                        #plt.set_cmap('gray')
-							fig1 = plt.figure(1)	 
-							ax1 = fig1.add_subplot(1,1,1)
-                                	                ax1.set_xlabel("Time (msec)")
-                                	                ax1.set_ylabel("DM")
-                                	                lti = int(np.floor(len(taxis)*i))
-                                	                lhi = int(np.ceil(len(taxis)*j))
-                                	                if(lhi>=len(taxis)): lhi = len(taxis)-1
-                                	                lt = taxis[lti]
-                                	                lh = taxis[lhi]
-                                	                ax1.imshow(toplot[:,lti:lhi],extent=[lt,lh,lodm,hidm],origin='lower',aspect='auto')
-                                	                pngfile = candname + ".dmspace_%.2f.png" % (i)
-							fig1.savefig(pngfile,format='png',bbox_inches='tight')	
-							#Negative DM plots if required      
-                                        	        FTdirection = source_name.split("_")[0]
-                                        	        if FTdirection in ['nT','nF','nTnF']:
-								print "Will be plotting original axis direction" 
-								fig2 = plt.figure(2)
-								ax2=fig2.add_subplot(1,1,1)
-								ax2.set_xlabel("Time (msec)")	
-                                        	                ndata=negDMplot(ar,FTdirection,fbin)
-								ax2.set_ylabel("Frequency (channels)")
-								ax2.imshow(ndata[:,lti:lhi],extent=[lt,lh,0,fbin],aspect='auto',interpolation='none')
-								npngfile = candname + ".ndm_%.2f.png" % (i)
-								fig2.savefig(npngfile,format='png',bbox_inches='tight')
-								cmd = "convert -rotate 90 %s_%.2f.ps +append \( -trim -resize 560x700 %s +append \) -append \( -trim -resize 560x700 %s +append \) -append %s_%.2f.pdf" % (candname,i,npngfile,pngfile,candname,i)
-                                                        	os.system(cmd)
-							else:	
-        	                                            	cmd = "convert -rotate 90 %s_%.2f.ps +append \( -trim -resize 560x700 %s +append \) -append %s_%.2f.pdf" % (candname,i,pngfile,candname,i)
-                	                                    	os.system(cmd)
+                                                    pngfile = candname + ".dmspace_%.2f.png" % (i)
+						    fig1.savefig(pngfile,format='png',bbox_inches='tight')	
+						    #Negative DM plots if required      
+                                                    FTdirection = source_name.split("_")[0]
+                                                    if FTdirection in ['nT','nF','nTnF']:
+							print "Will be plotting original axis direction" 
+							fig2 = plt.figure(2)
+							ax2=fig2.add_subplot(1,1,1)
+							ax2.set_xlabel("Time (msec)")	
+                                                        ndata=negDMplot(ar,FTdirection,fbin)
+							ax2.set_ylabel("Frequency (channels)")
+							ax2.imshow(ndata[:,lti:lhi],extent=[lt,lh,0,fbin],aspect='auto',interpolation='none')
+							npngfile = candname + ".ndm_%.2f.png" % (i)
+							fig2.savefig(npngfile,format='png',bbox_inches='tight')
+							cmd = "convert -rotate 90 %s_%.2f.ps +append \( -trim -resize 560x700 %s +append \) -append \( -trim -resize 560x700 %s +append \) -append %s_%.2f.pdf" % (candname,i,npngfile,pngfile,candname,i)
+                                                        os.system(cmd)
+						    else:	
+                                                    	cmd = "convert -rotate 90 %s_%.2f.ps +append \( -trim -resize 560x700 %s +append \) -append %s_%.2f.pdf" % (candname,i,pngfile,candname,i)
+                                                    	os.system(cmd)
+
 		        cmd = "gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dSAFER -sOutputFile=%s_frb_cand.pdf *sec*DM*.pdf" % (source_name)	  
                         print cmd
                         os.system(cmd)
