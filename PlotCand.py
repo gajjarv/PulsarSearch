@@ -11,6 +11,7 @@ from itertools import chain
 from os.path import basename
 from itertools import tee, izip
 import matplotlib
+matplotlib.use('Agg')
 #matplotlib.use('pdf')
 import matplotlib.pyplot as plt
 #plt.ioff()
