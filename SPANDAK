@@ -28,10 +28,10 @@ if [[ $fullinput == *"--subBand"* ]]; then
 		echo $cmd	
 		$cmd
 		sourcename=`header $outfil -source_name`
-		cmd="filedit $outfil --src-name=$i"_"$sourcename"			
-		echo $cmd
-		$cmd
-		cmd="SP_search_BL.py $lpart --fil $outfil $rpart"		
+		#cmd="filedit $outfil --src-name=$i"_"$sourcename"			
+		#echo $cmd
+		#$cmd
+		cmd="SP_search_BL.py $lpart --fil $outfil $rpart --outdir=$i"_"$sourcename"		
 		echo $cmd
 		$cmd
 		let i=i+1
