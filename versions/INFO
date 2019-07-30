@@ -7,12 +7,15 @@ V7 : With PRESTO, removes zerodm candidates (Next version should have ploting ba
 V8 : Copy before cleaning and better plotting tool
 V9 : Better plot with DM vs SNR plot 
 V10: Heimdall command improved with rfi_no_narrow placed (active)
+
 PlotCand: active v1
 v1: Basic version
 v2: With improve diagnostic plot 
 v3 : Also with DM vs phase 
 v4: Fixed a bug with candidate found at the edge of the file, copied this for next version with negative DM
-plots (active) 
+plots
+v5 : Save copy before centing pulse change 
+v6: Centering pulse such that we only need to see one plot.(Did not work, very well) (active)
 
 SPANDAK is a bigger wrapper which will SP_search_BL or other inside
 The reason to have a separate wrapper is to do negative DM search enable. 

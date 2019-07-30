@@ -97,8 +97,8 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint,nchan):
         #tbin = widths[filter]
         bin_width = tint * (2 ** filter)
 
-	extime = 2*float(cand_band_smear) 
-        if extime < 1.0: extime = 1.0
+	extime = 3*float(cand_band_smear) 
+        #if extime < 1.0: extime = 1.0
 	
 	#So that we have at least 4 bins on pulse
 	if filter <= 4 and snr > 20:
@@ -141,11 +141,11 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint,nchan):
 	'''
 
 	
-        # Fraction of extraction to plot each time calc (we expect pulse to be in first half)
+        # Fraction of extraction to plot each time calc
         if tbin>512:
-            frac = np.linspace(0,0.5,np.ceil(tbin/512.0)) 
+            frac = np.linspace(0.3,0.6,np.ceil(tbin/512.0)) 
         else:
-            frac = np.array([0,0.5]) 
+            frac = np.array([0.3,0.6])
 
         print tbin,fbin,extime,frac,cand_band_smear,tint, 
         return tbin,fbin,extime,frac,cand_band_smear 
@@ -174,8 +174,8 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
                                 tbin,fbin,extime,frac,cand_band_smear=plotParaCalc(snr,filter,dm,fl,fh,tint,nchan)
                                 #print tbin,fbin,extime,frac
         
-                                stime = time-(extimeplot*0.1) # Go back data
-				#stime = time - float(cand_band_smear)	
+                                #stime = time-(extimeplot*0.1) # Go back data
+				stime = time - float(cand_band_smear)	
 
                                 if(stime<0): stime = 0
 				if(stime+extime>=Ttot): extime=Ttot-stime
