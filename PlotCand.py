@@ -11,7 +11,7 @@ from itertools import chain
 from os.path import basename
 from itertools import tee, izip
 import matplotlib
-matplotlib.use('Agg')
+#matplotlib.use('Agg')
 #matplotlib.use('pdf')
 import matplotlib.pyplot as plt
 #plt.ioff()
@@ -128,6 +128,7 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint,nchan):
 
         #fbin_base2 = int(round(math.log(fbin,2)))
         #fbin = pow(2,fbin_base2)
+
         if fbin > 512:
             #fbin = 512
 	    i=0 
@@ -140,14 +141,15 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint,nchan):
 		fbin = nchan/2**np.argmin([abs(float(fbin)-nchan/2**i) for i in range(0,10)]) 
 	'''
 
+	bins_per_plot=1024.0
 	
         # Fraction of extraction to plot each time calc (we expect pulse to be in first half)
-        if tbin>512:
-            frac = np.linspace(0,0.5,np.ceil(tbin/512.0)) 
+        if tbin>bins_per_plot:
+            frac = np.linspace(0,0.5,np.ceil(tbin/bins_per_plot)) 
         else:
             frac = np.array([0,0.5]) 
 
-        print tbin,fbin,extime,frac,cand_band_smear,tint, 
+        #print tbin,fbin,extime,frac,cand_band_smear,tint, 
         return tbin,fbin,extime,frac,cand_band_smear 
 
 def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan):
@@ -235,8 +237,8 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
                		                                      " -c ':0:x:range=(%f,%f)' -c ':1:x:range=(%f,%f)'" % (i,j,i,j) + \
                          	                              " -c ':2:x:range=(%f,%f)'" % (i,j) + \
                                 	                      " -c ':1:y:view=(0.1,1.13)' -c ':2:y:view=(0.13,1.08)'" + \
-                                        	              " -c ':0:set=pub,below:l=SNR: %.2f,ch=2,below:r=Wid: %.2f'" % (float(snr),float(width))  + \
-                                                	      " -c ':0:above:c=$file'" + \
+                                        	              " -c ':0:set=pub,below:l=SNR: %.2f\nDM: %.2f,ch=2,below:r=Wid: %.2f'" % (float(snr),float(dm),float(width))  + \
+							      " -c ':0:above:c=%s' " % (str(source_name)) + \
 	                                                      " -c ':1:set=pub,above:c= ,ch=2,y:reverse=1'" + \
         	                                              " -c ':2:set=pub,above:c= ,ch=2'" + \
                 	                                      " -c ':2:x:unit=ms,y:reverse=1' " + \

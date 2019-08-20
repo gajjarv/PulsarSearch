@@ -1,0 +1,63 @@
+#!/bin/bash
+fullinput="$@"
+if [[ -z "${fullinput// }" ]]; then
+	 echo "Input required"
+fi
+
+file=`echo $fullinput | awk -F'--fil' '{print$2}' | awk '{print$1}'`
+
+lpart=`echo $fullinput | awk -F'--fil' '{print$1}' `
+rpart=`echo $fullinput | awk -F'--fil' '{print$2}' | awk '{for(i=2;i<=NF;i++)printf("%s ",$i)}'`
+
+#If sub-band search is required, orig file will be split into multiple files and 
+
+if [[ $fullinput == *"--subBand"* ]]; then
+	echo "Doing a sub-band search"
+	nsub=`echo $fullinput | awk -F'--subBand' '{print$2}' | awk '{print$1}'`			
+	echo "Input file will be splitted into $nsub files"
+	fch1=`header $file -fch1`
+	nchans=`header $file -nchans`
+	foff=`header $file -foff`
+	subsize=`bc -l <<< $nchans/$nsub`
+	i=0
+	while [ $i -lt $nsub ]; do
+		highf=`bc -l <<< $fch1+$foff*$i*$subsize`
+		lowf=`bc -l <<< $fch1+$foff*$i*$subsize+$foff*$subsize`
+		outfil=`echo "sub"$i".fil"`
+		cmd="bldice -f $file -b $highf -e $lowf -o $outfil -x .fil"	
+		echo $cmd	
+		$cmd
+		sourcename=`header $outfil -source_name`
+		cmd="/usr/local/sigproc/bin/filedit $outfil --src-name=$i"_"$sourcename"	# Somehow my version does not change source name		
+		echo $cmd
+		$cmd
+		cmd="SP_search_BL.py $lpart --fil $outfil $rpart" 		
+		echo $cmd
+		$cmd
+		let i=i+1
+	done
+fi
+
+if [[ $fullinput == *"--negDM"* ]]; then
+	echo "Only artificial DM search will be conducted for three different dispersion types!"
+	echo "For regular DM search, remove --negDM option."
+	cmd="/home/vgajjar/bl_sigproc/src/filedit --flipTime $file"
+	$cmd
+	cmd="SP_search_BL.py $lpart --fil outfile.fil $rpart"
+	$cmd
+	cmd="rm outfile.fil"
+	$cmd
+	cmd="/home/vgajjar/bl_sigproc/src/filedit --flipFreq $file"
+        $cmd
+        cmd="SP_search_BL.py $lpart --fil outfile.fil $rpart"
+        $cmd
+	cmd="rm outfile.fil"
+        $cmd
+        cmd="/home/vgajjar/bl_sigproc/src/filedit --flipFreq --flipTime $file"
+        $cmd
+        cmd="SP_search_BL.py $lpart --fil outfile.fil $rpart"
+        $cmd
+else
+	cmd="SP_search_BL.py $fullinput"
+	$cmd
+fi

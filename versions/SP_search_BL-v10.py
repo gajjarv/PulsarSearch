@@ -2,6 +2,8 @@
 """
 Take .fil file as an input file and does single pulse search
 """
+import matplotlib
+matplotlib.use('pdf')
 from argparse import ArgumentParser
 import os,sys,math
 import rfi_quality_check
@@ -106,7 +108,9 @@ def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range):
 		os.system(cmd)
 	else:
 		# After talking to AJ and SO
-		os.system("heimdall -f %s -dm_tol 1.15 -rfi_tol 10 -dm_pulse_width 100 -scrunching_tol 1.01 -rfi_no_narrow  -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s  -v" % (fil_file,dmlo,dmhi,boxcar_max,outdir));
+		cmd = "heimdall -f %s -dm_tol 1.15 -rfi_tol 10 -dm_pulse_width 100 -scrunching_tol 1.01 -rfi_no_narrow  -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s  -v" % (fil_file,dmlo,dmhi,boxcar_max,outdir)	
+		print cmd
+		os.system(cmd);
 	return
 
 def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosearch):
@@ -202,18 +206,20 @@ def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosear
 
 def downsample(fil_file,inbits,inchans):
 
-        basename = ".".join(fil_file.split(".")[:-1])
-
-	if(inbits>8 and inchans < 4097):
+        #basename = ".".join(fil_file.split(".")[:-1])
+	basename="downsampled"
+	#sum_fil="/home/obs/sw/bl_sigproc/src/sum_fil"
+	sum_fil="/home/vgajjar/bl_sigproc/src/sum_fil"
+	if(inbits>8 and inchans < 8193):
 		outf = basename + "_8bit.fil"
-		cmd = "/home/obs/sw/bl_sigproc/src/sum_fil %s -o %s -obits 8 -qlen 10000" % (fil_file,outf)
-	if(inbits>8 and inchans > 4096):
-		outf = basename + "_8bit_4chan.fil"
-		cmd = "/home/obs/sw/bl_sigproc/src/sum_fil %s -o %s -obits 8 -qlen 10000 -fcollapse 4" % (fil_file,outf)
-	if(inbits < 9 and inchans > 4096):
-		outf = basename + "_4chan.fil"
-		cmd = "/home/obs/sw/bl_sigproc/src/sum_fil %s -o %s -qlen 10000 -fcollapse 4" % (fil_file,outf)
-	if(inbits < 9 and inchans < 4097):
+		cmd = sum_fil + " %s -o %s -obits 8 -qlen 10000" % (fil_file,outf)
+	if(inbits>8 and inchans > 8192):
+		outf = basename + "_8bit_2chan.fil"
+		cmd = sum_fil + "  %s -o %s -obits 8 -fcollapse 2 -qlen 10000" % (fil_file,outf)
+	if(inbits < 9 and inchans > 8192):
+		outf = basename + "_2chan.fil"
+		cmd = sum_fil + "  %s -o %s -obits 8  -fcollapse 2 -qlen 10000" % (fil_file,outf)
+	if(inbits < 9 and inchans < 8193):
 		outf = fil_file
 
 	print cmd
@@ -301,11 +307,12 @@ if __name__ == "__main__":
 
         # For 32-bit BL, downsample to 8-bit and create new file
         if(nodsamp is not True):
-                if(inchans > 4096 or inbits > 8):
+                if(inchans > 8192 or inbits > 8):
                         print "Running sum_fil"
                         fil_file = downsample(fil_file,inbits,inchans)
 
 	fname = fil_file.split("/")[-1]
+	print fil_file
 	time = options.time
 	timesig = options.timesig
 	freqsig = options.freqsig
@@ -380,6 +387,7 @@ if __name__ == "__main__":
 	if(os.path.isdir(base_name) is not True):	
 		os.system("mkdir %s" % (base_name))
 	basedir = os.getcwd() + "/" + base_name
+	fil_file=os.path.abspath(fil_file)
 	os.system("mv %s.hdr %s/" % (fname,basedir))
 	os.chdir(basedir)
 	if(dorfi is True):

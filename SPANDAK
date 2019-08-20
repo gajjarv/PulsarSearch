@@ -1,17 +1,37 @@
 #!/bin/bash
 fullinput="$@"
+
 if [[ -z "${fullinput// }" ]]; then
 	 echo "Input required"
+	 cmd="SP_search_BL.py -h"
+	 $cmd
+	 exit
 fi
 
-file=`echo $fullinput | awk -F'--fil' '{print$2}' | awk '{print$1}'`
-
+file=`echo $fullinput  | awk -F'--fil' '{print$2}' | awk '{print$1}'`
 lpart=`echo $fullinput | awk -F'--fil' '{print$1}' `
 rpart=`echo $fullinput | awk -F'--fil' '{print$2}' | awk '{for(i=2;i<=NF;i++)printf("%s ",$i)}'`
+
+echo $file
+
+if [[ "$file" ]]; then
+	origname=`header $file -source_name`
+	nchan=`header $file -nchans `
+	nbits=`header $file -nbits`
+
+	if [[ $nchan -ge 8193 ]]; then
+		temp=`bc -l <<< $nchan/8191` # In order to get the right fraction 
+		fcol=$( printf "%.0f" $temp ) # round to int
+	fi
+fi
 
 #If sub-band search is required, orig file will be split into multiple files and 
 
 if [[ $fullinput == *"--subBand"* ]]; then
+	#MJD=`header $file -tstart`
+	cmd="mkdir $origname"
+	echo $cmd
+	$cmd
 	echo "Doing a sub-band search"
 	nsub=`echo $fullinput | awk -F'--subBand' '{print$2}' | awk '{print$1}'`			
 	echo "Input file will be splitted into $nsub files"
@@ -28,34 +48,102 @@ if [[ $fullinput == *"--subBand"* ]]; then
 		echo $cmd	
 		$cmd
 		sourcename=`header $outfil -source_name`
-		#cmd="filedit $outfil --src-name=$i"_"$sourcename"			
-		#echo $cmd
-		#$cmd
-		cmd="SP_search_BL.py $lpart --fil $outfil $rpart --outdir=$i"_"$sourcename"		
+		cmd="/usr/local/sigproc/bin/filedit $outfil --src-name=$i"_"$sourcename"	# Somehow my version does not change source name		
+		echo $cmd
+		$cmd
+		cmd="SP_search_BL.py $lpart --fil $outfil $rpart" 		
+		echo $cmd
+		$cmd 
+		localname=`header $outfil -source_name`
+		cmd="mv $localname* $origname"
 		echo $cmd
 		$cmd
 		let i=i+1
 	done
+	cmd="gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dSAFER -sOutputFile=$origname_all_combined_frb_cand.pdf $origname/*_$localname/*_frb_cand.pdf"
+	echo $cmd
+	$cmd
 fi
 
-if [[ $fullinput == *"--negDM"* ]]; then
+#Right now neg-DM search only possible for 8-bit files with less than 8k channels. 
+if [[ $fullinput == *"--negDM"* ]] && [[ $nchan -le 8192 ]] && [[ $nbits -le 8 ]]  ; then
+	cmd="mkdir $origname"
+        echo $cmd
+        $cmd	
 	echo "Only artificial DM search will be conducted for three different dispersion types!"
 	echo "For regular DM search, remove --negDM option."
+
 	cmd="/home/vgajjar/bl_sigproc/src/filedit --flipTime $file"
 	$cmd
 	cmd="SP_search_BL.py $lpart --fil outfile.fil $rpart"
 	$cmd
+	localname=`header outfile.fil -source_name`
+        cmd="mv $localname* $origname"
+        echo $cmd
+        $cmd
 	cmd="rm outfile.fil"
 	$cmd
+
 	cmd="/home/vgajjar/bl_sigproc/src/filedit --flipFreq $file"
         $cmd
         cmd="SP_search_BL.py $lpart --fil outfile.fil $rpart"
         $cmd
+	localname=`header $outfil -source_name`
+        cmd="mv $localname* $origname"
+        echo $cmd
+        $cmd
 	cmd="rm outfile.fil"
         $cmd
+
         cmd="/home/vgajjar/bl_sigproc/src/filedit --flipFreq --flipTime $file"
         $cmd
         cmd="SP_search_BL.py $lpart --fil outfile.fil $rpart"
+        $cmd
+	localname=`header $outfil -source_name`
+        cmd="mv $localname* $origname"
+        echo $cmd
+        $cmd
+	cmd="rm outfile.fil"
+        $cmd
+
+	cmd="gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dSAFER -sOutputFile=$origname_all_combined_frb_cand.pdf $origname/[nT,nF]*/*_frb_cand.pdf"
+        echo $cmd
+        $cmd
+
+elif [[ $nchan -ge 8193 ]] && [[ $nbits -le 8 ]]  ; then
+	#If input file has more than 8k channels and 8-bits 
+	cmd="/home/vgajjar/bl_sigproc/src/sum_fil $file -o downsampled_chan.fil -fcollapse $fcol -obits 8 -qlen 10000"
+	echo $cmd
+	$cmd
+	cmd="SP_search_BL.py $lpart --fil downsampled_chan.fil $rpart"
+	echo $cmd
+        $cmd
+	cmd="rm downsampled_chan.fil"
+	echo $cmd
+	$cmd
+	
+elif [[ $nchan -le 8192 ]] && [[ $nbits -ge 9 ]]  ; then
+	# If input file has more than 8-bits but lower than 8k channels
+	cmd="/home/vgajjar/bl_sigproc/src/sum_fil $file -o downsampled_bits.fil -obits 8 -qlen 10000"
+	echo $cmd
+        $cmd
+	cmd="SP_search_BL.py $lpart --fil downsampled_bits.fil $rpart"
+        echo $cmd
+        $cmd
+        cmd="rm downsampled_bits.fil"
+        echo $cmd
+        $cmd
+
+elif [[ $nchan -ge 8193 ]] && [[ $nbits -ge 9 ]]  ; then	
+	#If input file has more than 8k channels and 8-bits 
+	cmd="/home/vgajjar/bl_sigproc/src/sum_fil $file -o downsampled_chan_bits.fil -fcollapse $fcol -obits 8 -qlen 10000"
+        echo $cmd
+        $cmd
+	cmd="SP_search_BL.py $lpart --fil downsampled_chan_bits.fil $rpart"
+        echo $cmd
+        $cmd
+        cmd="rm downsampled_chan_bits.fil"
+        echo $cmd
         $cmd
 else
 	cmd="SP_search_BL.py $fullinput"

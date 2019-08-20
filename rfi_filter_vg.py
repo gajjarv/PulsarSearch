@@ -38,7 +38,9 @@ def rfi_filter(fil_file, time, timesig, freqsig, chanfrac, intfrac, max_percent,
 	nchans = hdr_data[3].strip("\n")
 	#Call PRESTO's rfifind command using the given inputs.
 	if not mask:
-		os.system("rfifind -time {0} -timesig {1} -freqsig {2} -chanfrac {3} -intfrac {4} -o {5} {6}".format(time, timesig, freqsig, chanfrac, intfrac, base_name, fil_file))
+		cmd= "rfifind -time {0} -timesig {1} -freqsig {2} -chanfrac {3} -intfrac {4} -o {5} {6}".format(time, timesig, freqsig, chanfrac, intfrac, base_name, fil_file)
+		os.system(cmd)
+
 	#Create a string for the name of the .mask file, to be used later.
 	mask_file = base_name + "_rfifind.mask"
 	#Run the rfi_check command from the rfi_quality_check.py script to see what percentage of the data is flagged.
