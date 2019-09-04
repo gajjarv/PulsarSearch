@@ -128,7 +128,7 @@ def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range):
 		cmd = "heimdall -f %s -dm_tol 1.15 -rfi_tol 10 -dm_pulse_width 100   -rfi_no_narrow  -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s  -v" % (fil_file,dmlo,dmhi,boxcar_max,outdir)	
 		print cmd
 		#os.system(cmd);
-		p=sb.Popen(cmd,stdout=subprocess.PIPE, shell=True)
+		p=sb.Popen(cmd,stdout=sb.PIPE, shell=True)
                 out,err=p.communicate()
 		if p.returncode != 0:
                         print "First try after failure"
