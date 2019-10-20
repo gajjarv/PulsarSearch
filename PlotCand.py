@@ -2,7 +2,6 @@
 # A separate function to extract and plot
 # heimdall candidate 
 # This script is a modified version of the heimdall plotting scipt 'trans_freq_time.py' 
-# 
 
 import os,sys,math
 import numpy as np
@@ -115,25 +114,32 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint,nchan):
         #Fbin Calc
         fbin = int(round(math.pow(float(snr)/4.0,2)))
 
-	
+	#print "fbin " + str(fbin)
+
 	#if nchan is not power of 2, get fbin modulo of nchan
 	i=0
 	while nchan%(fbin+i): i+=1
 	fbin+=i
 
-	if fbin<16:
-	    i=0
-            while nchan%(16+i): i+=1
-            fbin=i+16
+	#print "fbin " + str(fbin)
 
-        #fbin_base2 = int(round(math.log(fbin,2)))
-        #fbin = pow(2,fbin_base2)
-
-        if fbin > 512:
+	if fbin > 512:
             #fbin = 512
 	    i=0 
             while nchan%(512-i): i+=1
             fbin=512-i
+
+	#print "fbin " + str(fbin)
+
+	if fbin<16:
+	    i=0
+            while nchan%(16+i): i+=1
+            fbin=i+16
+	
+	#print "fbin " + str(fbin)
+
+        #fbin_base2 = int(round(math.log(fbin,2)))
+        #fbin = pow(2,fbin_base2)
 
 	'''
 	if(nchan%float(fbin)):
@@ -153,7 +159,6 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint,nchan):
         return tbin,fbin,extime,frac,cand_band_smear 
 
 def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan):
-        
         # Half of this time will be subtracted from the Heimdall candidate time
         extimeplot = 1.0
 
@@ -213,7 +218,9 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
                                                 os.system(cmd)
 
 						# Correct the variable baseline, this script writes out .norm files 	
-						cmd = "running_mean_sub %s.ar" % (candname)
+						#Commenting out here for C-band analysis
+						#cmd = "running_mean_sub %s.ar" % (candname)
+						cmd="cp %s.ar %s.norm" % (candname,candname)
 						os.system(cmd)
                                                 
                                                 ar = candname + ".norm"
@@ -230,7 +237,6 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
 						#i,j=zoomselect(tbin,0.3,0.5)
 						#i = 0.45
 						#j = 0.65
-
                                                 	cmd = "psrplot -N 1x3 -p flux -p freq -p freq " + \
 	                                                      " -j ':1:dedisperse,F %d' -j ':2:F %d' " % (int(fbin),int(fbin)) + \
         	                                              " -j :0:dedisperse -j :0:fscrunch " + \
@@ -238,7 +244,7 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
                          	                              " -c ':2:x:range=(%f,%f)'" % (i,j) + \
                                 	                      " -c ':1:y:view=(0.1,1.13)' -c ':2:y:view=(0.13,1.08)'" + \
                                         	              " -c ':0:set=pub,below:l=SNR: %.2f\nDM: %.2f,ch=2,below:r=Wid: %.2f'" % (float(snr),float(dm),float(width))  + \
-							      " -c ':0:above:c=%s' " % (str(source_name)) + \
+							      " -c ':0:above:c=%s' " % (str(candname)) + \
 	                                                      " -c ':1:set=pub,above:c= ,ch=2,y:reverse=1'" + \
         	                                              " -c ':2:set=pub,above:c= ,ch=2'" + \
                 	                                      " -c ':2:x:unit=ms,y:reverse=1' " + \
@@ -281,12 +287,10 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
 							else:	
         	                                            	cmd = "convert -rotate 90 %s_%.2f.ps +append \( -trim -resize 560x700 %s +append \) -append %s_%.2f.pdf" % (candname,i,pngfile,candname,i)
                 	                                    	os.system(cmd)
-		        cmd = "gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dSAFER -sOutputFile=%s_frb_cand.pdf *sec*DM*.pdf" % (source_name)	  
+		        cmd = "gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dSAFER -sOutputFile=%s_frb_cand.pdf *sec*DM*.pdf" % (source_name) 
                         print cmd
                         os.system(cmd)
                 else:
-
-
                         print "No candidate found"
                         return
 

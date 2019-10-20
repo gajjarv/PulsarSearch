@@ -45,28 +45,47 @@ if [[ $fullinput == *"--subBand"* ]]; then
 	fch1=`header $file -fch1`
 	nchans=`header $file -nchans`
 	foff=`header $file -foff`
+	sourcename=`header $file -source_name`
 	subsize=`bc -l <<< $nchans/$nsub`
 	i=0
+	cmd1=""
+	cmd2=""
+	cmd3=""
 	while [ $i -lt $nsub ]; do
 		highf=`bc -l <<< $fch1+$foff*$i*$subsize`
 		lowf=`bc -l <<< $fch1+$foff*$i*$subsize+$foff*$subsize`
 		outfil=`echo "sub"$i".fil"`
-		cmd="bldice -f $file -b $highf -e $lowf -o $outfil -x .fil"	
-		echo $cmd	
-		$cmd
-		sourcename=`header $outfil -source_name`
-		cmd="/usr/local/sigproc/bin/filedit $outfil --src-name=$i"_"$sourcename"	# Somehow my version does not change source name		
-		echo $cmd
-		$cmd
-		cmd="SP_search_BL.py $lpart --fil $outfil $rpart" 		
-		echo $cmd
-		$cmd 
-		localname=`header $outfil -source_name`
-		cmd="mv $localname* $origname"
-		echo $cmd
-		$cmd
+		if [[ i -le 0 ]]; then
+			cmd1="bldice -f $file -b $highf -e $lowf -o $outfil -x .fil"
+			cmd2="/usr/local/sigproc/bin/filedit $outfil --src-name=$i"_"$sourcename"  # Somehow my version does not change source name	
+			cmd3="SP_search_BL.py $lpart --fil $outfil $rpart"
+		else 
+			cmd1="${cmd1} & bldice -f $file -b $highf -e $lowf -o $outfil -x .fil"
+			cmd2="${cmd2} & /usr/local/sigproc/bin/filedit $outfil --src-name=$i"_"$sourcename"  # Somehow my version does not change source name
+			cmd3="${cmd3} & SP_search_BL.py $lpart --fil $outfil $rpart"
+		fi
+		#sourcename=`header $outfil -source_name`
+		#cmd2=$cmd2 +  " & /usr/local/sigproc/bin/filedit $outfil --src-name=$i"_"$sourcename"	# Somehow my version does not change source name		
+		#echo $cmd2
+		#$cmd
 		let i=i+1
 	done
+	echo $cmd1
+	eval $cmd1
+	echo $cmd2
+	eval $cmd2
+	echo $cmd3
+	eval $cmd3	
+	#echo $cmd4
+	#eval $cmd4
+	i=0
+	while [ $i -lt $nsub ]; do
+		localname=`header sub"$i".fil -source_name`
+		cmd="mv ${localname}* ${origname}"
+		eval $cmd
+		let i=i+1
+	done
+	#exit
 	cmd="gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dSAFER -sOutputFile=${origname}/${origname}_all_combined_frb_cand.pdf ${origname}/*/*_frb_cand.pdf"
 	echo $cmd
 	$cmd
