@@ -122,7 +122,9 @@ def waterfall(rawdatafile, start, duration, dm=None, nbins=None, nsub=None,\
                       0.5*nchan_per_sub*df # center of top subband
         start += 4.15e3 * np.abs(1./ref_freq**2 - 1./top_ctrfreq**2) * dm
 
-    source_name=rawdatafile.header['source_name']
+    try: source_name=rawdatafile.header['source_name']
+    except: source_name="Unknown"
+	
     start_bin = np.round(start/rawdatafile.tsamp).astype('int')
     dmfac = 4.15e3 * np.abs(1./rawdatafile.frequencies[0]**2 - 1./rawdatafile.frequencies[-1]**2)
 
