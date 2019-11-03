@@ -17,7 +17,13 @@ v4: Fixed a bug with candidate found at the edge of the file, copied this for ne
 plots
 v5 : Save copy before centing pulse change 
 v6: Centering pulse such that we only need to see one plot.(Did not work, very well) (active)
+v7: Save before a new version which is to use new python module to plot (without DSPSR and PSRCHIVE).  
 
 SPANDAK is a bigger wrapper which will SP_search_BL or other inside
 The reason to have a separate wrapper is to do negative DM search enable.
 v1: Version which can do both sub-band search and neg-DM but not both together.  
+
+waterfaller_vg_v1.py : basic
+waterfaller_vg_v2.py : DM-vs-time plot uses original data while waterfall and time-series uses downsampled data. 
+
+

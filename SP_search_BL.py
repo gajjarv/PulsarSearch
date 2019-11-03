@@ -60,7 +60,7 @@ def emailsend(send_to,subject,msgtxt,files,candtxt):
 	print("email sent")
 
 
-def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan):
+def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan,mask_file):
 	if(nogpu is not True):
 		#os.chdir(basedir)
 		#os.system("cd %s" % (basedir))
@@ -89,7 +89,7 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 			print "No candidate found"
 			return
 
-	extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan)
+	extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan,mask_file)
 
 def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range):
 
@@ -442,11 +442,11 @@ if __name__ == "__main__":
 
 		if filter(os.path.isfile,glob.glob("*.cand")):
 			gcands = []
-			candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan)
+			candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan,mask_file)
 		else:	print "No heimdall candidate found"
 	else:
 		gcands = PRESTOsp(fil_file,lodm,hidm,outdir,snr_cut,zerodm,mask_file,base_name,nosearch)
-		candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan)
+		candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan,mask_file)
 
 	if(email is True):
 		pdffile = source_name + "_frb_cand.pdf"

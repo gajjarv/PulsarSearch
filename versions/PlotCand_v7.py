@@ -158,75 +158,7 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint,nchan):
         #print tbin,fbin,extime,frac,cand_band_smear,tint, 
         return tbin,fbin,extime,frac,cand_band_smear 
 
-def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan,mask_file):
-
-	if(frb_cands.size >= 1):
-			if(frb_cands.size>1):
-                                frb_cands = np.sort(frb_cands)
-                                frb_cands[:] = frb_cands[::-1]
-                        if(frb_cands.size==1): frb_cands = [frb_cands]
-                        cmd = "rm *.png *.ps *.pdf"
-			print cmd
-                        os.system(cmd)
-			
-			for indx,frb in enumerate(frb_cands):
-                                time = frb['time']
-                                dm = frb['dm']
-                                filter = frb['filter']
-                                width = tint * (2 ** filter)*(10**3) # Width in msec
-                                snr = frb['snr']
-
-                                tbin,fbin,extime,frac,cand_band_smear=plotParaCalc(snr,filter,dm,fl,fh,tint,nchan)
-				bin_width = (2 ** filter)
-				#So that we have at least 4 bins on pulse
-			        if filter <= 4 and filter > 0 and snr > 20:
-			                downfact = int(bin_width/4.0)
-				elif filter > 2:
-					downfact = int(bin_width/2.0)
-			        else:
-			                downfact = 1		
-				if downfact == 0: downfact = 1
-
-				print fbin,filter,bin_width,downfact	
-				#stime = time-(extimeplot*0.1) # Go back data
-                                #stime = time - float(cand_band_smear) 
-				TotDisplay = 0.06*downfact 
-				stime = time-(TotDisplay/2.0)
-
-                                if(stime<0): stime = 0
-                                if(stime+extime>=Ttot): extime=Ttot-stime
-                                if(any(l<=time<=u for (l,u) in kill_time_range) or extime < 0.0):
-					print "Candidate inside bad-time range"	
-				else:
-					candname = '%04d' % (indx) + "_" + '%.3f' % (time) + "sec_DM" + '%.2f.png' % (dm)
-					cmd = "waterfaller_vg.py --show-ts " + \
-					       " -t " + str(TotDisplay) + \
-				 	       " --colour-map=hot " + \
-					       " -T "  + str(stime) +  \
-					       " -n "  + str(512*downfact) + \
-					       " -d "  + str(dm) + \
-					       " --sweep-dm " + str(dm) + \
-					       " -s "  + str(fbin) +  \
-					       " -o "  + str(candname) + \
-					       " --zerodm " + \
-					       " --scaleindep " + \
-					       " --downsamp " + str(downfact) + \
-					       " --width " + str(width) + " " + \
- 					       fil_file
-					if mask_file: cmd = cmd + " --maskfile  " + str(mask_file) 
-					print cmd
-					os.system(cmd) 						
-			#cmd = "gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dSAFER -sOutputFile=%s_frb_cand.pdf *.png" % (source_name)
-			cmd = "convert *.png %s_frb_cand.pdf" % (source_name)
-		        print cmd
-             		os.system(cmd)
-	else:
-		print "No candidate found"
-                return
-	
-#python waterfaller_vg.py -T 16.22 -d 600 --show-ts  -t 0.06  --sweep-posn 0.2 /mnt_blpd9/datax/incoming/spliced_guppi_57991_49905_DIAG_FRB121102_0011.gpuspec.0001.8.4chan.fil --colour-map=hot --width-bins 1 -s 64
-
-def extractPlotCand_old(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan,mask_file):
+def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan):
         # Half of this time will be subtracted from the Heimdall candidate time
         extimeplot = 1.0
 
@@ -259,7 +191,7 @@ def extractPlotCand_old(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_rang
                                         print "Candidate inside bad-time range"
                                 else:
                                         if(indx<1000):
-                                                candname = '%04d' % (indx) + "_" + '%.3f' % (time) + "sec_DM" + '%.2f.pdf' % (dm) 
+                                                candname = '%04d' % (indx) + "_" + '%.3f' % (time) + "sec_DM" + '%.2f' % (dm) 
                                                 cmd = "dspsr -cepoch=start -N %s" % (source_name) + \
                                                         " -b " + str(tbin) +   \
                                                         " -S " + str(stime) +  \
@@ -392,6 +324,5 @@ if __name__ == "__main__":
     fh = fch1
     fl = fch1 + (foff*nchan)
     source_name = f.header['source_name']
-    #extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan)
-    extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan,mask_file)
+    extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan)
 
