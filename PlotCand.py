@@ -194,8 +194,7 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
 				#TotDisplay = (downfact*bin_width)*tint*128 # To display 256 times the pulse width in the plot
 				#print TotDisplay
 
-				TotDisplay = (width/10**3)*128
-				#print TotDisplay
+				TotDisplay = (width/10**3)*128 #Roughly 128 times the pulse width window for display
 	
 				stime = time-(TotDisplay/2.0)
 				
@@ -220,6 +219,7 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
 					       " --scaleindep " + \
 					       " --downsamp " + str(downfact) + \
 					       " --width-bins " + str(smooth_bins) + \
+					       " --snr " + str(snr) + \
 					       " --width " + str(width) + " " + \
  					       fil_file
 					if mask_file: cmd = cmd + " --maskfile  " + str(mask_file) 

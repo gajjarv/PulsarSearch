@@ -196,7 +196,7 @@ def waterfall(rawdatafile, start, duration, dm=None, nbins=None, nsub=None,\
 def plot_waterfall(data, start, source_name, duration, dm,ofile,
                    integrate_ts=False, integrate_spec=False, show_cb=False, 
                    cmap_str="gist_yarg", sweep_dms=[], sweep_posns=[], 
-                   ax_im=None, ax_ts=None, ax_spec=None, interactive=True, downsamp=1,nsub=None,subdm=None,width=None):
+                   ax_im=None, ax_ts=None, ax_spec=None, interactive=True, downsamp=1,nsub=None,subdm=None,width=None, snr=None):
     """ I want a docstring too!
     """
     
@@ -270,6 +270,7 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
     #data.downsample(downsamp)
     data.dedisperse(dm,padval='rotate')	
     nbinlim = np.int(duration/data.dt)
+     	
     img = ax_im.imshow(data.data[..., :nbinlim], aspect='auto', \
                 cmap=matplotlib.cm.cmap_d[cmap_str], \
                 interpolation='nearest', origin='upper', \
@@ -291,10 +292,12 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
     times = (np.arange(data.numspectra)*data.dt + start)[..., :nbinlim]
     ax_ts.plot(times, Dedisp_ts,"k")
     ax_ts.set_xlim([times.min(),times.max()])
-    text1 = "DM: " + str(data.dm)
+    text1 = "DM: " + "%.2f" % float(data.dm)
     plt.text(0.1,0.9,text1,fontsize=12,ha='center', va='center', transform=ax_ts.transAxes)	
-    text2 = "Width: " + str(width)
-    plt.text(0.1,0.8,text2,fontsize=12,ha='center', va='center', transform=ax_ts.transAxes) 
+    text2 = "Width: " + "%.2f" % float(width)	
+    plt.text(0.1,0.8,text2,fontsize=12,ha='center', va='center', transform=ax_ts.transAxes)
+    text3 = "SNR: " + "%.2f" % float(snr)
+    plt.text(0.1,0.7,text3,fontsize=12,ha='center', va='center', transform=ax_ts.transAxes)	 
     ax_ts.set_title(title,fontsize=12)	
     plt.setp(ax_ts.get_xticklabels(), visible = False)
     plt.setp(ax_ts.get_yticklabels(), visible = False)
@@ -371,7 +374,7 @@ def main():
 		   dm=options.dm,ofile=options.ofile, integrate_ts=options.integrate_ts, \
                    integrate_spec=options.integrate_spec, show_cb=options.show_cb, 
                    cmap_str=options.cmap, sweep_dms=options.sweep_dms, \
-                   sweep_posns=options.sweep_posns, downsamp=options.downsamp,width=options.width)
+                   sweep_posns=options.sweep_posns, downsamp=options.downsamp,width=options.width,snr=options.snr)
 
 if __name__=='__main__':
     parser = optparse.OptionParser(prog="waterfaller.py", \
@@ -386,7 +389,9 @@ if __name__=='__main__':
     parser.add_option('-o', dest='ofile', default="unknown_cand", \
 			help="Output png plot file name (Default=start_dm)",type='str') 
     parser.add_option('--width',dest='width', default=None,\
-			help="Width of the pulse (for figure only; not used anywhere)",type='str')	
+			help="Width of the pulse (for figure only; not used anywhere)",type='str')
+    parser.add_option('--snr',dest='snr', default=None,\
+                        help="SNR of the pulse (for figure only; not used anywhere)",type='str')		
     parser.add_option('--zerodm', dest='zerodm', action='store_true', \
                         help="If this flag is set - Turn Zerodm filter - ON  (Default: " \
                                 "OFF)", default=False)
