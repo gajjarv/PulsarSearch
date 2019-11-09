@@ -51,6 +51,8 @@ if [[ $fullinput == *"--subBand"* ]]; then
 	cmd1=""
 	cmd2=""
 	cmd3=""
+	timelim="" #Timeout time for various scripts
+
 	while [ $i -lt $nsub ]; do
 		highf=`bc -l <<< $fch1+$foff*$i*$subsize`
 		lowf=`bc -l <<< $fch1+$foff*$i*$subsize+$foff*$subsize`

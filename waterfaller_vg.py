@@ -230,7 +230,7 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
     ax_dmvstm = plt.axes((0.15, 0.345, 0.8, 0.24), sharex=ax_ts) 
     ax_orig = plt.axes((0.15, 0.1,0.8, 0.21))	
 
-    # Ploting it up
+    data.downsample(downsamp)	
     nbinlim = np.int(duration/data.dt)
 
     # DM-vs-time plot	
@@ -254,7 +254,8 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
     #np.save('dmvstm_1step.npz',dmvstm_array)
     ax_dmvstm.set_xlabel("Time (sec) ")
     ax_dmvstm.set_ylabel("DM")	
-    ax_dmvstm.imshow(dmvstm_array, aspect='auto', cmap=matplotlib.cm.cmap_d[cmap_str], origin='lower',extent=(data.starttime, data.starttime+ nbinlim*data.dt, lodm, hidm))
+    #ax_dmvstm.imshow(dmvstm_array, aspect='auto', cmap=matplotlib.cm.cmap_d[cmap_str], origin='lower',extent=(data.starttime, data.starttime+ nbinlim*data.dt, lodm, hidm))	
+    ax_dmvstm.imshow(dmvstm_array, aspect='auto', origin='lower',extent=(data.starttime, data.starttime+ nbinlim*data.dt, lodm, hidm))
     #cmap=matplotlib.cm.cmap_d[cmap_str])
     #interpolation='nearest', origin='upper')
     plt.setp(ax_im.get_xticklabels(), visible = False)
@@ -266,7 +267,7 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
 
     #Plot Freq-vs-time 
     data = copy.deepcopy(datacopy)
-    data.downsample(downsamp)
+    #data.downsample(downsamp)
     data.dedisperse(dm,padval='rotate')	
     nbinlim = np.int(duration/data.dt)
     img = ax_im.imshow(data.data[..., :nbinlim], aspect='auto', \
@@ -321,9 +322,10 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
 	sty="b-"
 	ax_orig.plot(delays+sweepstart,  data.freqs, "b-", lw=2, alpha=0.7)
 	ax_orig.plot(delays+sweepstart+duration,  data.freqs, "b-", lw=2, alpha=0.7)	
+    
     ax_orig.imshow(data.data, aspect='auto', \
 	cmap=matplotlib.cm.cmap_d[cmap_str], \
-        interpolation='none', origin='upper', \
+        interpolation='nearest', origin='upper', \
         extent=(data.starttime, data.starttime + len(data.data[0])*data.dt, \
         data.freqs.min(), data.freqs.max()))
 
@@ -384,7 +386,7 @@ if __name__=='__main__':
     parser.add_option('-o', dest='ofile', default="unknown_cand", \
 			help="Output png plot file name (Default=start_dm)",type='str') 
     parser.add_option('--width',dest='width', default=None,\
-			help="Width of the pulse (for figure; not used)",type='str')	
+			help="Width of the pulse (for figure only; not used anywhere)",type='str')	
     parser.add_option('--zerodm', dest='zerodm', action='store_true', \
                         help="If this flag is set - Turn Zerodm filter - ON  (Default: " \
                                 "OFF)", default=False)

@@ -25,6 +25,7 @@ from email.utils import COMMASPACE, formatdate
 import subprocess as sb
 from sigpyproc.Readers import FilReader
 from PlotCand import extractPlotCand
+from PlotCand import extractPlotCand_old
 
 def dm_delay(fl, fh, DM):
     kdm = 4148.808 # MHz^2 / (pc cm^-3)
@@ -60,7 +61,7 @@ def emailsend(send_to,subject,msgtxt,files,candtxt):
 	print("email sent")
 
 
-def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan,mask_file):
+def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan,mask_file,smooth):
 	if(nogpu is not True):
 		#os.chdir(basedir)
 		#os.system("cd %s" % (basedir))
@@ -89,7 +90,8 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 			print "No candidate found"
 			return
 
-	extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan,mask_file)
+	extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan,mask_file,smooth)
+	#extractPlotCand_old(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan,mask_file)
 
 def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range):
 
@@ -319,6 +321,8 @@ if __name__ == "__main__":
                 help='Run single_pulse_search.py (no heimdall)')
 	parser.add_option("--zerodm", action='store_true', dest='zerodm',
                 help='Remove zerodm candidates, (only work with nogpu)')
+	parser.add_option("--smooth", action='store', dest='smooth', default=0.0, type=float,
+                help='Remove (smooth x burst width) boxcar moving average with waterfaller.py (Default: do not smooth)')
 
 	parser.add_option("--email", action='store_true', dest='email',
                 help='Send candidate file over email (no email)')	
@@ -372,6 +376,7 @@ if __name__ == "__main__":
 	email = options.email
 	negdm = options.negdm
 	#outdir = options.outdir
+	smooth = options.smooth
 
 	if not options.outdir: outdir = os.getcwd()
 	else: 
@@ -442,11 +447,11 @@ if __name__ == "__main__":
 
 		if filter(os.path.isfile,glob.glob("*.cand")):
 			gcands = []
-			candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan,mask_file)
+			candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan,mask_file,smooth)
 		else:	print "No heimdall candidate found"
 	else:
 		gcands = PRESTOsp(fil_file,lodm,hidm,outdir,snr_cut,zerodm,mask_file,base_name,nosearch)
-		candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan,mask_file)
+		candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan,mask_file,smooth)
 
 	if(email is True):
 		pdffile = source_name + "_frb_cand.pdf"

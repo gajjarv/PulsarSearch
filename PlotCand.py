@@ -158,7 +158,7 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint,nchan):
         #print tbin,fbin,extime,frac,cand_band_smear,tint, 
         return tbin,fbin,extime,frac,cand_band_smear 
 
-def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan,mask_file):
+def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan,mask_file,smooth):
 
 	if(frb_cands.size >= 1):
 			if(frb_cands.size>1):
@@ -186,13 +186,22 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
 			        else:
 			                downfact = 1		
 				if downfact == 0: downfact = 1
-
+					
+				 	
 				print fbin,filter,bin_width,downfact	
 				#stime = time-(extimeplot*0.1) # Go back data
                                 #stime = time - float(cand_band_smear) 
-				TotDisplay = 0.06*downfact 
-				stime = time-(TotDisplay/2.0)
+				#TotDisplay = (downfact*bin_width)*tint*128 # To display 256 times the pulse width in the plot
+				#print TotDisplay
 
+				TotDisplay = (width/10**3)*128
+				#print TotDisplay
+	
+				stime = time-(TotDisplay/2.0)
+				
+				if smooth: smooth_bins  = int(smooth*(bin_width)) # As downsampling is done after the smoothing, we do not need to multiple downsample here
+				else: smooth_bins = 0
+	
                                 if(stime<0): stime = 0
                                 if(stime+extime>=Ttot): extime=Ttot-stime
                                 if(any(l<=time<=u for (l,u) in kill_time_range) or extime < 0.0):
@@ -203,7 +212,6 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
 					       " -t " + str(TotDisplay) + \
 				 	       " --colour-map=hot " + \
 					       " -T "  + str(stime) +  \
-					       " -n "  + str(512*downfact) + \
 					       " -d "  + str(dm) + \
 					       " --sweep-dm " + str(dm) + \
 					       " -s "  + str(fbin) +  \
@@ -211,6 +219,7 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
 					       " --zerodm " + \
 					       " --scaleindep " + \
 					       " --downsamp " + str(downfact) + \
+					       " --width-bins " + str(smooth_bins) + \
 					       " --width " + str(width) + " " + \
  					       fil_file
 					if mask_file: cmd = cmd + " --maskfile  " + str(mask_file) 
@@ -392,6 +401,6 @@ if __name__ == "__main__":
     fh = fch1
     fl = fch1 + (foff*nchan)
     source_name = f.header['source_name']
-    #extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan)
-    extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan,mask_file)
+    extractPlotCand_old(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan)
+    extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan,mask_file,smooth)
 
