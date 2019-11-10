@@ -25,5 +25,6 @@ v1: Version which can do both sub-band search and neg-DM but not both together.
 
 waterfaller_vg_v1.py : basic
 waterfaller_vg_v2.py : DM-vs-time plot uses original data while waterfall and time-series uses downsampled data. 
-
+waterfaller_vg_v3.py : DM-vs-time uses subbanded and downsample data. The zooming on the pulse is fixed to be width*128 bins. 
+		       		
 

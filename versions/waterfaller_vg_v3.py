@@ -27,7 +27,6 @@ import rfifind
 import psrfits
 import filterbank
 import spectra
-from scipy import stats
 
 SWEEP_STYLES = ['r-', 'b-', 'g-', 'm-', 'c-']
 
@@ -160,6 +159,7 @@ def waterfall(rawdatafile, start, duration, dm=None, nbins=None, nsub=None,\
         #masked_chans[:ignore_chans] = True
         #masked_chans[-ignore_chans:] = True
 
+
     data_masked = np.ma.masked_array(data.data)
     data_masked[masked_chans] = np.ma.masked
     data.data = data_masked
@@ -225,12 +225,10 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
         ax_spec = plt.axes((0.75, 0.15, 0.2, im_height),sharey=ax_im)
     '''
     
-    ax_ts = plt.axes((0.1, 0.835, 0.71, 0.145))
-    ax_im = plt.axes((0.1, 0.59, 0.71, 0.24),  sharex=ax_ts)
-    ax_dmvstm = plt.axes((0.1, 0.345, 0.71, 0.24), sharex=ax_ts) 
-    ax_spec = plt.axes((0.815, 0.59, 0.16, 0.24),sharey=ax_im)	
-    ax_dmsnr = plt.axes((0.815,0.345,0.16,0.24),sharey=ax_dmvstm)
-    ax_orig = plt.axes((0.1, 0.1,0.71, 0.21))	
+    ax_ts = plt.axes((0.15, 0.835, 0.8, 0.145))
+    ax_im = plt.axes((0.15, 0.59, 0.8, 0.24),  sharex=ax_ts)
+    ax_dmvstm = plt.axes((0.15, 0.345, 0.8, 0.24), sharex=ax_ts) 
+    ax_orig = plt.axes((0.15, 0.1,0.8, 0.21))	
 
     data.downsample(downsamp)	
     nbinlim = np.int(duration/data.dt)
@@ -262,24 +260,22 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
     #interpolation='nearest', origin='upper')
     plt.setp(ax_im.get_xticklabels(), visible = False)
     plt.setp(ax_ts.get_xticklabels(), visible = False)
-    ax_dmvstm.set_ylim(lodm,hidm)
     #extent=(data.starttime, data.starttime+ nbinlim*data.dt, 500, 700)	
     #plt.show()
     #fig2 = plt.figure(2)	
     #plt.imshow(dmvstm_array,aspect='auto')
-    	
 
     #Plot Freq-vs-time 
     data = copy.deepcopy(datacopy)
     #data.downsample(downsamp)
     data.dedisperse(dm,padval='rotate')	
     nbinlim = np.int(duration/data.dt)
+     	
     img = ax_im.imshow(data.data[..., :nbinlim], aspect='auto', \
                 cmap=matplotlib.cm.cmap_d[cmap_str], \
                 interpolation='nearest', origin='upper', \
                 extent=(data.starttime, data.starttime+ nbinlim*data.dt, \
-                        data.freqs.min(), data.freqs.max()))   
-    #ax_im.axvline(x=(data.starttime + nbinlim*data.dt)/2.0,ymin=data.freqs.min(),ymax=data.freqs.max(),lw=3,color='b') 
+                        data.freqs.min(), data.freqs.max()))
     if show_cb:
         cb = ax_im.get_figure().colorbar(img)
         cb.set_label("Scaled signal intensity (arbitrary units)")
@@ -297,60 +293,14 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
     ax_ts.plot(times, Dedisp_ts,"k")
     ax_ts.set_xlim([times.min(),times.max()])
     text1 = "DM: " + "%.2f" % float(data.dm)
-    plt.text(1.1,0.9,text1,fontsize=15,ha='center', va='center', transform=ax_ts.transAxes)	
+    plt.text(0.1,0.9,text1,fontsize=12,ha='center', va='center', transform=ax_ts.transAxes)	
     text2 = "Width: " + "%.2f" % float(width)	
-    plt.text(1.1,0.75,text2,fontsize=15,ha='center', va='center', transform=ax_ts.transAxes)
+    plt.text(0.1,0.8,text2,fontsize=12,ha='center', va='center', transform=ax_ts.transAxes)
     text3 = "SNR: " + "%.2f" % float(snr)
-    plt.text(1.1,0.6,text3,fontsize=15,ha='center', va='center', transform=ax_ts.transAxes)	 
-    ax_ts.set_title(title,fontsize=14)	
+    plt.text(0.1,0.7,text3,fontsize=12,ha='center', va='center', transform=ax_ts.transAxes)	 
+    ax_ts.set_title(title,fontsize=12)	
     plt.setp(ax_ts.get_xticklabels(), visible = False)
     plt.setp(ax_ts.get_yticklabels(), visible = False)
-
-    #Spectrum and DM-vs-SNR plot 
-    #Get window 	
-    spectrum_window = 0.02*duration
-    window_width = int(spectrum_window/data.dt) # bins
-    burst_bin = nbinlim/2
-    ax_ts.axvline(times[burst_bin]-spectrum_window,ls="--",c="grey")
-    ax_ts.axvline(times[burst_bin]+spectrum_window,ls="--",c="grey")
-
-    #Get spectrum and DM-vs-SNR for the on-pulse window	
-    on_spec = np.array(data.data[..., burst_bin-window_width:burst_bin+window_width])
-    on_dmsnr = np.array(dmvstm_array[..., burst_bin-window_width:burst_bin+window_width])
-    Dedisp_spec = np.mean(on_spec,axis=1)
-    Dedisp_dmsnr = np.mean(on_dmsnr, axis=1) 
- 
-    #Get off-pulse and DM-vs-SNR for range outside on-pulse window 
-    off_spec1 = np.array(data.data[..., 0:burst_bin-window_width])		
-    off_spec=np.mean(off_spec1,axis=1)	
-    off_dmsnr1 =  np.array(dmvstm_array[...,0:burst_bin-window_width])
-    off_dmsnr=np.mean(off_dmsnr1,axis=1)
-
-    #Get Y-axis for both plots	
-    dms = np.linspace(lodm, hidm, len(Dedisp_dmsnr))
-    freqs = np.linspace(data.freqs.max(), data.freqs.min(), len(Dedisp_spec))
-
-    #Spectrum plot 	
-    ax_spec.plot(Dedisp_spec,freqs,color="red",lw=2)
-    ax_spec.plot(off_spec,freqs,color="grey",alpha=0.5,lw=1)
-    ttest=float(stats.ttest_ind(Dedisp_spec,off_spec)[0].tolist())	
-    ttestprob = float(stats.ttest_ind(Dedisp_spec,off_spec)[1].tolist())
-    text3 = "t-test"
-    plt.text(1.1,0.45,text3,fontsize=12,ha='center', va='center', transform=ax_ts.transAxes)
-    text4 =  "  %.2f" % (ttest) + "(%.2f" % ((1-ttestprob)*100) + "%)" 
-    plt.text(1.1,0.3,text4,fontsize=12,ha='center', va='center', transform=ax_ts.transAxes)
-
-    #DMvsSNR plot	
-    ax_dmsnr.plot(Dedisp_dmsnr,dms,color="red",lw=2)
-    ax_dmsnr.plot(off_dmsnr,dms,color="grey",alpha=0.5,lw=1)   
-     
-    #Plot settings 
-    plt.setp(ax_spec.get_xticklabels(), visible = True)
-    plt.setp(ax_dmsnr.get_xticklabels(), visible = False)
-    plt.setp(ax_spec.get_yticklabels(), visible = False)
-    plt.setp(ax_dmsnr.get_yticklabels(), visible = False) 
-    ax_spec.set_ylim([data.freqs.min(),data.freqs.max()])
-    ax_dmsnr.set_ylim(lodm,hidm) 
 
 
     #Plot original data
@@ -389,12 +339,9 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
     #oname = "%.3f_%s.png" % (start,str(dm))
 
     if ofile is "unknown_cand":    	    	
+		plt.savefig(ofile)
 		ofile = ofile + "_%.3f_%s.png" % (start,str(dm))
-
-    if ttest>2.0:
-    	ofile = "0000_" + ofile  #If t-test good then put those candidate first
-	
-    plt.savefig(ofile)
+    else: plt.savefig(ofile)
     #plt.show()
 
 def main():
