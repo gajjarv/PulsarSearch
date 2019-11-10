@@ -237,26 +237,10 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
 
     # DM-vs-time plot	
     dmvstm_array = []
-    #Old way
-    ''' 
     lodm = int(dm-(dm*0.15))
     if lodm < 0: lodm = 0
     hidm = int(dm+(dm*0.15))
-    '''
-    band = (data.freqs.max()-data.freqs.min())
-    centFreq = (data.freqs.min()+band)/(10**3) # To get it in GHz 
-    print width,centFreq,band 
-    #This comes from Cordes and McLaughlin (2003) Equation 13. 
-    FWHM_DM = 506*float(width)*pow(centFreq,3)/band 
-    #The candidate DM might not be exact so using a longer range
-    FWHM_DM = 3*FWHM_DM
-
-    lodm = int(dm-FWHM_DM)
-    if lodm < 0: lodm = 0
-    hidm= int(dm+FWHM_DM)    
-    print FWHM_DM,lodm,hidm 
-
-    dmstep = (hidm-lodm)/48.0
+    dmstep = (hidm-lodm)/50.0
     datacopy = copy.deepcopy(data)
     #print lodm,hidm
     for ii in np.arange(lodm,hidm,dmstep):
@@ -359,12 +343,7 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
     #DMvsSNR plot	
     ax_dmsnr.plot(Dedisp_dmsnr,dms,color="red",lw=2)
     ax_dmsnr.plot(off_dmsnr,dms,color="grey",alpha=0.5,lw=1)   
-    Dedisp_dmsnr_split = np.array_split(Dedisp_dmsnr,3)
-    #Sub-array could be different sizes that's why  
-    Dedisp_dmsnr_split[0]=Dedisp_dmsnr_split[0].sum()
-    Dedisp_dmsnr_split[1]=Dedisp_dmsnr_split[1].sum()
-    Dedisp_dmsnr_split[2]=Dedisp_dmsnr_split[2].sum()
-  
+     
     #Plot settings 
     plt.setp(ax_spec.get_xticklabels(), visible = True)
     plt.setp(ax_dmsnr.get_xticklabels(), visible = False)
@@ -412,13 +391,9 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
     if ofile is "unknown_cand":    	    	
 		ofile = ofile + "_%.3f_%s.png" % (start,str(dm))
 
-    if ttest>2 and Dedisp_dmsnr_split[1] > Dedisp_dmsnr_split[0] and Dedisp_dmsnr_split[1] > Dedisp_dmsnr_split[2]:
+    if ttest>2.0:
     	ofile = "0000_" + ofile  #If t-test good then put those candidate first
-    if ttest<=2 and ttest>1  and Dedisp_dmsnr_split[1] > Dedisp_dmsnr_split[0] and Dedisp_dmsnr_split[1] > Dedisp_dmsnr_split[2]: 
-	ofile = "0001_" + ofile
-    if ttest<=1 and  Dedisp_dmsnr_split[1] > Dedisp_dmsnr_split[0] and Dedisp_dmsnr_split[1] > Dedisp_dmsnr_split[2]: 
-        ofile = "0002_" 
-
+	
     plt.savefig(ofile)
     #plt.show()
 

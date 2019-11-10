@@ -26,5 +26,8 @@ v1: Version which can do both sub-band search and neg-DM but not both together.
 waterfaller_vg_v1.py : basic
 waterfaller_vg_v2.py : DM-vs-time plot uses original data while waterfall and time-series uses downsampled data. 
 waterfaller_vg_v3.py : DM-vs-time uses subbanded and downsample data. The zooming on the pulse is fixed to be width*128 bins. 
-		       		
+waterfaller_vg_v4.py : Added on-pulse spectra on the side of the dedisperse waterfall along with a t-test comparison with off-pulse spectra. 
+                       Also added DM-vs-SNR for the on-pulse and off-pulse region. The plots are much better. 
+    			The only thing I want to add is zoom on the DM-vs-SNR region based on the Cordes and MacLaughlin paper's 
+			equation number 13.  		       		
 
