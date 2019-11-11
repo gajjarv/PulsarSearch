@@ -158,7 +158,7 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint,nchan):
         #print tbin,fbin,extime,frac,cand_band_smear,tint, 
         return tbin,fbin,extime,frac,cand_band_smear 
 
-def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan,mask_file,smooth):
+def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan,mask_file,smooth,zerodm):
 
 	if(frb_cands.size >= 1):
 			if(frb_cands.size>1):
@@ -215,7 +215,6 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
 					       " --sweep-dm " + str(dm) + \
 					       " -s "  + str(fbin) +  \
 					       " -o "  + str(candname) + \
-					       " --zerodm " + \
 					       " --scaleindep " + \
 					       " --downsamp " + str(downfact) + \
 					       " --width-bins " + str(smooth_bins) + \
@@ -223,10 +222,11 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
 					       " --width " + str(width) + " " + \
  					       fil_file
 					if mask_file: cmd = cmd + " --maskfile  " + str(mask_file) 
+					if zerodm: cmd = cmd + " --zerodm "
 					print cmd
 					os.system(cmd) 						
 			#cmd = "gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dSAFER -sOutputFile=%s_frb_cand.pdf *.png" % (source_name)
-			cmd = "convert *.png %s_frb_cand.pdf" % (source_name)
+			cmd = "convert [A..Z]*.png 0*.png %s_frb_cand.pdf" % (source_name)
 		        print cmd
              		os.system(cmd)
 	else:

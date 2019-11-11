@@ -273,7 +273,7 @@ if __name__ == "__main__":
         parser.add_option("--nogpu", action='store_true', dest='nogpu',
                 help='Run single_pulse_search.py (no heimdall)')
 	parser.add_option("--zerodm", action='store_true', dest='zerodm',
-                help='Remove zerodm candidates, (only work with nogpu)')
+		help='Remove zerodm candidates. If heimdall then only used with plotting (Default: use it for GMRT)')
 	parser.add_option("--smooth", action='store', dest='smooth', default=0.0, type=float,
                 help='Remove (smooth x burst width) boxcar moving average with waterfaller.py (Default: do not smooth)')
 

@@ -252,10 +252,12 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
     FWHM_DM = 3*FWHM_DM
 
     lodm = int(dm-FWHM_DM)
-    if lodm < 0: lodm = 0
-    hidm= int(dm+FWHM_DM)    
+    if lodm < 0: 
+	lodm = 0
+	hidm = 2*dm # If low DM is zero then range should be 0 to 2*DM
+    else:
+	hidm= int(dm+FWHM_DM)    
     print FWHM_DM,lodm,hidm 
-
     dmstep = (hidm-lodm)/48.0
     datacopy = copy.deepcopy(data)
     #print lodm,hidm
@@ -413,11 +415,14 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
 		ofile = ofile + "_%.3f_%s.png" % (start,str(dm))
 
     if ttest>2 and Dedisp_dmsnr_split[1] > Dedisp_dmsnr_split[0] and Dedisp_dmsnr_split[1] > Dedisp_dmsnr_split[2]:
-    	ofile = "0000_" + ofile  #If t-test good then put those candidate first
+    	ofile = "A_" + ofile  #If t-test good then put those candidate first
+    	plt.text(1.1,0.2,"cat: A",fontsize=12,ha='center', va='center', transform=ax_ts.transAxes)    
     if ttest<=2 and ttest>1  and Dedisp_dmsnr_split[1] > Dedisp_dmsnr_split[0] and Dedisp_dmsnr_split[1] > Dedisp_dmsnr_split[2]: 
-	ofile = "0001_" + ofile
+	ofile = "B_" + ofile
+	plt.text(1.1,0.2,"cat: B",fontsize=12,ha='center', va='center', transform=ax_ts.transAxes) 
     if ttest<=1 and  Dedisp_dmsnr_split[1] > Dedisp_dmsnr_split[0] and Dedisp_dmsnr_split[1] > Dedisp_dmsnr_split[2]: 
-        ofile = "0002_" 
+	plt.text(1.1,0.2,"cat: C",fontsize=12,ha='center', va='center', transform=ax_ts.transAxes) 
+        ofile = "C_" + ofile 
 
     plt.savefig(ofile)
     #plt.show()
