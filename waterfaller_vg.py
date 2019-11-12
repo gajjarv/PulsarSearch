@@ -244,20 +244,20 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
     hidm = int(dm+(dm*0.15))
     '''
     band = (data.freqs.max()-data.freqs.min())
-    centFreq = (data.freqs.min()+band)/(10**3) # To get it in GHz 
+    centFreq = (data.freqs.min()+band/2.0)/(10**3) # To get it in GHz 
     print width,centFreq,band 
     #This comes from Cordes and McLaughlin (2003) Equation 13. 
     FWHM_DM = 506*float(width)*pow(centFreq,3)/band 
     #The candidate DM might not be exact so using a longer range
     FWHM_DM = 3*FWHM_DM
-
-    lodm = int(dm-FWHM_DM)
+   
+    lodm = dm-FWHM_DM
     if lodm < 0: 
 	lodm = 0
 	hidm = 2*dm # If low DM is zero then range should be 0 to 2*DM
     else:
-	hidm= int(dm+FWHM_DM)    
-    print FWHM_DM,lodm,hidm 
+	hidm= dm+FWHM_DM
+    print FWHM_DM,dm,lodm,hidm 
     dmstep = (hidm-lodm)/48.0
     datacopy = copy.deepcopy(data)
     #print lodm,hidm

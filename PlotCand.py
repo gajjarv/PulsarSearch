@@ -198,7 +198,7 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
 	
 				stime = time-(TotDisplay/2.0)
 				
-				if smooth: smooth_bins  = int(smooth*(bin_width)) # As downsampling is done after the smoothing, we do not need to multiple downsample here
+				if smooth: smooth_bins  = int(smooth*(bin_width)) # As downsampling is done after the smoothing, we do not need to multiplie downsample here
 				else: smooth_bins = 0
 	
                                 if(stime<0): stime = 0
