@@ -28,8 +28,10 @@ import psrfits
 import filterbank
 import spectra
 from scipy import stats
+import peakutils as ps
 
 SWEEP_STYLES = ['r-', 'b-', 'g-', 'm-', 'c-']
+
 
 def get_mask(rfimask, startsamp, N):
     """Return an array of boolean values to act as a mask
@@ -188,12 +190,7 @@ def waterfall(rawdatafile, start, duration, dm=None, nbins=None, nsub=None,\
  
     # Smooth
     if width_bins > 1:
-        for ii in range(data.numchans):
-                chan = data.get_chan(ii)
-		x = range(len(chan))
-		base=np.polyfit(x,chan,width_bins)
-		p = np.poly1d(base)
-		chan[:] = chan[:] - p(x)
+        data.smooth(width_bins, padval='mean')
 
     return data, nbinsextra, nbins, start, source_name
 

@@ -29,5 +29,6 @@ waterfaller_vg_v3.py : DM-vs-time uses subbanded and downsample data. The zoomin
 waterfaller_vg_v4.py : Added on-pulse spectra on the side of the dedisperse waterfall along with a t-test comparison with off-pulse spectra. 
                        Also added DM-vs-SNR for the on-pulse and off-pulse region. The plots are much better. 
     			The only thing I want to add is zoom on the DM-vs-SNR region based on the Cordes and MacLaughlin paper's 
-			equation number 13.  		       		
+			equation number 13.
+waterfaller_vg_v5.py : The output is based on the the three catagories (A, B, C) and others.   		       		
 
