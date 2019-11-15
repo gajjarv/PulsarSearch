@@ -226,7 +226,7 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
 					print cmd
 					os.system(cmd) 						
 			#cmd = "gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dSAFER -sOutputFile=%s_frb_cand.pdf *.png" % (source_name)
-			cmd = "convert [A..Z]*.png 0*.png %s_frb_cand.pdf" % (source_name)
+			cmd = "convert [A-Z]*.png 0*.png %s_frb_cand.pdf" % (source_name)
 		        print cmd
              		os.system(cmd)
 	else:
