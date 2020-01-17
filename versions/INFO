@@ -17,11 +17,15 @@ v4: Fixed a bug with candidate found at the edge of the file, copied this for ne
 plots
 v5 : Save copy before centing pulse change 
 v6: Centering pulse such that we only need to see one plot.(Did not work, very well) (active)
-v7: Save before a new version which is to use new python module to plot (without DSPSR and PSRCHIVE).  
+v7: Save before a new version which is to use new python module to plot (without DSPSR and PSRCHIVE). 
+v8: New plotting tool which is much better than DSPSR. It centers the pulse along with also providinging other necessary products. 
 
 SPANDAK is a bigger wrapper which will SP_search_BL or other inside
 The reason to have a separate wrapper is to do negative DM search enable.
 v1: Version which can do both sub-band search and neg-DM but not both together.  
+v2: Sub-band using bldice, (save before changing the save to "fil_multidice"
+v3: sub-banding using fil_multidice
+
 
 waterfaller_vg_v1.py : basic
 waterfaller_vg_v2.py : DM-vs-time plot uses original data while waterfall and time-series uses downsampled data. 
@@ -30,5 +34,12 @@ waterfaller_vg_v4.py : Added on-pulse spectra on the side of the dedisperse wate
                        Also added DM-vs-SNR for the on-pulse and off-pulse region. The plots are much better. 
     			The only thing I want to add is zoom on the DM-vs-SNR region based on the Cordes and MacLaughlin paper's 
 			equation number 13.
-waterfaller_vg_v5.py : The output is based on the the three catagories (A, B, C) and others.   		       		
+waterfaller_vg_v5.py : The output is based on the the three catagories (A, B, C) and others.   		       
+waterfaller_vg_v6.py : Two changes (1) scaleing was failing for masked file so instead of using from spectra class, scalling is done
+			outside now, (2) based on the number of nbins, polynomial gets removed for each channel.   		
+waterfaller_vg_v7.py : Negative DM plotting enabled based on the source name first two letters (e.g. nT,nF,nTnF). _		
+waterfaller_vg_v8.py : Off-pulse are taken from the both side of the pulse while earlier it was only from the left half
+waterfaller_vg_v9.py : Added csv file option. If --logs <csv file> provided, metadata for each candidate will be stored. 
+waterfaller_vg_v10.py : Zap channels with off-pulse signal higher than 4 times the std of the entire spectra. Also zap 5% of the band on both side (top and bottom).  
 
+ 

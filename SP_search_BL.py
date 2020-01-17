@@ -26,6 +26,7 @@ import subprocess as sb
 from sigpyproc.Readers import FilReader
 from PlotCand import extractPlotCand
 from PlotCand import extractPlotCand_old
+import pandas as pd
 
 def dm_delay(fl, fh, DM):
     kdm = 4148.808 # MHz^2 / (pc cm^-3)
@@ -61,7 +62,7 @@ def emailsend(send_to,subject,msgtxt,files,candtxt):
 	print("email sent")
 
 
-def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan,mask_file,smooth,zerodm):
+def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan,mask_file,smooth,zerodm,csv_file,ml_model):
 	if(nogpu is not True):
 		#os.chdir(basedir)
 		#os.system("cd %s" % (basedir))
@@ -73,8 +74,15 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 		os.system("mv overview_1024x768.tmp.png %s.overview.png" % (source_name))
 		os.system("frb_detector_bl.py  -gdm 6 -cands_file *_all.cand -filter_cut %d -snr_cut %f -max_cands_per_sec %f -min_members_cut %f -verbose" % (filter_cut,snr_cut,maxCandSec,minMem))
 		os.system("frb_detector_bl.py  -gdm 6 -cands_file *_all.cand -filter_cut %d -snr_cut %f -max_cands_per_sec %f -min_members_cut %f  > FRBcand" % (filter_cut,snr_cut,maxCandSec,minMem))
+		if ml_model:
+			print "ML model given"
+			FRBcand = os.path.abspath("FRBcand")
+			os.system("python /home/vgajjar/hey-aliens/simulateFRBclassification/predict.py %s %s %s" % (ml_model,FRBcand,fil_file))
 		if(os.stat("FRBcand").st_size is not 0):
-			frb_cands = np.loadtxt("FRBcand",dtype={'names': ('snr','time','samp_idx','dm','filter','prim_beam'),'formats': ('f4', 'f4', 'i4','f4','i4','i4')})
+			if ml_model and os.stat("FRBcand_prob.txt").st_size is not 0: 
+				frb_cands = np.loadtxt("FRBcand_prob.txt",dtype={'names': ('snr','time','samp_idx','dm','filter','prim_beam','FRBprob'),'formats': ('f4', 'f4', 'i4','f4','i4','i4','f4')})
+			else:
+				frb_cands = np.loadtxt("FRBcand",dtype={'names': ('snr','time','samp_idx','dm','filter','prim_beam'),'formats': ('f4', 'f4', 'i4','f4','i4','i4')})
 		else:
 			print "No candidate found"
 			return
@@ -90,10 +98,10 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 			print "No candidate found"
 			return
 
-	extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan,mask_file,smooth,zerodm)
+	extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan,mask_file,smooth,zerodm,csv_file)
 	#extractPlotCand_old(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan,mask_file)
 
-def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range):
+def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range,heimdall):
 
 	print "Running Heimdal with %f to %f DM range" % (lodm,hidm)
 	#Test 
@@ -105,7 +113,7 @@ def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range):
 		for r in kill_chan_range:
 			zapchan = zapchan + " -zap_chans " + r 
 		# After talking to AJ and SO and after much testing I found that 'rfi_no_narrow' works better. 
-		cmd = "heimdall -f %s -rfi_tol 10 -dm_tol 1.15 -dm_pulse_width 100   -rfi_no_narrow -rfi_no_broad -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s -v %s" % (fil_file,dmlo,dmhi,boxcar_max,outdir,zapchan)		
+		cmd = "heimdall -f %s -rfi_tol 10 -dm_tol 1.15 -dm_pulse_width 100  -rfi_no_narrow -rfi_no_broad -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s -v %s %s" % (fil_file,dmlo,dmhi,boxcar_max,outdir,zapchan,heimdall)		
 		print cmd
 		#os.system(cmd)
 		p=sb.Popen(cmd,stdout=sb.PIPE, shell=True)
@@ -129,7 +137,7 @@ def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range):
 		
 	else:
 		# After talking to AJ and SO
-		cmd = "heimdall -f %s -dm_tol 1.15 -rfi_tol 10 -dm_pulse_width 100   -rfi_no_narrow -rfi_no_broad -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s  -v" % (fil_file,dmlo,dmhi,boxcar_max,outdir)	
+		cmd = "heimdall -f %s -dm_tol 1.15 -rfi_tol 10 -dm_pulse_width 100   -rfi_no_narrow -rfi_no_broad -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s -v %s" % (fil_file,dmlo,dmhi,boxcar_max,outdir,heimdall)	
 		print cmd
 		#os.system(cmd);
 		p=sb.Popen(cmd,stdout=sb.PIPE, shell=True)
@@ -306,6 +314,8 @@ if __name__ == "__main__":
                 help="Heimdall: Boxcar maximum window size to search (Default: 16)")
 	parser.add_option("--nosearch", action='store_true', dest='nosearch',
                 help='Do not run Heimdall (Default: Run)')
+	parser.add_option("--heimdall ", default='-v', dest='heimdall', type=str,
+		help='Arguments to pass to heimdall (ex: --heimdall "-gpu_id 1")')
 
 	parser.add_option("--snr_cut", action='store', dest='snr_cut', default=6.0, type=float,
                 help="Post Heimdall: SNR cut for candidate selection (Default: 6.0)")	
@@ -323,13 +333,18 @@ if __name__ == "__main__":
                 help='Remove zerodm candidates. If heimdall then only used with plotting (Default: do not use)')
 	parser.add_option("--smooth", action='store', dest='smooth', default=0.0, type=float,
                 help='Remove (smooth x burst width) boxcar moving average with waterfaller.py (Default: do not smooth)')
+        
+        parser.add_option("--logs", action='store', dest='csv_file', type=str, default="",
+		help='Update results in the input CSV file')
+	parser.add_option("--ML", action='store', dest='model', type=str, default="",help="Trained Model. Each candidate will be varified with this ML model (If given, FRBcand_prob file will be created with additional column as probability of FRB)")
 
 	parser.add_option("--email", action='store_true', dest='email',
                 help='Send candidate file over email (no email)')	
 
 	parser.add_option("--nodsamp", action='store_true', dest='nodsamp',
                 help='Do not downsample; For the current 32-bit BL files,it is required (default: do downsample)')
-
+	
+	
 	options,args = parser.parse_args()
 
 	if (not options.fil_file):
@@ -339,6 +354,11 @@ if __name__ == "__main__":
 
 	nodsamp = options.nodsamp
         fil_file = os.path.abspath(options.fil_file)
+
+	if options.csv_file: csv_file = os.path.abspath(options.csv_file)
+	else: csv_file=""
+	if options.model: ml_model=options.model
+	else: ml_model=""
 
 	origf = FilReader(fil_file)
 	inchans = origf.header['nchans']
@@ -377,6 +397,9 @@ if __name__ == "__main__":
 	negdm = options.negdm
 	#outdir = options.outdir
 	smooth = options.smooth
+	heimdall = str(options.heimdall)
+
+	print heimdall
 
 	if not options.outdir: outdir = os.getcwd()
 	else: 
@@ -441,13 +464,13 @@ if __name__ == "__main__":
 		if(nosearch is not True):
 			# IF running heimdall then remove old candidates 
                 	os.system("rm %s/*.cand" % (outdir))
-			heimdall_run(fil_file,lodm,hidm,outdir,boxcar_max,dorfi,kill_chan_range)
+			heimdall_run(fil_file,lodm,hidm,outdir,boxcar_max,dorfi,kill_chan_range,heimdall)
 			#os.system("mv %s.* %s" % (base_name,base_name))
 			#if(os.path.isfile("*.cand") is True):
 
 		if filter(os.path.isfile,glob.glob("*.cand")):
 			gcands = []
-			candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan,mask_file,smooth,zerodm)
+			candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan,mask_file,smooth,zerodm,csv_file,ml_model)
 		else:	print "No heimdall candidate found"
 	else:
 		gcands = PRESTOsp(fil_file,lodm,hidm,outdir,snr_cut,zerodm,mask_file,base_name,nosearch)

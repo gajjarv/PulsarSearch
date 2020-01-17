@@ -1,0 +1,243 @@
+#!/bin/bash
+# The default pipeline run will do SubBand search along with a negative DM search 
+# Following things are assumed for this pipeline
+# Input file band: C-band
+# Input file bits: 8-bits 
+
+fullinput="$@"
+
+#Config
+#--------
+subBand=4
+lodm=10
+hidm=20000
+boxcarmax=128 #for C-band files, this will correspond to 44.032 msec pulses
+snr=8
+#------- 
+
+if [[ -z "${fullinput// }" ]]; then
+	 echo "Input required"
+	 cmd="SP_search_BL.py -h"
+	 $cmd
+	 exit
+fi
+
+file=`echo $fullinput  | awk -F'--fil' '{print$2}' | awk '{print$1}'`
+lpart=`echo $fullinput | awk -F'--fil' '{print$1}' `
+rpart=`echo $fullinput | awk -F'--fil' '{print$2}' | awk '{for(i=2;i<=NF;i++)printf("%s ",$i)}'`
+
+rpart="$rpart  --boxcar_max $boxcarmax --snr_cut $snr "
+
+echo $file
+
+#If sub-band search is required, orig file will be split into multiple files and 
+MJD=`header $file -tstart`
+#origname="TEST"
+origname=`header $file -source_name`
+cmd="mkdir $origname"
+echo $cmd
+$cmd
+echo "Doing a sub-band search"
+
+#nsub=`echo $fullinput | awk -F'--subBand' '{print$2}' | awk '{print$1}'`			
+nsub=$subBand
+echo "Input file will be splitted into $nsub files"
+
+fch1=`header $file -fch1`
+nchans=`header $file -nchans`
+foff=`header $file -foff`
+subsize=`bc -l <<< $nchans/$nsub`
+
+i=0
+
+if [[ "$file" ]]; then
+	#origname=`header $file -source_name`
+	nchan=`header $file -nchans `
+	nbits=`header $file -nbits`
+	
+	if [[ $nchan -ge 8193 ]]; then
+		#temp=`bc -l <<< $nchan/8191` # In order to get the right fraction 
+		#fcol=$( printf "%.0f" $temp ) # round to int
+		# It is important to keep  the number channel power of 2 so, we are using this technique
+		fcol="2"
+	        nnchan=`bc -l <<< $nchan/$fcol`
+        	while (( $(echo "$nnchan > 8193" |bc -l)  )); do
+                	fcol=$[$fcol+2]
+	                nnchan=`bc -l <<< $nchan/$fcol`
+        	done
+	fi
+fi
+
+basename=`ls $file | awk -F/ '{print$NF}' | awk -F.fil '{print$1}'`
+
+
+#First creating file while other process are going on, if original file has more number of channels then converting 
+#it to a new file.
+if [[ $nchan -ge 8192 ]] ; then
+	downfil="${basename}_downsampled_chan.fil"
+	cmd="rm $downfil"
+	echo $cmd
+	$cmd						   	
+	cmd="/home/vgajjar/bl_sigproc/src/sum_fil $file -o $downfil -fcollapse $fcol -obits 8 -qlen 10000"
+        echo $cmd
+        $cmd &
+	export PID_sumfil=`echo "$!"`
+	mainfile=$downfil
+else
+	mainfile=$file
+fi
+
+
+outf=`echo $mainfile | awk -F.fil '{print$1}'`
+
+cmd="/home/mattl/fil_multidice -e $nsub $file"
+echo $cmd
+$cmd
+
+
+filname=`ls $file | awk -F/ '{print$NF}'`	
+echo $filname
+
+#First do a sub-band search
+while [ $i -lt $nsub ]; do
+	dicfil=`echo "diced_"$i"_"$filname`
+	sourcename=`header $dicfil -source_name`
+	if [ $i -eq 0 ]; then 
+		export gpuid=0 
+	elif [ $i -eq 1 ]; then 
+		export gpuid=2 
+	elif [ $i -eq 2 ]; then 
+		export gpuid=3 
+	else	
+		export gpuid=0
+	fi
+	cmd="SP_search_BL.py $lpart --fil $dicfil $rpart --lodm $lodm --hidm $hidm --logs $basename.csv  --heimdall \" -gpu_id $gpuid  \" 2>&1 | tee $origname/$dicfil.spout" 		
+	echo $cmd 
+	eval $cmd &
+	export procID_$i=`echo "$!"`
+	let i=i+1
+done
+
+while ps -p $procID_{0..10} > /dev/null 
+do	
+	sleep 10
+done
+
+echo "Sub-Band search finished"
+
+i=0
+
+while [ $i -lt $nsub ]; do
+	dicfil=`echo "diced_"$i"_"$filname`
+	localname=`header $dicfil -source_name`
+	if [[ -d "$origname" ]]; then
+                echo "moving $localname sub-band results to $origname"
+                cmd="mv $localname* $origname"
+                echo $cmd
+                $cmd
+        fi
+        cmd="rm $dicfil"
+        echo $cmd
+        $cmd
+	let i=i+1
+done
+
+while ps -p $PID_sumfil > /dev/null 
+do
+        sleep 10
+done
+
+echo $outf
+
+cmdfull="SP_search_BL.py $lpart --fil $mainfile $rpart --lodm $lodm --hidm $hidm --logs $basename.csv  --heimdall \" -gpu_id 0 \"   2>&1 | tee $origname/full_$filname.spout "
+echo $cmdfull
+eval $cmdfull &
+export spPID_full=`echo "$!"`
+
+#Negative Time serch
+cmdnT1="/home/vgajjar/bl_sigproc/src/filedit --flipTime $mainfile"
+cmdnT1mv="mv nT_outfile.fil nT_$filname.fil"
+cmdnT2="SP_search_BL.py $lpart --fil nT_$filname.fil $rpart --lodm $lodm --hidm $hidm --logs $basename.csv  --heimdall \" -gpu_id 2 \"  2>&1 | tee $origname/nT_outfile_$filname.spout  "
+
+#Negative Frequency search
+cmdnF1="/home/vgajjar/bl_sigproc/src/filedit --flipFreq $mainfile"
+cmdnF1mv="mv nF_outfile.fil nF_$filname.fil"
+cmdnF2="SP_search_BL.py $lpart --fil nF_$filname.fil $rpart --lodm $lodm --hidm $hidm --logs $basename.csv  --heimdall \" -gpu_id 3 \"  2>&1 | tee $origname/nF_outfile_$filname.spout "
+
+#Both
+cmdnTnF1="/home/vgajjar/bl_sigproc/src/filedit --flipFreq --flipTime $mainfile"
+cmdnTnFmv="mv nTnF_outfile.fil nTnF_$filname.fil"
+cmdnTnF2="SP_search_BL.py $lpart --fil nTnF_$filname.fil $rpart --lodm $lodm --hidm $hidm --logs $basename.csv  --heimdall \" -gpu_id 0 \"   2>&1 | tee $origname/nTnF_outfile_$filname.spout "
+
+echo $cmdnT1
+$cmdnT1 &
+export fePID_nT=`echo "$!"`
+
+echo $cmdnF1
+$cmdnF1 &
+export fePID_nF=`echo "$!"`
+
+echo $cmdnTnF1
+$cmdnTnF1 &
+export fePID_nTnF=`echo "$!"`
+
+while ps -p $fePID_nT $fePID_nF $fePID_nTnF > /dev/null 
+do
+        sleep 2
+done
+
+sleep 2
+echo "filterbank edit done"
+
+eval $cmdnF1mv
+eval $cmdnT1mv
+eval $cmdnTnFmv
+
+echo $cmdnT2
+eval $cmdnT2 & 
+export spPID_nT=`echo "$!"`
+
+echo $cmdnF2
+eval $cmdnF2 &
+export spPID_nF=`echo "$!"`
+
+echo $cmdnTnF2
+eval $cmdnTnF2 & 
+export spPID_nTnF=`echo "$!"`
+
+while ps -p $spPID_full $spPID_nT $spPID_nF $spPID_nTnF > /dev/null 
+do
+        sleep 10
+done
+
+sleep 2
+echo "Negative DM sp search done"
+
+for i in nT_$filname.fil nF_$filname.fil nTnF_$filname.fil
+do
+	localname=`header $i  -source_name`
+
+	cmd="mv $localname* $origname"
+	echo $cmd
+	$cmd
+
+	cmd="rm $i"
+	echo $cmd
+	$cmd
+	
+done
+
+localname=`header $mainfile  -source_name`
+cmd="mv $localname* $origname"
+echo $cmd
+$cmd
+
+cmd="rm $downfil"
+echo $cmd
+eval $cmd
+
+
+#cmd="convert ${origname}/*/[A-Z]*.png ${origname}/*/0*.png ${origname}/${origname}_all_combined_frb_cand.pdf"
+#echo $cmd
+#$cmd
+

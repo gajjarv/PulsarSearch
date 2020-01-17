@@ -222,7 +222,7 @@ def waterfall(rawdatafile, start, duration, dm=None, nbins=None, nsub=None,\
 def plot_waterfall(data, start, source_name, duration, dm,ofile,
                    integrate_ts=False, integrate_spec=False, show_cb=False, 
                    cmap_str="gist_yarg", sweep_dms=[], sweep_posns=[], 
-                   ax_im=None, ax_ts=None, ax_spec=None, interactive=True, downsamp=1,nsub=None,subdm=None,width=None, snr=None, csv_file=None,prob=None):
+                   ax_im=None, ax_ts=None, ax_spec=None, interactive=True, downsamp=1,nsub=None,subdm=None,width=None, snr=None, csv_file=None):
     """ I want a docstring too!
     """	
  
@@ -365,7 +365,7 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
     text2 = "Width: " + "%.2f" % float(width)	
     plt.text(1.1,0.75,text2,fontsize=15,ha='center', va='center', transform=ax_ts.transAxes)
     text3 = "SNR: " + "%.2f" % float(snr)
-    plt.text(1.1,0.6,text3,fontsize=15,ha='center', va='center', transform=ax_ts.transAxes)	
+    plt.text(1.1,0.6,text3,fontsize=15,ha='center', va='center', transform=ax_ts.transAxes)	 
     ax_ts.set_title(title,fontsize=14)	
     plt.setp(ax_ts.get_xticklabels(), visible = False)
     plt.setp(ax_ts.get_yticklabels(), visible = False)
@@ -402,23 +402,16 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
     plt.text(1.1,0.45,text3,fontsize=12,ha='center', va='center', transform=ax_ts.transAxes)
     text4 =  "  %.2f" % (ttest) + "(%.2f" % ((1-ttestprob)*100) + "%)" 
     plt.text(1.1,0.3,text4,fontsize=12,ha='center', va='center', transform=ax_ts.transAxes)
-    if prob: 
-	text5 = "ML prob: " + "%.2f" % (float(prob))
-	print text5
-	plt.text(1.1,0.1,text5,fontsize=12,ha='center', va='center', transform=ax_ts.transAxes) 
 
     #DMvsSNR plot	
     ax_dmsnr.plot(Dedisp_dmsnr,dms,color="red",lw=2)
     ax_dmsnr.plot(off_dmsnr,dms,color="grey",alpha=0.5,lw=1)   
-    Dedisp_dmsnr_split = np.array_split(Dedisp_dmsnr,5)
+    Dedisp_dmsnr_split = np.array_split(Dedisp_dmsnr,3)
     #Sub-array could be different sizes that's why  
     Dedisp_dmsnr_split[0]=Dedisp_dmsnr_split[0].sum()
     Dedisp_dmsnr_split[1]=Dedisp_dmsnr_split[1].sum()
     Dedisp_dmsnr_split[2]=Dedisp_dmsnr_split[2].sum()
-    Dedisp_dmsnr_split[3]=Dedisp_dmsnr_split[3].sum()
-    Dedisp_dmsnr_split[4]=Dedisp_dmsnr_split[4].sum()
-    	 
- 
+  
     #Plot settings 
     plt.setp(ax_spec.get_xticklabels(), visible = True)
     plt.setp(ax_dmsnr.get_xticklabels(), visible = False)
@@ -502,28 +495,20 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
 
     if ofile is "unknown_cand":    	    	
 		ofile = ofile + "_%.3f_%s.png" % (start,str(dm))
-    
-    ttestTrsh1=3
-    ttestTrsh2=1
-    probTrsh1=0.5
-    probTrsh2=0.05
-    DMleft = Dedisp_dmsnr_split[0]
-    DMcent = Dedisp_dmsnr_split[2]
-    DMright = Dedisp_dmsnr_split[4]
-    	
-    if prob >= probTrsh2:
-    	ofile = "A_" + ofile  
+
+    if ttest>2 and Dedisp_dmsnr_split[1] > Dedisp_dmsnr_split[0] and Dedisp_dmsnr_split[1] > Dedisp_dmsnr_split[2]:
+    	ofile = "A_" + ofile  #If t-test good then put those candidate first
     	plt.text(1.1,0.2,"cat: A",fontsize=12,ha='center', va='center', transform=ax_ts.transAxes)    
-    elif ttest > ttestTrsh1 and DMcent > DMleft and DMcent > DMright:
+    if ttest<=2 and ttest>1  and Dedisp_dmsnr_split[1] > Dedisp_dmsnr_split[0] and Dedisp_dmsnr_split[1] > Dedisp_dmsnr_split[2]: 
 	ofile = "B_" + ofile
 	plt.text(1.1,0.2,"cat: B",fontsize=12,ha='center', va='center', transform=ax_ts.transAxes) 
-    elif ttest > ttestTrsh2 and DMcent > DMleft and DMcent > DMright:	
+    if ttest<=1 and  Dedisp_dmsnr_split[1] > Dedisp_dmsnr_split[0] and Dedisp_dmsnr_split[1] > Dedisp_dmsnr_split[2]: 
 	plt.text(1.1,0.2,"cat: C",fontsize=12,ha='center', va='center', transform=ax_ts.transAxes) 
         ofile = "C_" + ofile 
-   
+
     plt.savefig(ofile)
     #plt.show()
-    return ofile,ttest,ttestprob	
+    return ofile	
    
 def main():
     fn = args[0]
@@ -552,14 +537,12 @@ def main():
 			    csv_file=options.csv_file,\
                             bandpass_corr=options.bandpass_corr)
 
-    ofile,ttest,ttestprob = plot_waterfall(data,  start, source_name, options.duration, \
+    ofile = plot_waterfall(data,  start, source_name, options.duration, \
 		   dm=options.dm,ofile=options.ofile, integrate_ts=options.integrate_ts, \
                    integrate_spec=options.integrate_spec, show_cb=options.show_cb, 
                    cmap_str=options.cmap, sweep_dms=options.sweep_dms, \
-                   sweep_posns=options.sweep_posns, downsamp=options.downsamp,width=options.width,snr=options.snr,csv_file=options.csv_file,prob=options.prob)	
+                   sweep_posns=options.sweep_posns, downsamp=options.downsamp,width=options.width,snr=options.snr,csv_file=options.csv_file)	
 
-    ttestprob = "%.2f" % ((1-ttestprob)*100)
-    ttest = "%.2f" % (ttest)
     # Update CSV file if file is provided	
     if csv_file:
 	sourcename=rawdatafile.header['source_name']
@@ -573,12 +556,10 @@ def main():
 	snr=options.snr
 	width=options.width
 	dm=options.dm
-	if options.prob: prob=options.prob
-	else:	prob="*"	
-    	df = pd.DataFrame({'PNGFILE':[ofile],'Category':[cat],'Prob':[prob],'T-test':[ttest],'T-test_prob':[ttestprob],'SNR':[snr],'WIDTH':[width],'DM':[dm],'SourceName':[sourcename],'RA':[src_ra],'DEC':[src_dec],'MJD':[tstart],'Hfreq':[fch1],'NCHANS':[nchans],'BANDWIDTH':[bw],'filename':[fn]})	
+    	df = pd.DataFrame({'PNGFILE':[ofile],'Category':[cat],'SNR':[snr],'WIDTH':[width],'DM':[dm],'SourceName':[sourcename],'RA':[src_ra],'DEC':[src_dec],'MJD':[tstart],'Hfreq':[fch1],'NCHANS':[nchans],'BANDWIDTH':[bw],'filename':[fn]})	
 
 	#Column order coming out irregular, so fixing it here
-	col=['PNGFILE','Category','Prob','T-test','T-test_prob','SNR','WIDTH','DM','SourceName','RA','DEC','MJD','Hfreq','NCHANS','BANDWIDTH','filename']
+	col=['PNGFILE','Category','SNR','WIDTH','DM','SourceName','RA','DEC','MJD','Hfreq','NCHANS','BANDWIDTH','filename']
 	df = df.reindex(columns=col)
 
 	if os.path.exists(csv_file) is False: 	
@@ -605,8 +586,6 @@ if __name__=='__main__':
 			help="Width of the pulse (for figure only; not used anywhere)",type='str')
     parser.add_option('--snr',dest='snr', default=None,\
                         help="SNR of the pulse (for figure only; not used anywhere)",type='str')		
-    parser.add_option("--prob",dest='prob', default=None, \
-			help="Probability of that candidate from ML tool",type='float')
     parser.add_option('--zerodm', dest='zerodm', action='store_true', \
                         help="If this flag is set - Turn Zerodm filter - ON  (Default: " \
                                 "OFF)", default=False)
@@ -661,8 +640,7 @@ if __name__=='__main__':
                         default=None)
     #parser.add_option("--logs", action='store', dest='csv_file', type=str, default='/home/vgajjar/PulsarSearch/example.csv',
     parser.add_option("--logs", action='store', dest='csv_file', type=str, default='', 
-                	help='Update results in the input CSV file')
-
+                	help='Update results in the input CSV file')	
     parser.add_option('--mask', dest='mask', action="store_true", \
                         help="Mask data using rfifind mask (Default: Don't mask).", \
                         default=False)

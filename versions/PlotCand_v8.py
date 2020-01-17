@@ -8,7 +8,7 @@ import numpy as np
 import glob
 from itertools import chain
 from os.path import basename
-from itertools import tee, izip, izip_longest
+from itertools import tee, izip
 import matplotlib
 #matplotlib.use('Agg')
 #matplotlib.use('pdf')
@@ -16,35 +16,10 @@ import matplotlib.pyplot as plt
 #plt.ioff()
 import psrchive as psr
 from sigpyproc.Readers import FilReader
-import subprocess as sb
-import shlex
-import time as tt
-import pandas as pd
 
 def find_nearidx(array,val):
         idx = (np.abs(array-val)).argmin()
         return idx
-
-def grouper(array,n,fillvalue=None):
-	args = [iter(array)]*n
-	return izip_longest(*args, fillvalue=fillvalue)	
-
-def exeparallel(cmd_array):
-     '''
-     This will execute an array of commands simultaneously in groups
-     number provided
-     '''
-     ncmd=20 #Number of commands to execute simultaneously
-     if ncmd>len(cmd_array): ncmd=len(cmd_array)
-
-     for grpcmd in grouper(cmd_array,ncmd):
-		grpcmd1 = list(filter(None,grpcmd)) #Remove None elements from the groups
-     		cmd = ' & '.join(grpcmd1)									
-		print cmd
-		#proc=sb.Popen(cmd,stdout=sb.PIPE,shell=True)
-		proc=sb.Popen(cmd,shell=True)
-		while proc.poll()==None: continue 
-        	#os.system(cmd)
 
 def dedispblock(ar,lodm,hidm):
     fpsr = psr.Archive_load(ar)
@@ -183,9 +158,9 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint,nchan):
 
         return tbin,fbin,extime,frac,cand_band_smear 
 
-def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan,mask_file,smooth,zerodm,csv_file):
-	parallel=1
-	if(frb_cands.size >= 1 and noplot is not True):
+def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan,mask_file,smooth,zerodm):
+
+	if(frb_cands.size >= 1):
 			if(frb_cands.size>1):
                                 frb_cands = np.sort(frb_cands)
                                 frb_cands[:] = frb_cands[::-1]
@@ -193,16 +168,13 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
                         cmd = "rm *.png *.ps *.pdf"
 			print cmd
                         os.system(cmd)
-			cmd_array=[]
+			
 			for indx,frb in enumerate(frb_cands):
                                 time = frb['time']
                                 dm = frb['dm']
                                 filter = frb['filter']
                                 width = tint * (2 ** filter)*(10**3) # Width in msec
                                 snr = frb['snr']
-				if len(frb)>6: prob = frb['FRBprob']					
-				else: prob = ""
-
 				#print "here"
                                 tbin,fbin,extime,frac,cand_band_smear=plotParaCalc(snr,filter,dm,fl,fh,tint,nchan)
 				bin_width = (2 ** filter)
@@ -214,8 +186,9 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
 			        else:
 			                downfact = 1		
 				if downfact == 0: downfact = 1
+					
 				 	
-				#print fbin,filter,bin_width,downfact	
+				print fbin,filter,bin_width,downfact	
 				#stime = time-(extimeplot*0.1) # Go back data
                                 #stime = time - float(cand_band_smear) 
 				#TotDisplay = (downfact*bin_width)*tint*128 # To display 256 times the pulse width in the plot
@@ -250,27 +223,12 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
  					       fil_file 
 					if mask_file: cmd = cmd + " --maskfile  " + str(mask_file) 
 					if zerodm: cmd = cmd + " --zerodm "
-					if csv_file: cmd = cmd + " --logs " + str(csv_file)
-					if prob: cmd = cmd + " --prob " + str(prob)	
-					#os.system(cmd) 						
-					if parallel: 
-						cmd_array.append(cmd)
-					else: 
-						print cmd
-						os.system(cmd)					
-					#df=pd.DataFrame({'PNGFILE':[candname],'filename':[fil_file]})
-					#if csv_file: csvdata = csvdata.append(df)
-		  	if parallel: 
-				exeparallel(cmd_array)
-				open('cand_plot_commands','wb').write('\n'.join(i for i in cmd_array))
-			#if csv_file: csvdata.to_csv(csv_file)		
-			tt.sleep(2)	
-			print "Plotting Done"	
-			
+					print cmd
+					os.system(cmd) 						
 			#cmd = "gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dSAFER -sOutputFile=%s_frb_cand.pdf *.png" % (source_name)
-			#cmd = "convert [A-Z]*.png 0*.png %s_frb_cand.pdf" % (source_name)
-		        #print cmd
-             		#os.system(cmd)
+			cmd = "convert [A-Z]*.png 0*.png %s_frb_cand.pdf" % (source_name)
+		        print cmd
+             		os.system(cmd)
 	else:
 		print "No candidate found"
                 return

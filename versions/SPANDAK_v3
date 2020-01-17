@@ -69,7 +69,6 @@ if [[ $fullinput == *"--subBand"* ]]; then
 		$cmd
 		let i=i+1
 	done
-	
 	#cmd="gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dSAFER -sOutputFile=${origname}/${origname}_all_combined_frb_cand.pdf ${origname}/*/*_frb_cand.pdf"
 fi
 
@@ -80,55 +79,43 @@ if [[ $fullinput == *"--negDM"* ]] && [[ $nchan -le 8192 ]] && [[ $nbits -le 8 ]
         $cmd	
 	echo "Only artificial DM search will be conducted for three different dispersion types!"
 	echo "For regular DM search, remove --negDM option."
-	
-	echo "Doing negative time search"
+
 	cmd="/home/vgajjar/bl_sigproc/src/filedit --flipTime $file"
-	echo $cmd
 	$cmd
 	cmd="SP_search_BL.py $lpart --fil outfile.fil $rpart"
-	echo $cmd
 	$cmd
 	localname=`header outfile.fil -source_name`
         cmd="mv $localname* $origname"
         echo $cmd
         $cmd
 	cmd="rm outfile.fil"
-	echo $cmd
 	$cmd
 
-	echo "Doing negative freq search"
 	cmd="/home/vgajjar/bl_sigproc/src/filedit --flipFreq $file"
-	echo $cmd
         $cmd
         cmd="SP_search_BL.py $lpart --fil outfile.fil $rpart"
-	echo $cmd
         $cmd
-	localname=`header outfile.fil -source_name`
+	localname=`header $outfil -source_name`
         cmd="mv $localname* $origname"
         echo $cmd
         $cmd
 	cmd="rm outfile.fil"
-	echo $cmd
         $cmd
 
-	echo "Doing negative time and frequency search"
         cmd="/home/vgajjar/bl_sigproc/src/filedit --flipFreq --flipTime $file"
-	echo $cmd
         $cmd
         cmd="SP_search_BL.py $lpart --fil outfile.fil $rpart"
-	echo $cmd
         $cmd
-	localname=`header outfile.fil -source_name`
+	localname=`header $outfil -source_name`
         cmd="mv $localname* $origname"
         echo $cmd
         $cmd
 	cmd="rm outfile.fil"
-	echo $cmd
         $cmd
-	
-	cmd="convert ${origname}/n*/[A-Z]*.png  ${origname}/n*/0*.png ${origname}/${origname}_all_artificial_frb_cand.pdf"
-	echo $cmd
-	$cmd
+
+	cmd="gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dSAFER -sOutputFile=$origname_all_combined_frb_cand.pdf $origname/[nT,nF]*/*_frb_cand.pdf"
+        echo $cmd
+        $cmd
 
 elif [[ $nchan -ge 8193 ]] && [[ $nbits -le 8 ]]  ; then
 	#If input file has more than 8k channels and 8-bits 
@@ -193,15 +180,9 @@ elif [[ $nchan -ge 8193 ]] && [[ $nbits -ge 9 ]]  ; then
         echo $cmd
         $cmd
 else
-	echo "The default"
 	cmd="SP_search_BL.py $fullinput"
 	echo $cmd
 	$cmd
-	if [[ $fullinput == *"--negDM"* ]] ; then
-		cmd="SPANDAK $lpart --fil downsampled_8bit_2chan.fil $rpart"
-		echo $cmd
-		$cmd
-	fi
 	if [[ -d "$origname" ]]; then
 		echo "Directory exist, moving results to $origname"
 		cmd="mv ${origname}_* $origname"
