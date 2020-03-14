@@ -197,7 +197,7 @@ def waterfall(rawdatafile, start, duration, dm=None, nbins=None, nsub=None,\
 		chan[:] = (chan-median)/std
 	else:
 		chan[:] = chan
-			
+
     # scale data
     #data = data.scaled(scaleindep)
     #data = data.scaled(False)
@@ -266,17 +266,6 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
     window_width = int(spectrum_window/data.dt) # bins
     burst_bin = nbinlim/2
 
-    #Zap all channels which have more than half bins zero (drop packets)	
-    zerochan=1
-    arrmedian=np.ones(data.numchans)
-    if zerochan:
-	for ii in range(data.numchans):
-		chan = data.get_chan(ii)	
-		#if 50% are zero
-		if len(chan)-np.count_nonzero(chan)>0.5*len(chan):
-			arrmedian[ii]=0.0 	
-    	#arrmedian=np.array(arrmedian)	
-
     #Additional zapping from off-pulse spectra
     extrazap=1
     zapthresh=4
@@ -288,13 +277,9 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
 	masked_val = np.ones(data.data.shape[1],dtype=bool)
 	masked_chan = np.array(np.where(off_spec>zapthresh*np.std(off_spec)))[0]
     	mask[masked_chan] = masked_val
-	masked_chan1 = np.array(np.where(arrmedian==0))[0]
-	mask[masked_chan1] = masked_val
     	data=data.masked(mask,maskval=0)
 	for i in masked_chan:
 		ax_spec.axhline(data.freqs[i],alpha=0.4,color='grey')	
-	for i in masked_chan1:
-		ax_spec.axhline(data.freqs[i],alpha=0.4,color='grey')
 
     # DM-vs-time plot	
     dmvstm_array = []
@@ -353,7 +338,6 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
     #data.downsample(downsamp)
     data.dedisperse(dm,padval='rotate')	
     nbinlim = np.int(duration/data.dt)
-    #orig
     img = ax_im.imshow(data.data[..., :nbinlim], aspect='auto', \
                 cmap=matplotlib.cm.cmap_d[cmap_str], \
                 interpolation='nearest', origin='upper', \
@@ -411,7 +395,7 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
 
     #Spectrum plot 	
     ax_spec.plot(Dedisp_spec,freqs,color="red",lw=2)
-    ax_spec.plot(off_spec,freqs,color="blue",alpha=0.5,lw=1)
+    ax_spec.plot(off_spec,freqs,color="grey",alpha=0.5,lw=1)
     ttest=float(stats.ttest_ind(Dedisp_spec,off_spec)[0].tolist())	
     ttestprob = float(stats.ttest_ind(Dedisp_spec,off_spec)[1].tolist())
     text3 = "t-test"
@@ -503,21 +487,13 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
 	ax_orig.set_ylim(data.freqs.min(),data.freqs.max())
 	ax_orig.plot(ndelay, nfreqs, "b-", lw=2, alpha=0.7)
 	ax_orig.plot(ndelay2, nfreqs, "b-", lw=2, alpha=0.7)	
-
-
-    #Orig
+   
     ax_orig.imshow(ndata, aspect='auto', \
 	cmap=matplotlib.cm.cmap_d[cmap_str], \
         interpolation='nearest', origin='upper', \
         extent=(data.starttime, data.starttime + len(data.data[0])*data.dt, \
         data.freqs.min(), data.freqs.max()))
-    '''
-    ax_orig.imshow(ndata, aspect='auto', \
-        cmap=matplotlib.cm.cmap_d[cmap_str], \
-        interpolation='nearest', origin='lower', \
-        extent=(data.starttime, data.starttime + len(data.data[0])*data.dt, \
-        data.freqs.min(), data.freqs.max()))
-    '''	
+
     #if interactive:
     #    fig.suptitle("Frequency vs. Time")
     #    fig.canvas.mpl_connect('key_press_event', \

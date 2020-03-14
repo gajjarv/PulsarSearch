@@ -278,7 +278,7 @@ if __name__ == "__main__":
 	if(ddplanflag == 0):
 		outddfile = outdir + "DDplan.out"
 
-		cmd = "DDplan.py -f %s -b %s -n %s -t %f -r 0.2 -o %s -d 1000 > %s" % \
+		cmd = "DDplan.py -f %s -b %s -n %s -t %f -r 0.2 -o %s -d 2000 > %s" % \
 		       (lofq+(bandwidth/2), bandwidth, chan,samptime,outdir + "DDplan.eps",outddfile)
 
 		timed_execute(cmd,1)

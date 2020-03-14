@@ -40,6 +40,8 @@ waterfaller_vg_v6.py : Two changes (1) scaleing was failing for masked file so i
 waterfaller_vg_v7.py : Negative DM plotting enabled based on the source name first two letters (e.g. nT,nF,nTnF). _		
 waterfaller_vg_v8.py : Off-pulse are taken from the both side of the pulse while earlier it was only from the left half
 waterfaller_vg_v9.py : Added csv file option. If --logs <csv file> provided, metadata for each candidate will be stored. 
-waterfaller_vg_v10.py : Zap channels with off-pulse signal higher than 4 times the std of the entire spectra. Also zap 5% of the band on both side (top and bottom).  
+waterfaller_vg_v10.py : Zap channels with off-pulse signal higher than 4 times the std of the entire spectra. Also zap 5% of the band on both side (top and bottom).
+waterfaller_vg_v11.py : Probability from the ML algorithm added. A B C catagory parameters were changed a little bit (this version was used for the first 1000 C band files).
+Next: All the channels which have 50% zeros in them are flagged. This should reduce number of B candidates   
 
  

@@ -77,7 +77,7 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 		if ml_model:
 			print "ML model given"
 			FRBcand = os.path.abspath("FRBcand")
-			os.system("python /home/vgajjar/hey-aliens/simulateFRBclassification/predict.py %s %s %s" % (ml_model,FRBcand,fil_file))
+			os.system("python /home/vgajjar/hey-aliens/simulateFRBclassification/predict.py %s %s %s" % (ml_model,fil_file,FRBcand))
 		if(os.stat("FRBcand").st_size is not 0):
 			if ml_model and os.stat("FRBcand_prob.txt").st_size is not 0: 
 				frb_cands = np.loadtxt("FRBcand_prob.txt",dtype={'names': ('snr','time','samp_idx','dm','filter','prim_beam','FRBprob'),'formats': ('f4', 'f4', 'i4','f4','i4','i4','f4')})
@@ -113,7 +113,7 @@ def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range,heim
 		for r in kill_chan_range:
 			zapchan = zapchan + " -zap_chans " + r 
 		# After talking to AJ and SO and after much testing I found that 'rfi_no_narrow' works better. 
-		cmd = "heimdall -f %s -rfi_tol 10 -dm_tol 1.15 -dm_pulse_width 100  -rfi_no_narrow -rfi_no_broad -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s -v %s %s" % (fil_file,dmlo,dmhi,boxcar_max,outdir,zapchan,heimdall)		
+		cmd = "heimdall -f %s -rfi_tol 10 -dm_tol 1.15 -dm_pulse_width 100 -rfi_no_narrow -rfi_no_broad -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s -v %s %s" % (fil_file,dmlo,dmhi,boxcar_max,outdir,zapchan,heimdall)		
 		print cmd
 		#os.system(cmd)
 		p=sb.Popen(cmd,stdout=sb.PIPE, shell=True)
@@ -474,7 +474,7 @@ if __name__ == "__main__":
 		else:	print "No heimdall candidate found"
 	else:
 		gcands = PRESTOsp(fil_file,lodm,hidm,outdir,snr_cut,zerodm,mask_file,base_name,nosearch)
-		candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan,mask_file,smooth)
+		candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan,mask_file,smooth,zerodm,csv_file,ml_model)
 
 	if(email is True):
 		pdffile = source_name + "_frb_cand.pdf"
