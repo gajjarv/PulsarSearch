@@ -6,9 +6,7 @@
 
 **To get help:**
 
-SPANDAK -h \ 
-
-
+SPANDAK -h
 
 
 **Examples:**
