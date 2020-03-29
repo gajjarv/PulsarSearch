@@ -248,7 +248,7 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
 					       " --snr " + str(snr) + \
 					       " --width " + str(width) + " " + \
  					       fil_file 
-					if mask_file: cmd = cmd + " --maskfile  " + str(mask_file) 
+					if mask_file: cmd = cmd + " --mask --maskfile  " + str(mask_file) 
 					if zerodm: cmd = cmd + " --zerodm "
 					if csv_file: cmd = cmd + " --logs " + str(csv_file)
 					if prob: cmd = cmd + " --prob " + str(prob)	

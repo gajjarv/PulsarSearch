@@ -40,9 +40,11 @@ def rfi_filter(fil_file, time, timesig, freqsig, chanfrac, intfrac, max_percent,
 	if not mask:
 		cmd= "rfifind -time {0} -timesig {1} -freqsig {2} -chanfrac {3} -intfrac {4} -o {5} {6}".format(time, timesig, freqsig, chanfrac, intfrac, base_name, fil_file)
 		os.system(cmd)
+		#Create a string for the name of the .mask file, to be used later.
+		mask_file = base_name + "_rfifind.mask"
+	else:	
+		mask_file = mask
 
-	#Create a string for the name of the .mask file, to be used later.
-	mask_file = base_name + "_rfifind.mask"
 	#Run the rfi_check command from the rfi_quality_check.py script to see what percentage of the data is flagged.
 	percentage_flagged, percentage_bad_ints,kill_chans,kill_chans_range,kill_time_range = rfiqul.rfi_check(base_name, mask_file, time, nchans, tsamp,chanfrac,intfrac)
 	#See if the percentage of data flag exceeds the maximum allowed percentage input.
@@ -93,8 +95,9 @@ if __name__ == "__main__":
                 help="Threshold for bad interval to flag an entire channel  (Default: 0.3)")
 	parser.add_argument("-max_percent", action='store', dest='max_percent', required=False, default=20.0, type=float,
                 help="Maximum percentage of flagged data allowed to pass through the filter. (Default: 20.0%)")
-	parser.add_argument("-mask", action='store_true', dest='mask',
-                help='Use this flag to indicate whether a .mask file already exists for the given filterbank file.')
+	parser.add_argument("-mask", action='store', dest='mask',required=False,default='default',type=str,
+                help='User supplied mask file')
+                #help='Use this flag to indicate whether a .mask file already exists for the given filterbank file.')
 	parser.add_argument("-sp", action='store_true', dest='sp',
                 help='Use this flag for single-pulse searches instead of pulsar searches.')
 	'''		
@@ -114,6 +117,7 @@ if __name__ == "__main__":
 	intfrac = args.intfrac
 	max_percent = args.max_percent
 	mask = args.mask
+	print mask
 	sp = args.sp
 
 	rfi_filter(fil_file, time, timesig, freqsig, chanfrac, intfrac, max_percent, mask, sp)

@@ -293,8 +293,10 @@ if __name__ == "__main__":
                 help="RFIFIND: The fraction of bad intervals that will mask a full channel (Default: 0.3)")
 	parser.add_option("--max_percent", action='store', dest='max_percent', default=20.0, type=float,
                 help="Maximum percentage of flagged data allowed to pass through the filter. (Default: 20.0%)")
-	parser.add_option("--mask", action='store_true', dest='mask',
-                help='Use this flag to indicate whether a .mask file already exists for the given filterbank file.')
+	parser.add_option("--mask", action='store', dest='mask',default='',type=str,
+                help='User supplied mask file')
+	#parser.add_option("--mask", action='store_true', dest='mask',
+                #help='Use this flag to indicate whether a .mask file already exists for the given filterbank file.')
 	'''
 	parser.add_option("--dozap", action='store_true', dest='sp',
                 help='Use this flag to run zap (Default: Do not Run)')
