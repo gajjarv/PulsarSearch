@@ -30,7 +30,7 @@ SPANDAK --fil <filterbank file> --ML <Saved ML mode>
 Dependencies: coming soon... 
 
 
-===================================================================================
+===================================================================================\
 This is documentation on pulsar seach pipeline
 
 The script requires following python import. 
