@@ -2,11 +2,13 @@
 
 **SPANDAK: Searching for naturally and artificially dispersed transient signals for Breakthrough Listen**
 
+![SPANDAK](images/SPANDAK_diag.png)
 
 **To get help:**
 
 SPANDAK -h
 
+![Help](images/Help.png)
 
 **Examples:**
 1. For simple dispersion search across 0 to 1000 DMs. 
