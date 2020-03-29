@@ -10,13 +10,13 @@ SPANDAK -h
 
 
 **Examples:**
-1. For simple natual dispersion search across 0 to 1000 DMs. 
+1. For simple dispersion search across 0 to 1000 DMs. 
 
 SPANDAK --fil <filterbank file> 
 
-2. For artificially dispersed signal search across 0 to 1000 DMs. 
+2. For artificially dispersed signal search across 0 to 2000 DMs. 
 
-SPANDAK --fil <filterbank file> --negDM
+SPANDAK --fil <filterbank file> --negDM --lodm 0 --hidm 2000
 	
 3. Searching with RFI flagging
 
