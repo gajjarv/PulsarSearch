@@ -2,7 +2,7 @@
 
 **SPANDAK: Searching for naturally and artificially dispersed transient signals for Breakthrough Listen**
 
-
+![SPANDAK](images/SPANDAK_diag.png)
 
 **To get help:**
 
