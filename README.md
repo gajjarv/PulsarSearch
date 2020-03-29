@@ -24,7 +24,7 @@ SPANDAK --fil <filterbank file> --dorfi
 	
 4. ML assisted candidate prioritization. 
 
-SPANDAK --fil <filterbank file> --ML <Saved ML mode> 
+SPANDAK --fil <filterbank file> --ML <Saved ML model> 
 
 
 Dependencies: coming soon... 
