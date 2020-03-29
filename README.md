@@ -1,3 +1,38 @@
+
+
+**SPANDAK: Searching for naturally and artificially dispersed transient signals for Breakthrough Listen**
+
+
+
+**To get help:**
+
+SPANDAK -h \ 
+
+
+
+
+**Examples:**
+1. For simple natual dispersion search across 0 to 1000 DMs. 
+
+SPANDAK --fil <filterbank file> 
+
+2. For artificially dispersed signal search across 0 to 1000 DMs. 
+
+SPANDAK --fil <filterbank file> --negDM
+	
+3. Searching with RFI flagging
+
+SPANDAK --fil <filterbank file> --dorfi
+	
+4. ML assisted candidate prioritization. 
+
+SPANDAK --fil <filterbank file> --ML <Saved ML mode> 
+
+
+Dependencies: coming soon... 
+
+
+===================================================================================
 This is documentation on pulsar seach pipeline
 
 The script requires following python import. 
