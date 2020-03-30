@@ -13,19 +13,19 @@ SPANDAK -h
 **Examples:**
 1. For simple dispersion search across 0 to 1000 DMs. 
 
-SPANDAK --fil <filterbank file> 
+SPANDAK --fil file.fil 
 
 2. For artificially dispersed signal search across 0 to 2000 DMs. 
 
-SPANDAK --fil <filterbank file> --negDM --lodm 0 --hidm 2000
+SPANDAK --fil file.fil --negDM --lodm 0 --hidm 2000
 	
 3. Searching with RFI flagging
 
-SPANDAK --fil <filterbank file> --dorfi
+SPANDAK --fil file.fil --dorfi
 	
 4. ML assisted candidate prioritization. 
 
-SPANDAK --fil <filterbank file> --ML <Saved ML model> 
+SPANDAK --fil file.fil --ML saved_model.h5
 
 
 Dependencies: coming soon... 
