@@ -117,7 +117,7 @@ if __name__ == "__main__":
 	intfrac = args.intfrac
 	max_percent = args.max_percent
 	mask = args.mask
-	print mask
+	print(mask)
 	sp = args.sp
 
 	rfi_filter(fil_file, time, timesig, freqsig, chanfrac, intfrac, max_percent, mask, sp)
