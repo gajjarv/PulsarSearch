@@ -14,8 +14,7 @@ from rfi_filter_vg import rfi_filter as rfi
 import numpy as np
 import glob
 from itertools import chain
-sys.path.insert(0,'/home/dancpr/test/SP_search_wrapper/PulsarSearch/robert_sp/')
-import sp_cand_find as sp
+from robert_sp import sp_cand_find as sp
 import smtplib
 from os.path import basename
 from email.mime.application import MIMEApplication
@@ -134,7 +133,7 @@ def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range,heim
                     print("HEIMDALL_ERROR=0")
         else:
             print("HEIMDALL_ERROR=0")
-        
+
     else:
         # After talking to AJ and SO
         cmd = "heimdall -f %s -dm_tol 1.15 -rfi_tol 10 -dm_pulse_width 100   -rfi_no_narrow -rfi_no_broad -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s -v %s" % (fil_file,dmlo,dmhi,boxcar_max,outdir,heimdall) 
@@ -143,23 +142,23 @@ def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range,heim
         p=sb.Popen(cmd,stdout=sb.PIPE, shell=True)
         out,err=p.communicate()
         if p.returncode != 0:
-                        print("First try after failure")
-                        p=sb.Popen(cmd,stdout=sb.PIPE,shell=True)
-                        out,err=p.communicate()
-                        if p.returncode != 0:
-                                print("Second try after failure")
-                                p=sb.Popen(cmd,stdout=sb.PIPE,shell=True)
-                                out,err=p.communicate()
-                                if p.returncode != 0:
-                                        print("HEIMDALL_ERROR=" + str(p.returncode))
-                                else:
-                                        print("HEIMDALL_ERROR=0")
-                        else:
-                            print("HEIMDALL_ERROR=0")
+            print("First try after failure")
+            p=sb.Popen(cmd,stdout=sb.PIPE,shell=True)
+            out,err=p.communicate()
+            if p.returncode != 0:
+                print("Second try after failure")
+                p=sb.Popen(cmd,stdout=sb.PIPE,shell=True)
+                out,err=p.communicate()
+                if p.returncode != 0:
+                    print("HEIMDALL_ERROR=" + str(p.returncode))
+                else:
+                    print("HEIMDALL_ERROR=0")
+            else:
+                print("HEIMDALL_ERROR=0")
     return
 
 def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosearch):
-    
+
     print("Running PRESTO with %f to %f DM range" % (lodm,hidm))    
 
     #prepsubband can only take 500 DMs to  dedisperse
@@ -218,11 +217,11 @@ def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosear
 
     if(len(cands)):
         if zerodm:
-                    zdm = []
-                    dupdms = np.array([ dd.dupes_dms for dd in cands ])
-                    for i,d in enumerate(dupdms):
-                            if(0.0 not in d): zdm.append(i)
-                    cands = [cands[ii] for ii in zdm]
+            zdm = []
+            dupdms = np.array([ dd.dupes_dms for dd in cands ])
+            for i,d in enumerate(dupdms):
+                if(0.0 not in d): zdm.append(i)
+            cands = [cands[ii] for ii in zdm]
 
         sp.write_cands( fullfile, cands )
         ndupes = np.array([ dd.nhits for dd in cands ])
@@ -231,7 +230,7 @@ def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosear
         #print len(yy)
         all_cands = [ cands[ii] for ii in yy ]
         if len(all_cands): sp.write_cands( allfile, all_cands )
-    
+
         dms = np.array([ dd.dm for dd in cands ])
         snrs = np.array([ dd.sigma for dd in cands ])
         xx = np.where( (ndupes > 0) & (ndupes <= nhits_max) & (dms >= dm_min) & (dms <= dm_max) & (snrs >= snr_cut))[0]
@@ -239,8 +238,8 @@ def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosear
 
         print(("%d good candidates" %len(gcands)))
         if(len(gcands)):
-                sp.write_cands(tmp_file, gcands)
-                sp.make_nhits_plot(ndupes, nhits_max, base_name)    
+            sp.write_cands(tmp_file, gcands)
+            sp.make_nhits_plot(ndupes, nhits_max, base_name)    
         else:   print("Nothing to plot")    
     else:
         gcands = []
@@ -296,7 +295,7 @@ if __name__ == "__main__":
     parser.add_option("--mask", action='store', dest='mask',default='',type=str,
                 help='User supplied mask file')
     #parser.add_option("--mask", action='store_true', dest='mask',
-                #help='Use this flag to indicate whether a .mask file already exists for the given filterbank file.')
+            #help='Use this flag to indicate whether a .mask file already exists for the given filterbank file.')
     '''
     parser.add_option("--dozap", action='store_true', dest='sp',
                 help='Use this flag to run zap (Default: Do not Run)')
@@ -335,7 +334,7 @@ if __name__ == "__main__":
                 help='Remove zerodm candidates. If heimdall then only used with plotting (Default: do not use)')
     parser.add_option("--smooth", action='store', dest='smooth', default=0.0, type=float,
                 help='Remove (smooth x burst width) boxcar moving average with waterfaller.py (Default: do not smooth)')
-        
+
     parser.add_option("--logs", action='store', dest='csv_file', type=str, default="",
         help='Update results in the input CSV file')
     parser.add_option("--ML", action='store', dest='model', type=str, default="",help="Trained Model. Each candidate will be varified with this ML model (If given, FRBcand_prob file will be created with additional column as probability of FRB)")
@@ -345,14 +344,14 @@ if __name__ == "__main__":
 
     parser.add_option("--nodsamp", action='store_true', dest='nodsamp',
                 help='Do not downsample; For the current 32-bit BL files,it is required (default: do downsample)')
-    
-    
+
+
     options,args = parser.parse_args()
 
     if (not options.fil_file):
-                print('Input file required.')
-                print(parser.print_help())
-                sys.exit(1)
+        print('Input file required.')
+        print(parser.print_help())
+        sys.exit(1)
 
     nodsamp = options.nodsamp
     fil_file = os.path.abspath(options.fil_file)
@@ -368,9 +367,9 @@ if __name__ == "__main__":
 
     # For 32-bit BL, downsample to 8-bit and create new file
     if(nodsamp is not True):
-            if(inchans > 8192 or inbits > 8):
-                    print("Running sum_fil")
-                    fil_file = downsample(fil_file,inbits,inchans)
+        if(inchans > 8192 or inbits > 8):
+            print("Running sum_fil")
+            fil_file = downsample(fil_file,inbits,inchans)
 
     fname = fil_file.split("/")[-1]
     print(fil_file)
@@ -407,10 +406,10 @@ if __name__ == "__main__":
     else: 
         outdir = options.outdir
         if(os.path.isdir(outdir) is not True):       
-                    os.system("mkdir %s" % (outdir))
-            
+            os.system("mkdir %s" % (outdir))
+
     #print "Output will go to %s" % (outdir)                    
-    
+
     os.chdir(outdir)
 
     f = FilReader(fil_file)
@@ -425,10 +424,10 @@ if __name__ == "__main__":
               "\n Chan. Bandwidth (MHz) : " + str(foff) + \
               "\n Integration time : " + str(tint) + \
               "\n Total time : " + str(Ttot) + "\n")
-    
+
     fh = fch1
     fl = fch1 + (foff*nchan)
-    
+
     fname = fname[:-4]
     hdr_file_name = fname+".hdr"
     #print fname,hdr_file_name  
@@ -445,7 +444,7 @@ if __name__ == "__main__":
     MJD = hdr_data[1].strip("\n").replace(".", "_")
     MJDfloat = hdr_data[1].strip("\n")
     if (len(MJD) - MJD.index("_") - 1) > 4: #check to see if the MJD has more than 4 decimal places
-                MJD = MJD[:MJD.index("_") + 5] #reduce the MJD to 4 decimal places
+        MJD = MJD[:MJD.index("_") + 5] #reduce the MJD to 4 decimal places
     base_name = source_name + "_" + MJD
     outdir = outdir + "/" + base_name 
     print("Output will go to %s"  % (outdir))
@@ -464,7 +463,7 @@ if __name__ == "__main__":
         mask_file = ""
     if(nogpu is not True):
         if(nosearch is not True):
-            # IF running heimdall then remove old candidates 
+        # IF running heimdall then remove old candidates 
             os.system("rm %s/*.cand" % (outdir))
             heimdall_run(fil_file,lodm,hidm,outdir,boxcar_max,dorfi,kill_chan_range,heimdall)
             #os.system("mv %s.* %s" % (base_name,base_name))

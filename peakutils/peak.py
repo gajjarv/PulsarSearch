@@ -42,7 +42,7 @@ def indexes(y, thres=0.3, min_dist=1):
 
     # propagate left and right values successively to fill all plateau pixels (0-value)
     zeros,=np.where(dy == 0)
-    
+
     while len(zeros):
         # add pixels 2 by 2 to propagate left and right value onto the zero-value pixel
         zerosr = np.hstack([dy[1:], 0.])
@@ -176,7 +176,7 @@ def interpolate(x, y, ind=None, width=10, func=gaussian_fit):
     """Tries to enhance the resolution of the peak detection by using
     Gaussian fitting, centroid computation or an arbitrary function on the
     neighborhood of each previously detected peak index.
-    
+
     RuntimeErrors raised in the fitting function will be converted to warnings, with the peak
     being mantained as the original one (in the ind array).
 
@@ -201,15 +201,15 @@ def interpolate(x, y, ind=None, width=10, func=gaussian_fit):
         Array with the adjusted peak positions (in *x*)
     """
     assert x.shape == y.shape
-    
+
     if ind is None:
         ind = indexes(y)
 
     out = []
-    
+
     for i in ind:
         slice_ = slice(i - width, i + width + 1)
-        
+
         try:
             best_idx = func(x[slice_], y[slice_])
         except RuntimeError as e:

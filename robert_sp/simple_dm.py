@@ -20,22 +20,22 @@ def fake_dspec(tt, t0, W, f0, df, nchan, DM):
     pp = np.exp(-(tt - t0)**2.0 / (2 * W**2.0))
     dt = tt[1] - tt[0]
     nt = len(tt)
-    dsamp = np.array([ dmdt(DM, ichan, dt, df, f0) for ichan in xrange(nchan) ])
+    dsamp = np.array([ dmdt(DM, ichan, dt, df, f0) for ichan in range(nchan) ])
     offs = dsamp - np.min(dsamp)
     dspec = np.zeros(shape=(nchan, len(tt)))
-    for jj in xrange(nchan):
+    for jj in range(nchan):
         dspec[jj, offs[jj]:] = pp[:nt-offs[jj]]
     return dspec
-    
+
 
 def dedisperse_one(dspec, dm, dt, df, f0, kdm=kdm):
     nchans = dspec.shape[0]
     nt = dspec.shape[1]
-    dsamps = np.array([ dmdt(dm, ichan, dt, df, f0, kdm=kdm) for ichan in xrange(nchans) ])
+    dsamps = np.array([ dmdt(dm, ichan, dt, df, f0, kdm=kdm) for ichan in range(nchans) ])
     dsamps -= np.min(dsamps)
     tpad = np.max(dsamps)
     outarr = np.zeros( nt + tpad )
-    for ii in xrange(nchans):
+    for ii in range(nchans):
         osl = slice(tpad - dsamps[ii], nt + tpad - dsamps[ii])
         outarr[osl] += dspec[ii]
     return outarr[tpad:nt + tpad] / float(nchans)
@@ -45,7 +45,7 @@ def dedisperse_naive(dspec, dms, dt, df, f0, kdm=kdm):
     nchans = dspec.shape[0]
     nt = dspec.shape[1]
     outarr = np.zeros( shape=(len(dms), nt) )
-    for ii in xrange(len(dms)):
+    for ii in range(len(dms)):
         outarr[ii] = dedisperse_one(dspec, dms[ii], dt, df, f0, kdm=kdm)
     return outarr
 
@@ -53,11 +53,11 @@ def dedisperse_naive(dspec, dms, dt, df, f0, kdm=kdm):
 def dedisperse_dspec(dspec, dm, dt, df, f0, kdm=kdm):
     nchans = dspec.shape[0]
     nt = dspec.shape[1]
-    dsamps = np.array([ dmdt(dm, ichan, dt, df, f0, kdm=kdm) for ichan in xrange(nchans) ])
+    dsamps = np.array([ dmdt(dm, ichan, dt, df, f0, kdm=kdm) for ichan in range(nchans) ])
     dsamps -= np.min(dsamps)
     tpad = np.max(dsamps)
     outarr = np.zeros( (nchans, nt + tpad) )
-    for ii in xrange(nchans):
+    for ii in range(nchans):
         osl = slice(tpad - dsamps[ii], nt + tpad - dsamps[ii])
         outarr[ii, osl] = dspec[ii]
     return outarr[:, tpad:nt + tpad]

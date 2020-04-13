@@ -15,10 +15,10 @@ class Classifier(object):
         self.filter_cut  = 10
         self.beam_mask   = (1<<13) - 1
         self.filter_max  = 12
-        
+
     def is_masked(self, beam):
         return ((1<<beam) & self.beam_mask) == 0
-    
+
     def is_hidden(self, cand):
         # self.is_noise(cand) | 
         return ( (cand['snr'] < self.snr_cut) |
@@ -26,23 +26,23 @@ class Classifier(object):
                  self.is_masked(cand['beam']) |
                  ((self.is_masked(cand['beam']) != True) &
                   (cand['beam'] != cand['prim_beam'])) )
-    
+
     def is_noise(self, cand):
         return cand['members'] < self.members_cut
 
     def is_fat(self, cand):
         return cand['filter'] >= self.filter_max
-    
+
     def count_nbeams(self, mask):
         n = 0
         for i in range(self.nbeams):
             n += (mask & (1<<i)) > 0
         return n
-            
+
     def is_coinc_rfi(self, cand):
         nbeams = self.count_nbeams(cand['beam_mask'] & self.beam_mask)
         return nbeams > self.nbeams_cut
-    
+
     def is_lowdm_rfi(self, cand):
         return cand['dm'] < self.dm_cut
 
@@ -52,13 +52,13 @@ class TimeDMPlot(object):
         self.dm_base = 1.0
         self.snr_min = 6.0
         self.multiplot = multiplot
-        
+
     def plot(self, data):
         self.g.reset()
         if self.multiplot:
-          self.g('set size 1.0,0.5')
+            self.g('set size 1.0,0.5')
         else:
-          self.g('set size 1.0,1.0')
+            self.g('set size 1.0,1.0')
         self.g('set origin 0.0,0.0')
         self.g('unset key')
         self.g('set autoscale x')
@@ -118,7 +118,7 @@ class TimeDMPlot(object):
                                  using="2:($4+%f):(min(($1-%f)/2.0+0.9,5)):3" \
                                      % (self.dm_base,self.snr_min),
                                  with_="p pt 3 lw 0.25 lt palette ps variable", inline=True))
-            
+
         if (len(data['lowdm']['snr']) > 0):        
             to_plot.append(Gnuplot.Data(data['lowdm']['snr'],
                                  data['lowdm']['time'],
@@ -157,7 +157,7 @@ class DMSNRPlot(object):
         self.dm_base = 1.0
         self.snr_base = 5.9
         self.max_filter = 12
-	self.dt = 163.84e-6
+        self.dt = 163.84e-6
     def plot(self, data):
         self.g.reset()
         self.g('set size 0.5,0.5')
@@ -195,9 +195,9 @@ class DMSNRPlot(object):
         self.g('set ylabel "SNR"')
         #self.g('set cblabel "log_{2} boxcar width"')
         self.g('set cblabel "Boxcar width [ms]"')
-  
+
         to_plot = []
-            
+
         if (len(data['noise']['snr']) > 0):
             to_plot.append(Gnuplot.Data(data['noise']['snr'],
                                      data['noise']['dm'],
@@ -242,7 +242,7 @@ class DMHistogram(object):
         self.hist     = None
         if cands is not None:
             self.build(cands)
-            
+
     def build(self, cands):
         # cands = cands[cands["filter"] < 11]
         import math
@@ -292,7 +292,7 @@ class DMHistPlot(object):
         self.g('set key inside top center horizontal samplen 2')
         self.g('set xlabel "DM+1 [pc cm^{-3}]')
         self.g('set ylabel "Candidate count"')
-        
+
         beams = []
         for b,beam_hist in enumerate(data):
             beams.append( Gnuplot.Data(beam_hist['bins'],
@@ -335,7 +335,7 @@ class TextOutput(object):
 if __name__ == "__main__":
     import argparse
     import Gnuplot
-    
+
     parser = argparse.ArgumentParser(description="Generates data for Heimdall overview plots.")
     parser.add_argument('-cands_file', default="all_candidates.dat")
     parser.add_argument('-nbeams', type=int, default=13)
@@ -357,7 +357,7 @@ if __name__ == "__main__":
     parser.add_argument('-interactive', action="store_true")
     parser.add_argument('-verbose', action="store_true")
     args = parser.parse_args()
-    
+
     filename = args.cands_file
     nbeams = args.nbeams
     interactive = args.interactive
@@ -371,12 +371,12 @@ if __name__ == "__main__":
     resolution = args.resolution
     res_parts = resolution.split("x")
     if (len(res_parts) != 2):
-      sys.stderr.write("ERROR: resolution must be of form 1024x768")
-      sys.exit(1)
+        sys.stderr.write("ERROR: resolution must be of form 1024x768")
+        sys.exit(1)
 
     res_x = res_parts[0]
     res_y = res_parts[1]
-    
+
     # Load candidates from all_candidates file
     all_cands = \
         np.loadtxt(filename,
@@ -395,8 +395,8 @@ if __name__ == "__main__":
     all_cands['beam'] -= 1
 
     if verbose:
-      sys.stderr.write ("Loaded %i candidates\n" % len(all_cands))
-    
+        sys.stderr.write ("Loaded %i candidates\n" % len(all_cands))
+
     classifier = Classifier()
     classifier.nbeams = args.nbeams
     classifier.snr_cut = args.snr_cut
@@ -406,10 +406,10 @@ if __name__ == "__main__":
     classifier.dm_cut = args.dm_cut
     classifier.filter_cut = args.filter_cut
     classifier.filter_max = args.filter_max
-    
+
     # Filter candidates based on classifications
     if verbose:
-      sys.stderr.write ("Classifying candidates...\n")
+        sys.stderr.write ("Classifying candidates...\n")
     categories = {}
     is_hidden = classifier.is_hidden(all_cands)
     is_noise  = (is_hidden==False) & classifier.is_noise(all_cands)
@@ -423,74 +423,74 @@ if __name__ == "__main__":
     categories["fat"]    = all_cands[is_fat]
     categories["lowdm"]  = all_cands[is_lowdm]
     categories["valid"]  = all_cands[is_valid]
-    
+
     if verbose:
-      sys.stderr.write ( "Classified %i as hidden\n" % len(categories["hidden"]))
-      sys.stderr.write ( "           %i as noise spikes\n" % len(categories["noise"]))
-      sys.stderr.write ( "           %i as coincident RFI\n" % len(categories["coinc"]))
-      sys.stderr.write ( "           %i as fat RFI\n" % len(categories["fat"]))
-      sys.stderr.write ( "           %i as low-DM RFI\n" % len(categories["lowdm"]))
-      sys.stderr.write ( "           %i as valid candidates\n" % len(categories["valid"]))
-    
+        sys.stderr.write ( "Classified %i as hidden\n" % len(categories["hidden"]))
+        sys.stderr.write ( "           %i as noise spikes\n" % len(categories["noise"]))
+        sys.stderr.write ( "           %i as coincident RFI\n" % len(categories["coinc"]))
+        sys.stderr.write ( "           %i as fat RFI\n" % len(categories["fat"]))
+        sys.stderr.write ( "           %i as low-DM RFI\n" % len(categories["lowdm"]))
+        sys.stderr.write ( "           %i as valid candidates\n" % len(categories["valid"]))
+
     if verbose:
-      sys.stderr.write ( "Building histograms...\n")
+        sys.stderr.write ( "Building histograms...\n")
     beam_hists = []
     for beam in range(nbeams):
         cands = all_cands[all_cands['beam'] == beam]
         beam_hists.append(DMHistogram(cands).hist)
 
     if cand_list_xml:
-      if verbose:
-        sys.stderr.write ( "Generating text only listing on stdout:\n")
-      text_output = TextOutput()
-      text_output.print_xml(categories, max_cands)
+        if verbose:
+            sys.stderr.write ( "Generating text only listing on stdout:\n")
+        text_output = TextOutput()
+        text_output.print_xml(categories, max_cands)
 
     if not no_plot:    
-      # Generate plots
-      if verbose:
-        sys.stderr.write ( "Generating plots...\n")
-      g = Gnuplot.Gnuplot(debug=0)
-      if not interactive:
-        g('set terminal pngcairo enhanced font "arial,10" size ' + res_x + ', ' + res_y)
-        if std_out:
-          g('set output')
-          if verbose:
-            sys.stderr.write ( "Writing binary image data to STDOUT\n")
+        # Generate plots
+        if verbose:
+            sys.stderr.write ( "Generating plots...\n")
+        g = Gnuplot.Gnuplot(debug=0)
+        if not interactive:
+            g('set terminal pngcairo enhanced font "arial,10" size ' + res_x + ', ' + res_y)
+            if std_out:
+                g('set output')
+                if verbose:
+                    sys.stderr.write ( "Writing binary image data to STDOUT\n")
+            else:
+                g('set output "overview_' + resolution + '.tmp.png"')
+                if verbose:
+                    sys.stderr.write ( "Writing plots to overview_" + resolution + ".tmp.png\n")
         else:
-          g('set output "overview_' + resolution + '.tmp.png"')
-          if verbose:
-            sys.stderr.write ( "Writing plots to overview_" + resolution + ".tmp.png\n")
-      else:
-        g('set terminal x11 size '+ res_x + ', ' + res_y)
+            g('set terminal x11 size '+ res_x + ', ' + res_y)
 
-      if just_time_dm:
-        timedm_plot = TimeDMPlot(g, False)
-        timedm_plot.plot(categories)
-      else:
-        # g('set terminal x11 size '+ res_x + ', ' + res_y)
-        g('set multiplot')
-        if verbose:
-          sys.stderr.write ( "Gen TimeDM\n")
-        timedm_plot = TimeDMPlot(g, True)
-        if verbose:
-          sys.stderr.write ( "Gen DMSNR\n")
-        dmsnr_plot  = DMSNRPlot(g)
-        if verbose:
-          sys.stderr.write ( "Gen DMHist\n")
-        dmhist_plot = DMHistPlot(g)
-        if verbose:
-          sys.stderr.write ( "Plot TimeDM\n")
-        timedm_plot.plot(categories)
-        if verbose:
-          sys.stderr.write ( "Plot DMSNR\n")
-        dmsnr_plot.plot(categories)
-        if verbose:
-          sys.stderr.write ( "Plot BeamHists\n")
-        dmhist_plot.plot(beam_hists)
-        g('unset multiplot')
-      
-      if interactive:
-          raw_input('Please press return to close...\n')
-        
+        if just_time_dm:
+            timedm_plot = TimeDMPlot(g, False)
+            timedm_plot.plot(categories)
+        else:
+            # g('set terminal x11 size '+ res_x + ', ' + res_y)
+            g('set multiplot')
+            if verbose:
+                sys.stderr.write ( "Gen TimeDM\n")
+            timedm_plot = TimeDMPlot(g, True)
+            if verbose:
+                sys.stderr.write ( "Gen DMSNR\n")
+            dmsnr_plot  = DMSNRPlot(g)
+            if verbose:
+                sys.stderr.write ( "Gen DMHist\n")
+            dmhist_plot = DMHistPlot(g)
+            if verbose:
+                sys.stderr.write ( "Plot TimeDM\n")
+            timedm_plot.plot(categories)
+            if verbose:
+                sys.stderr.write ( "Plot DMSNR\n")
+            dmsnr_plot.plot(categories)
+            if verbose:
+                sys.stderr.write ( "Plot BeamHists\n")
+            dmhist_plot.plot(beam_hists)
+            g('unset multiplot')
+
+        if interactive:
+            raw_input('Please press return to close...\n')
+
     if verbose:
-      sys.stderr.write ( "Done\n")
+        sys.stderr.write ( "Done\n")

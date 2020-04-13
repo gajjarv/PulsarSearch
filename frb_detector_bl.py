@@ -17,7 +17,7 @@ class Classifier(object):
         self.dm_cut      = gdm;
         self.filter_cut  = 8
         self.beam_mask   = (1<<13) - 1  # 1111111111111 allow all beams
-	# For 13 beam mask. These number are in decimal but if we convert them to binnary they generate valid beam masks. 
+        # For 13 beam mask. These number are in decimal but if we convert them to binnary they generate valid beam masks. 
         self.valid_masks = [1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 13, 15, 16, 17, 24, 25, 29, 32, 33, 48, 49, 57, 64, 65, 66, 67, 71, 96, 97, 99, 113, 128, 130, 192, 194, 195, 256, 258, 260, 262, 263, 386, 512, 516, 520, 524, 525, 772, 1024, 1032, 1040, 1048, 1049, 1544, 2048, 2064, 2080, 2096, 2097, 3088, 4096, 4128, 4160, 4192, 4193, 4288, 6176]
 
     def is_hidden(self, cand):
@@ -29,10 +29,10 @@ class Classifier(object):
 
     # test if candidate is galactic or low dm in BL case
     def is_galactic(self, cand):
-      return cand['dm'] <= self.dm_cut
+        return cand['dm'] <= self.dm_cut
 
     def is_not_adjacent(self, cand, epoch, half_time):
-      return (cand['time'] > epoch + half_time) | (cand['time'] < epoch - half_time)
+        return (cand['time'] > epoch + half_time) | (cand['time'] < epoch - half_time)
 
     # count the maximum time
     def min_time(self, cand):
@@ -62,16 +62,16 @@ class TextOutput(object):
             sys.stdout.write("</table>\n")
 
     def print_text(self, data):
-        
+
         cand_type = 'valid'
-    
+
         if len(data[cand_type]) > 0:
 
-          # get indicies list for sorting via time
-          sorted_indices = [i[0] for i in sorted(enumerate(data[cand_type]['time']), key=lambda x:x[1])]
+            # get indicies list for sorting via time
+            sorted_indices = [i[0] for i in sorted(enumerate(data[cand_type]['time']), key=lambda x:x[1])]
 
-          #sys.stdout.write ( "SNR\tTIME\tSAMP\tDM\tFILTER\tBEAM\n")
-          for i in sorted_indices:
+            #sys.stdout.write ( "SNR\tTIME\tSAMP\tDM\tFILTER\tBEAM\n")
+            for i in sorted_indices:
                 sys.stdout.write (str(data[cand_type]['snr'][i]) + "\t" + \
                                   str(data[cand_type]['time'][i]) + "\t" + \
                                   str(data[cand_type]['samp_idx'][i]) + "\t" + \
@@ -100,7 +100,7 @@ class TextOutput(object):
 if __name__ == "__main__":
     import argparse
     import Gnuplot
-    
+
     parser = argparse.ArgumentParser(description="Detects FRB's in candidates file")
     parser.add_argument('-gdm',default=1, type=float)
     parser.add_argument('-cands_file', default="all_candidates.dat")
@@ -116,7 +116,7 @@ if __name__ == "__main__":
     parser.add_argument('-verbose', action="store_true")
     parser.add_argument('-min_members_cut',type=float,default=3)
     args = parser.parse_args()
-	 
+
     max_cands_per_second = args.max_cands_per_sec
     filename = args.cands_file
     verbose = args.verbose
@@ -145,8 +145,8 @@ if __name__ == "__main__":
     all_cands['beam_mask'] &= clear_rfi_mask
 
     if verbose:
-      sys.stderr.write ("Loaded %i candidates\n" % len(all_cands))
-    
+        sys.stderr.write ("Loaded %i candidates\n" % len(all_cands))
+
     classifier = Classifier(math.fabs(args.gdm))
     classifier.snr_cut = args.snr_cut
     classifier.filter_cut = args.filter_cut
@@ -155,7 +155,7 @@ if __name__ == "__main__":
     classifier.members_cut = args.min_members_cut    
     # Filter candidates based on classifications
     if verbose:
-      sys.stderr.write ("Classifying candidates...\n")
+        sys.stderr.write ("Classifying candidates...\n")
 
     categories = {}
 
@@ -177,69 +177,69 @@ if __name__ == "__main__":
 
     # for valid events, check the event rate around the time of the event
     if len(categories['valid']) > 0 & False:
-      min_time = classifier.min_time(all_cands)
-      max_time = classifier.max_time(all_cands)
+        min_time = classifier.min_time(all_cands)
+        max_time = classifier.max_time(all_cands)
 
-      # look in a 8 second window around the event for excessive RFI
-      event_time = 8
+        # look in a 8 second window around the event for excessive RFI
+        event_time = 8
 
-      # Here we check if the event rate excedes set maximum number of events per sec
-	
-      for (i, item) in reversed(list(enumerate(categories['valid']))):
+        # Here we check if the event rate excedes set maximum number of events per sec
+
+        for (i, item) in reversed(list(enumerate(categories['valid']))):
         #cands_per_second = classifier.events_per_sec (all_cands, item['time'], min_time, max_time)
         #print "cands_per_second(orig)="+str(cands_per_second)
 
-        epoch = item['time']
-        half_time = event_time / 2.0
-        new_time = 0
+            epoch = item['time']
+            half_time = event_time / 2.0
+            new_time = 0
 
-        if (epoch - half_time) < min_time:
-          new_time += (epoch - min_time)
-        else:
-          new_time += half_time
+            if (epoch - half_time) < min_time:
+                new_time += (epoch - min_time)
+            else:
+                new_time += half_time
 
-        if (epoch + half_time) > max_time:
-          new_time += (max_time - epoch)
-        else:
-          new_time += half_time
+            if (epoch + half_time) > max_time:
+                new_time += (max_time - epoch)
+            else:
+                new_time += half_time
 
-        half_time = new_time / 2.0
+            half_time = new_time / 2.0
 
-        is_not_adjacent = (is_noise == False) & classifier.is_not_adjacent(all_cands, epoch, half_time)
-        is_valid = (is_noise == False) & (is_not_adjacent == False)
+            is_not_adjacent = (is_noise == False) & classifier.is_not_adjacent(all_cands, epoch, half_time)
+            is_valid = (is_noise == False) & (is_not_adjacent == False)
 
-        event_sum = float(np.count_nonzero(is_valid))
-        cands_per_second = event_sum / new_time
+            event_sum = float(np.count_nonzero(is_valid))
+            cands_per_second = event_sum / new_time
 
-        if cands_per_second < 0:
-          sys.stderr.write ( "cands_per_second = %f \n" % ( cands_per_second )) 
-          cands_per_second = max_cands_per_second
-        if verbose:
-          sys.stderr.write ( "cands_per_second around %f was %f [max = %f]\n" % ( item['time'], cands_per_second, max_cands_per_second )) 
-        if cands_per_second >= max_cands_per_second:
-          categories['valid'] = np.delete(categories['valid'], i, axis=0)
+            if cands_per_second < 0:
+                sys.stderr.write ( "cands_per_second = %f \n" % ( cands_per_second )) 
+                cands_per_second = max_cands_per_second
+            if verbose:
+                sys.stderr.write ( "cands_per_second around %f was %f [max = %f]\n" % ( item['time'], cands_per_second, max_cands_per_second )) 
+            if cands_per_second >= max_cands_per_second:
+                categories['valid'] = np.delete(categories['valid'], i, axis=0)
 
     rfi_storm = pre_valid - len(categories["valid"])
 
     if verbose:
-      sys.stderr.write ( "Classified %i as hidden \n" % len(categories["hidden"]))
-      sys.stderr.write ( "           %i as noise spikes\n" % len(categories["noise"]))
-      #sys.stderr.write ( "           %i as coinc RFI [nbeam > %i]\n" % (len(categories["coinc_dumb"]), classifier.nbeams_cut))
-      #sys.stderr.write ( "           %i as coinc RFI [mask_rule]\n" % len(categories["coinc_smart"]))
-      sys.stderr.write ( "           %i as low DM spikes\n" % len(categories["galactic"]))
-      sys.stderr.write ( "           %i as RFI storm\n" % rfi_storm)
-      sys.stderr.write ( "           %i as valid FRB candidates\n" % len(categories["valid"]))
+        sys.stderr.write ( "Classified %i as hidden \n" % len(categories["hidden"]))
+        sys.stderr.write ( "           %i as noise spikes\n" % len(categories["noise"]))
+        #sys.stderr.write ( "           %i as coinc RFI [nbeam > %i]\n" % (len(categories["coinc_dumb"]), classifier.nbeams_cut))
+        #sys.stderr.write ( "           %i as coinc RFI [mask_rule]\n" % len(categories["coinc_smart"]))
+        sys.stderr.write ( "           %i as low DM spikes\n" % len(categories["galactic"]))
+        sys.stderr.write ( "           %i as RFI storm\n" % rfi_storm)
+        sys.stderr.write ( "           %i as valid FRB candidates\n" % len(categories["valid"]))
 
     text_output = TextOutput()
 
     if cand_list_xml:
-      text_output.print_xml(categories)
+        text_output.print_xml(categories)
     elif cand_list_html:
-      text_output.print_html(categories)
+        text_output.print_html(categories)
     else:
-      text_output.print_text(categories)
+        text_output.print_text(categories)
 
     if verbose:
-      sys.stderr.write ( "Done\n")
+        sys.stderr.write ( "Done\n")
 
 

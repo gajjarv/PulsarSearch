@@ -14,7 +14,7 @@ from astropy.coordinates import Angle
 
 from itertools import combinations
 
-import get_dspec as sp_plt
+from . import get_dspec as sp_plt
 
 
 class Pulse(object):
@@ -75,7 +75,7 @@ class Pulse(object):
     def calc_beams(self):
         self.dupes_nbeams = len(set(self.dupes_beams))
         if self.dupes_nbeams == 0:
-            print self.dupes_beams
+            print(self.dupes_beams)
 
     def get_pdist_stats(self):
         if self.nhits > 1:
@@ -222,7 +222,7 @@ def cands_from_many_files(beam_nums, cands_dir):
         if not os.path.isfile(sp_file):
             sp_file = "%s/beam%03d.cands" %(cands_dir, bnum)
             if not os.path.isfile(sp_file):
-                print("File not found: %s" %sp_file)
+                print(("File not found: %s" %sp_file))
                 continue
             else: pass
         else: pass
@@ -323,7 +323,7 @@ def attrarr(obj_list, attr):
         out_arr = np.array([ getattr(bb, attr) for bb in obj_list ])
         return out_arr
     else:
-        print("List has no attribute \"%s\" " %attr)
+        print(("List has no attribute \"%s\" " %attr))
         return
 
 
@@ -435,22 +435,22 @@ def copy_beams(beamlist, basename, indir, outdir):
         fitsfile = "%s.fits" %(basename)
         inpath = "%s/%s" %(indir, fitsfile)
         if os.path.isfile(inpath):
-            print("FOUND: %s" %inpath)
+            print(("FOUND: %s" %inpath))
             outpath = "%s/%s" %(outdir, fitsfile)
             shutil.copy2(inpath, outpath)
         else:
-            print("MISSING: %s" %inpath)
+            print(("MISSING: %s" %inpath))
     return
 
 
 def copy_beams_from_candfile(candfile, basename, indir, outdir):
     beams = get_beamlist(candfile)
     bb, cc = np.unique(beams, return_counts=True)
-    print("%d Beams, %d Unique Beams" %(len(beams), len(cc)))
+    print(("%d Beams, %d Unique Beams" %(len(beams), len(cc))))
     xx = np.where(cc > 1)[0]
     if len(xx):
         for idx in xx:
-            print("BEAM %d -- %d hits" %(bb[idx], cc[idx]))
+            print(("BEAM %d -- %d hits" %(bb[idx], cc[idx])))
     copy_beams(bb, basename, indir, outdir)
     return
 
@@ -514,13 +514,13 @@ midx_cut = np.sqrt(float(nchan)) / snr_cut
 if get_obs_info:
     testfile = "%s/%s.fits" %(fitsdir, basename)
     #testfile = "%s/%s.fil" %(fitsdir, basename)
-    print testfile
+    print(testfile)
     sp_plt.save_obs_info(testfile, basename)
-	
+
 
 if get_cands:
     cands = cands_from_file(cand_file, 0)
-    print("%d total candidates" %len(cands))
+    print(("%d total candidates" %len(cands)))
     cands = find_duplicates(cands, tbin, 1000.0)
     write_cands( fullfile, cands )
     ndupes = np.array([ dd.nhits for dd in cands ])
@@ -533,7 +533,7 @@ if get_cands:
                    (dms >= dm_min) & (dms <= dm_max))[0]
     gcands = [ cands[ii] for ii in xx ]
 
-    print("%d good candidates" %len(gcands))
+    print(("%d good candidates" %len(gcands)))
     write_cands(tmp_file, gcands)
     make_nhits_plot(ndupes, nhits_max, basename)
 
@@ -554,7 +554,7 @@ if make_cut:
     snrs  = attrarr(candlist, 'fit_snr')
     midxs = attrarr(candlist, 'fit_midx')
     xx = np.where( (snrs >= snr_cut) & (midxs < midx_cut) )[0]
-    print("%d top candidates" %len(xx))
+    print(("%d top candidates" %len(xx)))
     candlist = [ candlist[ii] for ii in xx ]
     sp_plt.write_select_cands(candlist, top_file)
     if make_midx:

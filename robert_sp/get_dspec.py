@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
@@ -11,7 +11,7 @@ from collections import namedtuple
 from astropy.io import fits
 #from astropy.coordinates import SkyCoord
 from astropy import units as u
-import simple_dm as dedisp
+from . import simple_dm as dedisp
 
 
 def get_data(infile, tstart, tdur):
@@ -19,7 +19,7 @@ def get_data(infile, tstart, tdur):
     hdu1, hdu2 = hdulist
 
     tstop = tstart + tdur 
-    
+
     dt = hdu2.header['tbin']
     freqs = hdu2.data[0]['dat_freq']
     df = freqs[1] - freqs[0]
@@ -33,7 +33,7 @@ def get_data(infile, tstart, tdur):
 
     dd = hdu2.data[row_start : row_stop]['data']
     dd = np.reshape(dd, ( (row_stop - row_start) * nsblk, nchan ))
-    
+
     idx = max(int( (tstart - trow_start) / dt ), 0)
     ntx = int(tdur / dt)
 
@@ -42,14 +42,14 @@ def get_data(infile, tstart, tdur):
     tt = np.arange(dd.shape[0]) * dt + trow_start + idx * dt
 
     hdulist.close()
-    
+
     return tt, freqs, dd
 
 
 def get_obs_info(infile):
     hdulist = fits.open(infile)
     hdu1, hdu2 = hdulist
-    
+
     obs_info = {}
     hdr = hdu1.header
     keys = ['RA', 'DEC', 'STT_IMJD', 'STT_SMJD', 'STT_OFFS']
@@ -85,7 +85,7 @@ def save_obs_info(fitsfile, basename):
 
 def avg_chan(dd, nchan=4):
     nsteps = int(dd.shape[1] / nchan)
-    for nn in xrange(nsteps):
+    for nn in range(nsteps):
         dd[:,nn*nchan:(nn+1)*nchan] = \
             np.outer(np.mean(dd[:, nn*nchan:(nn+1)*nchan], axis=1), np.ones(nchan))
     return dd
@@ -137,7 +137,7 @@ def make_plot(infile, tmid, tsearch, tshow, DM, beamnum=-999,
 
     if outfile is not None:
         plt.ioff()
-    
+
     # Make Figure
     fig = plt.figure(figsize=(10,8))
 
@@ -153,13 +153,13 @@ def make_plot(infile, tmid, tsearch, tshow, DM, beamnum=-999,
     wds = hds = 0.55
     xds = bpad 
     yds = bpad
-    
+
     # Time Series Axis
     hts = 1.0 - 2 * bpad - hpad - hds
     wts = wds
     xts = xds
     yts = yds + hds + hpad 
-    
+
     # Spectrum Axis
     hs = hds 
     ws = 1.0 - 2 * bpad - wpad - wds 
@@ -194,7 +194,7 @@ def make_plot(infile, tmid, tsearch, tshow, DM, beamnum=-999,
 
     im_ext = [tt[0] - tpk, tt[-1] - tpk, freqs[0], freqs[-1]]
 
-    
+
     ax_ds.imshow(dd.T / dd_sig, interpolation='nearest', origin='lower', 
                  aspect='auto', extent = im_ext, cmap=cmap, 
                  vmin= -1 * min_frac * dspec_snr * dd_sig, 
@@ -239,7 +239,7 @@ def make_plot(infile, tmid, tsearch, tshow, DM, beamnum=-999,
     ax_s.plot(spec / dd_sig, freqs, c='k', ls='steps', lw=1)
     #ax_s.plot(spec0 / dd_sig, freqs, c='LimeGreen')
     ax_s.axvline(x=0, lw=3, c='k', alpha=0.2)
-    
+
     ax_s.set_ylim(flim)
     spec_max = (int(1.2 * np.max(spec/dd_sig)/5)+1) * 5
     spec_min = -(int(0.1 * np.max(spec/dd_sig)/5)+1) * 5
@@ -282,11 +282,11 @@ def make_plot(infile, tmid, tsearch, tshow, DM, beamnum=-999,
                 r"${\rm DM} = %.1f\, {\rm pc\, cm}^{-3}$" %(DM) + "     " +\
                 r"${\rm Beam} = %d$" %(beamnum)
     fig.suptitle(title_str, fontsize=16)
-    
+
     # Add a footer with the file name
     fig.text(0.02, 0.02, infile.split('/')[-1], 
              va='bottom', ha='left', fontsize=10)
-    
+
     if outfile is not None:
         plt.savefig(outfile, dpi=100, bbox_inches='tight')
         plt.close()
@@ -307,9 +307,9 @@ def dspec_stats(infile, tmid, tsearch, tshow, DM, chan_weights=None):
     ddm_sig = np.std(ddm)
     snrs = ddm / ddm_sig 
     xpk = np.where(tt == tpk)[0][0]
-    
+
     return tpk, snrs[xpk], midx[xpk]
-    
+
 
 def get_file_name(indir, basename, beamnum, nzeros=4):
     return "{}/{}_beam{:0{}}.fits".format(indir, basename, beamnum, nzeros)
@@ -329,7 +329,7 @@ def plots_from_candfile(candfile, fitsdir, basename, tsearch, tshow,
         dms = dms * 0 + fixdm
 
     print("\nMaking %d Dynamic Spectrum Plots" %N)
-    for ii in xrange(N):
+    for ii in range(N):
         print("%d%%" %(int(100.0 * (ii+1) / float(N))), end="...")
         sys.stdout.flush()
         infile = get_file_name(fitsdir, basename, beams[ii], nzeros=nzeros)
@@ -355,7 +355,7 @@ def plots_from_candlist(candlist, fitsdir, basename, tsearch, tshow,
         dms = dms * 0 + fixdm
 
     print("\nMaking %d Dynamic Spectrum Plots" %N)
-    for ii in xrange(N):
+    for ii in range(N):
         print("%d%%" %(int(100.0 * (ii+1) / float(N))), end="...")
         sys.stdout.flush()
         infile = "%s/%s.fits" %(fitsdir, basename)
@@ -386,7 +386,7 @@ def stats_from_candfile(candfile, fitsdir, basename, tsearch, tshow,
     else:
         dms = np.ones(len(dms_det)) * fixdm
 
-    for ii in xrange(N):
+    for ii in range(N):
         #infile = get_file_name(fitsdir, basename, 0, nzeros=nzeros)
         infile = "%s/%s.fits" %(fitsdir, basename)
         ftt, fss, fmm = dspec_stats(infile, times[ii], tsearch, tshow, dms[ii],
@@ -422,7 +422,7 @@ def cands_from_candfile(candfile, fixdm=None):
         dms = np.ones(len(dms_det)) * fixdm
 
 
-    for ii in xrange(N):
+    for ii in range(N):
         cc = Cand(tt=times[ii], beam=beams[ii], dm=dms[ii], dm_det=dms_det[ii], 
                   snr=snrs[ii], fit_snr=fit_snr[ii], fit_midx=fit_midx[ii])
         candlist.append(cc)
@@ -446,7 +446,7 @@ def write_select_cands(cands, outfile):
     fit_snrs = array_attr(cands, 'fit_snr')
     idx = np.argsort(fit_snrs)
     sorted_cands = [ cands[ii] for ii in idx[::-1] ]
-    
+
     for cc in sorted_cands:
         outstr = "{:<12.3f}{:<10d}{:<10.2f}{:<10.2f}{:<10.2f}{:<10.2f}".format(\
             cc.tt, cc.beam, cc.dm_det, cc.snr, cc.fit_snr, cc.fit_midx)
