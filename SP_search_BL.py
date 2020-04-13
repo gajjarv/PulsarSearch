@@ -28,6 +28,12 @@ from PlotCand import extractPlotCand_old
 import pandas as pd
 
 ENV = os.environ.copy()
+SPANDAK_PATH = os.path.split(os.path.abspath(__file__))[0]
+
+def run_in_env(cmd):
+    p=sb.Popen(cmd,stdout=sb.PIPE, shell=True, env=ENV, executable='/bin/bash')
+    out,err=p.communicate()
+    return out, err
 
 def dm_delay(fl, fh, DM):
     kdm = 4148.808 # MHz^2 / (pc cm^-3)
@@ -70,11 +76,12 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
         #print "Inside : %s" % (basedir) 
         os.system("rm *_all.cand")
         os.system("rm *.ar *.norm")
-        os.system("coincidencer *.cand")    
+        run_in_env("coincidencer *.cand")    
+        os.system('pwd')
         os.system("trans_gen_overview.py -cands_file *_all.cand")
         os.system("mv overview_1024x768.tmp.png %s.overview.png" % (source_name))
-        os.system("frb_detector_bl.py  -gdm 6 -cands_file *_all.cand -filter_cut %d -snr_cut %f -max_cands_per_sec %f -min_members_cut %f -verbose" % (filter_cut,snr_cut,maxCandSec,minMem))
-        os.system("frb_detector_bl.py  -gdm 6 -cands_file *_all.cand -filter_cut %d -snr_cut %f -max_cands_per_sec %f -min_members_cut %f  > FRBcand" % (filter_cut,snr_cut,maxCandSec,minMem))
+        os.system("%s/frb_detector_bl.py  -gdm 6 -cands_file *_all.cand -filter_cut %d -snr_cut %f -max_cands_per_sec %f -min_members_cut %f -verbose" % (SPANDAK_PATH, filter_cut,snr_cut,maxCandSec,minMem))
+        os.system("%s/frb_detector_bl.py  -gdm 6 -cands_file *_all.cand -filter_cut %d -snr_cut %f -max_cands_per_sec %f -min_members_cut %f  > FRBcand" % (SPANDAK_PATH, filter_cut,snr_cut,maxCandSec,minMem))
         if ml_model:
             print("ML model given")
             FRBcand = os.path.abspath("FRBcand")

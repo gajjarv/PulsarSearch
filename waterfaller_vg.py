@@ -21,12 +21,11 @@ import matplotlib.pyplot as plt
 import matplotlib.cm
 import numpy as np
 
-import psr_utils
-import rfifind
-
-import psrfits
-import filterbank
-import spectra
+from presto import psr_utils
+from presto import rfifind
+from presto import psrfits
+from presto import filterbank
+from presto import spectra
 from scipy import stats
 import pandas as pd
 import os
@@ -207,7 +206,7 @@ def waterfall(rawdatafile, start, duration, dm=None, nbins=None, nsub=None,\
         for ii in range(data.numchans):
             chan = data.get_chan(ii)
             nbin = len(chan)
-            x = range(nbin)
+            x = list(range(nbin))
             if(nbin>4000): deg = 10
             if(nbin<4000 and nbin>2000): deg = 8
             if(nbin<2000 and nbin>1000): deg = 6
@@ -264,7 +263,7 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
     #Get window 	
     spectrum_window = 0.02*duration
     window_width = int(spectrum_window/data.dt) # bins
-    burst_bin = nbinlim/2
+    burst_bin = nbinlim//2
 
     #Zap all channels which have more than half bins zero (drop packets)	
     zerochan=1
@@ -306,7 +305,7 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
     '''
     band = (data.freqs.max()-data.freqs.min())
     centFreq = (data.freqs.min()+band/2.0)/(10**3) # To get it in GHz 
-    print width,centFreq,band 
+    print(width,centFreq,band) 
     #This comes from Cordes and McLaughlin (2003) Equation 13. 
     FWHM_DM = 506*float(width)*pow(centFreq,3)/band 
     #The candidate DM might not be exact so using a longer range
@@ -318,7 +317,7 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
         hidm = 2*dm # If low DM is zero then range should be 0 to 2*DM
     else:
         hidm= dm+FWHM_DM
-    print FWHM_DM,dm,lodm,hidm 
+    print(FWHM_DM,dm,lodm,hidm) 
     dmstep = (hidm-lodm)/48.0
     datacopy = copy.deepcopy(data)
     #print lodm,hidm
@@ -420,7 +419,7 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
     plt.text(1.1,0.3,text4,fontsize=12,ha='center', va='center', transform=ax_ts.transAxes)
     if prob: 
         text5 = "ML prob: " + "%.2f" % (float(prob))
-        print text5
+        print(text5)
         plt.text(1.1,0.1,text5,fontsize=12,ha='center', va='center', transform=ax_ts.transAxes) 
 
     #DMvsSNR plot	
@@ -453,16 +452,16 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
 
     if FTdirection == 'nT':
         ndata = data.data[...,::-1]
-        print "Will be flipped in Time"
+        print("Will be flipped in Time")
     elif FTdirection == 'nF':
         ndata = data.data[::-1,...]
-        print "Will be flipped in freq"
+        print("Will be flipped in freq")
     elif FTdirection == 'nTnF':
         ndata = data.data[::-1,::-1]
-        print "Will be flipped in time and freq"
+        print("Will be flipped in time and freq")
     else:
         ndata = data.data
-        print "No flip"
+        print("No flip")
 
     # Sweeping it up
     for ii, sweep_dm in enumerate(sweep_dms):
@@ -535,6 +534,7 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
     DMcent = Dedisp_dmsnr_split[2]
     DMright = Dedisp_dmsnr_split[4]
 
+    prob = 0.0 if prob is None else prob  # Set to 0 if None
     if prob >= probTrsh2:
         ofile = "A_" + ofile  
         plt.text(1.1,0.2,"cat: A",fontsize=12,ha='center', va='center', transform=ax_ts.transAxes)    

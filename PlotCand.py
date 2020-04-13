@@ -21,6 +21,15 @@ import shlex
 import time as tt
 import pandas as pd
 
+ENV = os.environ.copy()
+SPANDAK_PATH = os.path.split(os.path.abspath(__file__))[0]
+
+def run_in_env(cmd):
+    p=sb.Popen(cmd,stdout=sb.PIPE, shell=True, env=ENV, executable='/bin/bash')
+    out,err=p.communicate()
+    return out, err
+
+
 def find_nearidx(array,val):
     idx = (np.abs(array-val)).argmin()
     return idx
@@ -177,7 +186,7 @@ def plotParaCalc(snr,filter,dm,fl,fh,tint,nchan):
 
     # Fraction of extraction to plot each time calc (we expect pulse to be in first half)
     if tbin>bins_per_plot:
-        frac = np.linspace(0,0.5,np.ceil(tbin/bins_per_plot)) 
+        frac = np.linspace(0,0.5,int(np.ceil(tbin/bins_per_plot))) 
     else:
         frac = np.array([0,0.5]) 
 
@@ -234,7 +243,7 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
                 print("Candidate inside bad-time range")	
             else:
                 candname = '%04d' % (indx) + "_" + '%.3f' % (time) + "sec_DM" + '%.2f.png' % (dm)
-                cmd = "waterfaller_vg.py --show-ts " + \
+                cmd = "%s/waterfaller_vg.py --show-ts " % SPANDAK_PATH + \
                        " -t " + str(TotDisplay) + \
                        " --colour-map=hot " + \
                        " -T "  + str(stime) +  \
@@ -257,12 +266,12 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
                     cmd_array.append(cmd)
                 else: 
                     print(cmd)
-                    os.system(cmd)					
+                    run_in_env(cmd)					
                 #df=pd.DataFrame({'PNGFILE':[candname],'filename':[fil_file]})
                 #if csv_file: csvdata = csvdata.append(df)
         if parallel: 
             exeparallel(cmd_array)
-            open('cand_plot_commands','wb').write('\n'.join(i for i in cmd_array))
+            open('cand_plot_commands','wb').write('\n'.join(i for i in cmd_array).encode('ascii'))
         #if csv_file: csvdata.to_csv(csv_file)		
         tt.sleep(2)	
         print("Plotting Done")	
