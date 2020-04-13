@@ -38,7 +38,7 @@ def baseline(y, deg=None, max_it=None, tol=None):
     if deg is None: deg = 3
     if max_it is None: max_it = 100
     if tol is None: tol = 1e-3
-    
+
     order = deg + 1
     coeffs = np.ones(order)
 
@@ -66,7 +66,7 @@ def envelope(y, deg=None, max_it=None, tol=None):
     """
     Computes the upper envelope of a given data.
     It is implemented in terms of the `baseline` function.
-    
+
     Parameters
     ----------
     y : ndarray

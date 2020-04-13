@@ -19,5 +19,5 @@ foff = fhdr.header['foff']
 subsize = int(np.floor(chans/nsub))
 
 for i in range(nsub): 
-	print fch1+foff*i*subsize,fch1 + foff*(i+1)*subsize
-		
+    print fch1+foff*i*subsize,fch1 + foff*(i+1)*subsize
+

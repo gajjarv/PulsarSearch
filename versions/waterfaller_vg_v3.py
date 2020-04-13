@@ -54,7 +54,7 @@ def get_mask(rfimask, startsamp, N):
             blockmask[:,chans_to_mask] = True
         mask[blocknums==blocknum] = blockmask
     return mask.T
-        
+
 def maskfile(maskfn, data, start_bin, nbinsextra):
     rfimask = rfifind.rfifind(maskfn) 
     mask = get_mask(rfimask, start_bin, nbinsextra)[::-1]
@@ -124,7 +124,7 @@ def waterfall(rawdatafile, start, duration, dm=None, nbins=None, nsub=None,\
 
     try: source_name=rawdatafile.header['source_name']
     except: source_name="Unknown"
-	
+
     start_bin = np.round(start/rawdatafile.tsamp).astype('int')
     dmfac = 4.15e3 * np.abs(1./rawdatafile.frequencies[0]**2 - 1./rawdatafile.frequencies[-1]**2)
 
@@ -132,7 +132,7 @@ def waterfall(rawdatafile, start, duration, dm=None, nbins=None, nsub=None,\
         nbins = np.round(duration/rawdatafile.tsamp).astype('int')
 
     if dm:
-	nbinsextra = np.round((duration + dmfac * dm)/rawdatafile.tsamp).astype('int')
+        nbinsextra = np.round((duration + dmfac * dm)/rawdatafile.tsamp).astype('int')
     else:
         nbinsextra = nbins    
 
@@ -154,7 +154,7 @@ def waterfall(rawdatafile, start, duration, dm=None, nbins=None, nsub=None,\
         masked_chans[bandpass == 0] = True
 
         # ignore top and bottom 1% of band
-	# VG: there is some bug here so "masking" these three lines
+        # VG: there is some bug here so "masking" these three lines
         #ignore_chans = int(np.ceil(0.01*rawdatafile.nchan)) 
         #masked_chans[:ignore_chans] = True
         #masked_chans[-ignore_chans:] = True
@@ -165,7 +165,7 @@ def waterfall(rawdatafile, start, duration, dm=None, nbins=None, nsub=None,\
     data.data = data_masked
 
     if bandpass_corr:
-       data.data /= bandpass[:, None]
+        data.data /= bandpass[:, None]
 
     # Zerodm filtering
     if (zerodm == True):
@@ -186,7 +186,7 @@ def waterfall(rawdatafile, start, duration, dm=None, nbins=None, nsub=None,\
 
     # scale data
     data = data.scaled(scaleindep)
- 
+
     # Smooth
     if width_bins > 1:
         data.smooth(width_bins, padval='mean')
@@ -199,13 +199,13 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
                    ax_im=None, ax_ts=None, ax_spec=None, interactive=True, downsamp=1,nsub=None,subdm=None,width=None, snr=None):
     """ I want a docstring too!
     """
-    
+
     if source_name is None:
-	source_name="Unknown"
+        source_name="Unknown"
 
     #Output file 	
     if ofile is "unknown_cand":
-    	title = "%s_" +  ofile + "_%.3f_%s" % (source_name,start,str(dm))
+        title = "%s_" +  ofile + "_%.3f_%s" % (source_name,start,str(dm))
     else: title=source_name + "_" + ofile
 
     # Set up axes
@@ -224,7 +224,7 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
     if integrate_spec and not ax_spec:
         ax_spec = plt.axes((0.75, 0.15, 0.2, im_height),sharey=ax_im)
     '''
-    
+
     ax_ts = plt.axes((0.15, 0.835, 0.8, 0.145))
     ax_im = plt.axes((0.15, 0.59, 0.8, 0.24),  sharex=ax_ts)
     ax_dmvstm = plt.axes((0.15, 0.345, 0.8, 0.24), sharex=ax_ts) 
@@ -243,12 +243,12 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
     #print lodm,hidm
     for ii in np.arange(lodm,hidm,dmstep):
     #for ii in range(400,600,10):
-	#Without this, dispersion delay with smaller DM step does not produce delay close to bin width
-	data.dedisperse(0,padval='rotate')
-	data.dedisperse(ii,padval='rotate')		
-	Data = np.array(data.data[..., :nbinlim])			
-	Dedisp_ts = Data.sum(axis=0)
-	dmvstm_array.append(Dedisp_ts)
+        #Without this, dispersion delay with smaller DM step does not produce delay close to bin width
+        data.dedisperse(0,padval='rotate')
+        data.dedisperse(ii,padval='rotate')		
+        Data = np.array(data.data[..., :nbinlim])			
+        Dedisp_ts = Data.sum(axis=0)
+        dmvstm_array.append(Dedisp_ts)
     dmvstm_array=np.array(dmvstm_array)		
     #print np.shape(dmvstm_array)
     #np.save('dmvstm_1step.npz',dmvstm_array)
@@ -270,7 +270,7 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
     #data.downsample(downsamp)
     data.dedisperse(dm,padval='rotate')	
     nbinlim = np.int(duration/data.dt)
-     	
+
     img = ax_im.imshow(data.data[..., :nbinlim], aspect='auto', \
                 cmap=matplotlib.cm.cmap_d[cmap_str], \
                 interpolation='nearest', origin='upper', \
@@ -313,7 +313,7 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
         ddm = sweep_dm-data.dm
         delays = psr_utils.delay_from_DM(ddm, data.freqs)
         delays -= delays.min()
-        
+
         if sweep_posns is None:
             sweep_posn = 0.0
         elif len(sweep_posns) == 1:
@@ -322,12 +322,12 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
             sweep_posn = sweep_posns[ii]
         sweepstart = data.dt*data.numspectra*sweep_posn+data.starttime
         #sty = SWEEP_STYLES[ii%len(SWEEP_STYLES)]
-	sty="b-"
-	ax_orig.plot(delays+sweepstart,  data.freqs, "b-", lw=2, alpha=0.7)
-	ax_orig.plot(delays+sweepstart+duration,  data.freqs, "b-", lw=2, alpha=0.7)	
-    
+        sty="b-"
+        ax_orig.plot(delays+sweepstart,  data.freqs, "b-", lw=2, alpha=0.7)
+        ax_orig.plot(delays+sweepstart+duration,  data.freqs, "b-", lw=2, alpha=0.7)	
+
     ax_orig.imshow(data.data, aspect='auto', \
-	cmap=matplotlib.cm.cmap_d[cmap_str], \
+        cmap=matplotlib.cm.cmap_d[cmap_str], \
         interpolation='nearest', origin='upper', \
         extent=(data.starttime, data.starttime + len(data.data[0])*data.dt, \
         data.freqs.min(), data.freqs.max()))
@@ -339,8 +339,8 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
     #oname = "%.3f_%s.png" % (start,str(dm))
 
     if ofile is "unknown_cand":    	    	
-		plt.savefig(ofile)
-		ofile = ofile + "_%.3f_%s.png" % (start,str(dm))
+        plt.savefig(ofile)
+        ofile = ofile + "_%.3f_%s.png" % (start,str(dm))
     else: plt.savefig(ofile)
     #plt.show()
 
@@ -371,7 +371,7 @@ def main():
                             bandpass_corr=options.bandpass_corr)
 
     plot_waterfall(data,  start, source_name, options.duration, \
-		   dm=options.dm,ofile=options.ofile, integrate_ts=options.integrate_ts, \
+                   dm=options.dm,ofile=options.ofile, integrate_ts=options.integrate_ts, \
                    integrate_spec=options.integrate_spec, show_cb=options.show_cb, 
                    cmap_str=options.cmap, sweep_dms=options.sweep_dms, \
                    sweep_posns=options.sweep_posns, downsamp=options.downsamp,width=options.width,snr=options.snr)
@@ -387,9 +387,9 @@ if __name__=='__main__':
                         help="DM to use when subbanding. (Default: " \
                                 "same as --dm)", default=None)
     parser.add_option('-o', dest='ofile', default="unknown_cand", \
-			help="Output png plot file name (Default=start_dm)",type='str') 
+                        help="Output png plot file name (Default=start_dm)",type='str') 
     parser.add_option('--width',dest='width', default=None,\
-			help="Width of the pulse (for figure only; not used anywhere)",type='str')
+                        help="Width of the pulse (for figure only; not used anywhere)",type='str')
     parser.add_option('--snr',dest='snr', default=None,\
                         help="SNR of the pulse (for figure only; not used anywhere)",type='str')		
     parser.add_option('--zerodm', dest='zerodm', action='store_true', \
@@ -461,7 +461,7 @@ if __name__=='__main__':
                                 "(Default: gist_yarg.)", \
                         default='gist_yarg')
     options, args = parser.parse_args()
-    
+
     if not hasattr(options, 'start'):
         raise ValueError("Start time (-T/--start-time) " \
                             "must be given on command line!")
@@ -471,5 +471,5 @@ if __name__=='__main__':
                             "must be given on command line!")
     if options.subdm is None:
         options.subdm = options.dm
-   	
+
     main()
