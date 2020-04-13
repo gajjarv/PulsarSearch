@@ -27,6 +27,8 @@ from PlotCand import extractPlotCand
 from PlotCand import extractPlotCand_old
 import pandas as pd
 
+ENV = os.environ.copy()
+
 def dm_delay(fl, fh, DM):
     kdm = 4148.808 # MHz^2 / (pc cm^-3)
     return abs(kdm * DM * (1.0 / (fl * fl) - 1 / (fh * fh)))
@@ -115,17 +117,17 @@ def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range,heim
         cmd = "heimdall -f %s -rfi_tol 10 -dm_tol 1.15 -dm_pulse_width 100 -rfi_no_narrow -rfi_no_broad -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s -v %s %s" % (fil_file,dmlo,dmhi,boxcar_max,outdir,zapchan,heimdall)        
         print(cmd)
         #os.system(cmd)
-        p=sb.Popen(cmd,stdout=sb.PIPE, shell=True)
+        p=sb.Popen(cmd,stdout=sb.PIPE, shell=True, env=ENV, executable='/bin/bash')
         out,err=p.communicate()
         #Sometime the heimdall command fails with some Thrust memory error
         #so running it again
         if p.returncode != 0:
             print("First try after failure")
-            p=sb.Popen(cmd,stdout=sb.PIPE,shell=True)
+            p=sb.Popen(cmd,stdout=sb.PIPE,shell=True, env=ENV, executable='/bin/bash')
             out,err=p.communicate()
             if p.returncode != 0:
                 print("Second try after failure")
-                p=sb.Popen(cmd,stdout=sb.PIPE,shell=True)   
+                p=sb.Popen(cmd,stdout=sb.PIPE,shell=True, env=ENV, executable='/bin/bash')   
                 out,err=p.communicate()
                 if p.returncode != 0:
                     print("HEIMDALL_ERROR=" + str(p.returncode))
@@ -139,15 +141,18 @@ def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range,heim
         cmd = "heimdall -f %s -dm_tol 1.15 -rfi_tol 10 -dm_pulse_width 100   -rfi_no_narrow -rfi_no_broad -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s -v %s" % (fil_file,dmlo,dmhi,boxcar_max,outdir,heimdall) 
         print(cmd)
         #os.system(cmd);
-        p=sb.Popen(cmd,stdout=sb.PIPE, shell=True)
+        #print(ENV)
+        p=sb.Popen('env',stdout=sb.PIPE, shell=True, env=ENV, executable='/bin/bash')
+        out,err=p.communicate()
+        p=sb.Popen(cmd,stdout=sb.PIPE, shell=True, env=ENV, executable='/bin/bash')
         out,err=p.communicate()
         if p.returncode != 0:
             print("First try after failure")
-            p=sb.Popen(cmd,stdout=sb.PIPE,shell=True)
+            p=sb.Popen(cmd,stdout=sb.PIPE,shell=True, env=ENV, executable='/bin/bash')
             out,err=p.communicate()
             if p.returncode != 0:
                 print("Second try after failure")
-                p=sb.Popen(cmd,stdout=sb.PIPE,shell=True)
+                p=sb.Popen(cmd,stdout=sb.PIPE,shell=True, env=ENV, executable='/bin/bash')
                 out,err=p.communicate()
                 if p.returncode != 0:
                     print("HEIMDALL_ERROR=" + str(p.returncode))
@@ -484,7 +489,7 @@ if __name__ == "__main__":
         pdffile = [pdffile]
         subject = "Broadband candidates from %s" % (base_name)
         cmd = "mjd2cal %s" % (MJDfloat) 
-        p = sb.Popen([cmd],stdout=sb.PIPE,shell=True)
+        p = sb.Popen([cmd],stdout=sb.PIPE,shell=True, env=ENV, executable='/bin/bash')
         mjdstr = [p.stdout.read()]
         msgtxt = "Broadband candidates found on %s" % (mjdstr[0])
         send_to = "vishal.gajjar2002@gmail.com"
