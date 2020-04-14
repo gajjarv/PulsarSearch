@@ -209,8 +209,11 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
             filter = frb['filter']
             width = tint * (2 ** filter)*(10**3) # Width in msec
             snr = frb['snr']
-            if len(frb)>6: prob = frb['FRBprob']					
-            else: prob = ""
+            
+            try:
+                prob = frb['FRBprob']
+            except:
+                prob = ''
 
             #print "here"
             tbin,fbin,extime,frac,cand_band_smear=plotParaCalc(snr,filter,dm,fl,fh,tint,nchan)
