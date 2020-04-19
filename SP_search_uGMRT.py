@@ -95,7 +95,8 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 			print "No candidate found"
 			return
 
-        extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan,mask_file,smooth,zerodm)                    
+        extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan,mask_file,smooth,zerodm,csv_file)           
+
 
 def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range):
 
@@ -277,6 +278,10 @@ if __name__ == "__main__":
 		help='Remove zerodm candidates. If heimdall then only used with plotting (Default: use it for GMRT)')
 	parser.add_option("--smooth", action='store', dest='smooth', default=0.0, type=float,
                 help='Remove (smooth x burst width) boxcar moving average with waterfaller.py (Default: do not smooth)')
+	
+	parser.add_option("--logs", action='store', dest='csv_file', type=str, default="",
+                help='Update results in the input CSV file')
+        parser.add_option("--ML", action='store', dest='model', type=str, default="",help="Trained Model. Each candidate will be varified with this ML model (If given, FRBcand_prob file will be created with additional column as probability of FRB)")
 
 	parser.add_option("--email", action='store_true', dest='email',
                 help='Send candidate file over email (no email)')	
@@ -293,6 +298,12 @@ if __name__ == "__main__":
 	
 	nodsamp = options.nodsamp
 	fil_file = os.path.abspath(options.fil_file)
+	
+	if options.csv_file: csv_file = os.path.abspath(options.csv_file)
+        else: csv_file=""
+        if options.model: ml_model=options.model
+        else: ml_model=""
+	
 
 	# For GMRT, downsample by 2 and new file created 
 	if(nodsamp is not True): fil_file = downsample(fil_file)	
