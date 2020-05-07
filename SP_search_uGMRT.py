@@ -219,7 +219,7 @@ def downsample(fil_file):
 	cmd = "uGMRT_FilFix.py %s" % (tmp) # Fix header problems
 	print cmd
 	os.system(cmd)
-        print "Decimate comple"
+        print "Decimate complete"
 	# Return new file name
 	return ".".join(fil_file.split(".")[:-1])+"_2add_DS1.fil"
 	#return ".".join(fil_file.split(".")[:-1])+"_2add.fil"
