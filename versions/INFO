@@ -6,7 +6,8 @@ v6: A good working verion but does not remove zero DM candidates. Next version.
 V7 : With PRESTO, removes zerodm candidates (Next version should have ploting based on the candidate DM and SNR)
 V8 : Copy before cleaning and better plotting tool
 V9 : Better plot with DM vs SNR plot 
-V10: Heimdall command improved with rfi_no_narrow placed (active)
+V10: Heimdall command improved with rfi_no_narrow placed 
+V11: Heimdall Error check if it fails. ML model passed to FRBcand output for priortization  
 
 
 PlotCand: active v1
@@ -42,6 +43,6 @@ waterfaller_vg_v8.py : Off-pulse are taken from the both side of the pulse while
 waterfaller_vg_v9.py : Added csv file option. If --logs <csv file> provided, metadata for each candidate will be stored. 
 waterfaller_vg_v10.py : Zap channels with off-pulse signal higher than 4 times the std of the entire spectra. Also zap 5% of the band on both side (top and bottom).
 waterfaller_vg_v11.py : Probability from the ML algorithm added. A B C catagory parameters were changed a little bit (this version was used for the first 1000 C band files).
-Next: All the channels which have 50% zeros in them are flagged. This should reduce number of B candidates   
+waterfaller_vg_v12.py: All the channels which have 50% zeros in them are flagged. This should reduce number of B candidates   
 
  

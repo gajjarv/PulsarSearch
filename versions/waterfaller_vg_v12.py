@@ -30,7 +30,6 @@ import spectra
 from scipy import stats
 import pandas as pd
 import os
-import re
 
 SWEEP_STYLES = ['r-', 'b-', 'g-', 'm-', 'c-']
 
@@ -69,21 +68,10 @@ def maskfile(maskfn, data, start_bin, nbinsextra):
     #datacopy = copy.deepcopy(data)
     return data, masked_chans
 
-def zap_channels(data, flag_chans):
-    mask = np.zeros(data.data.shape,dtype=bool)
-    masked_val = np.ones(data.data.shape[1],dtype=bool)
-    if len(flag_chans) == 1:
-        mask[flag_chans[0]] = masked_val
-    elif len(flag_chans) == 2:
-        mask[int(flag_chans[0]):int(flag_chans[1])] = masked_val
-    
-    new_data = data.masked(mask,maskval=0)
-    return new_data
-
 def waterfall(rawdatafile, start, duration, dm=None, nbins=None, nsub=None,\
               subdm=None, zerodm=False, downsamp=1, scaleindep=False,\
               width_bins=1, mask=False, maskfn=None, csv_file=None, bandpass_corr=False, \
-              ref_freq=None, zap_range=None, zap_original=None):
+              ref_freq=None):
     """
     Create a waterfall plot (i.e. dynamic specrum) from a raw data file.
     Inputs:
@@ -162,33 +150,6 @@ def waterfall(rawdatafile, start, duration, dm=None, nbins=None, nsub=None,\
     else:
         masked_chans = np.zeros(rawdatafile.nchan,dtype=bool)
 
-    # Additional zapping -Z for original data (before subbanning)
-    if zap_original:
-        sub_grps = [x.group() for x in re.finditer("(\d+\:\d+|\d+)+", zap_original)]
-
-        for sub_str in sub_grps:
-            temp_idx = np.array([])
-            num_rows = data.data.shape[0]
-            idx_match = re.match("(^\d+)(\d$)", sub_str)
-            arr_match = re.match("(^\d+)(:\d*\d$)", sub_str)
-            if idx_match:
-                temp_idx = np.array([int(idx_match.groups()[0]+idx_match.groups()[1])])
-                if temp_idx[0] >(num_rows-1):
-                    print("Warning, zap channel index out of range. No zapping occurred.")
-                    print("Zap channel must be within rows of length ", num_rows)
-                    temp_idx = np.array([])
-            elif arr_match:
-                temp_idx = np.sort(np.array([int(arr_match.groups()[0]),
-                    int(arr_match.groups()[1][1:])]))
-                if temp_idx[-1] >(num_rows-1):
-                    print("Warning, zap channel index out of range. No zapping occurred.")
-                    print("Zap channel must be within rows of length ", num_rows)
-                    temp_idx = np.array([])
-            else:
-                print("Warning zap channel input range invalid.")
-            if temp_idx.shape > 0:
-                data = copy.deepcopy(zap_channels(data, temp_idx))
-	
     # Bandpass correction
     if maskfn and bandpass_corr:
         bandpass = rfifind.rfifind(maskfn).bandpass_avg[::-1]
@@ -255,42 +216,13 @@ def waterfall(rawdatafile, start, duration, dm=None, nbins=None, nsub=None,\
 		base=np.polyfit(x,chan,deg)
 		p = np.poly1d(base)
 		chan[:] = chan[:] - p(x)
-
-    # Zap channels of data after subbaning, option '-z' or '--zap-chans'
-    if zap_range:
-        sub_grps = [x.group() for x in re.finditer("(\d+\:\d+|\d+)+", zap_range)]
-
-        for sub_str in sub_grps:
-            temp_idx = np.array([])
-            num_rows = data.data.shape[0]
-            idx_match = re.match("(^\d+)(\d$)", sub_str)
-            arr_match = re.match("(^\d+)(:\d*\d$)", sub_str)
-            if idx_match:
-                temp_idx = np.array([int(idx_match.groups()[0]+idx_match.groups()[1])])
-                if temp_idx[0] >(num_rows-1):
-                    print("Warning, zap channel index out of range. No zapping occurred.")
-                    print("Zap channel must be within rows of length ", num_rows)
-                    temp_idx = np.array([])
-            elif arr_match:
-                temp_idx = np.sort(np.array([int(arr_match.groups()[0]),
-                    int(arr_match.groups()[1][1:])]))
-                if temp_idx[-1] >(num_rows-1):
-                    print("Warning, zap channel index out of range. No zapping occurred.")
-                    print("Zap channel must be within rows of length ", num_rows)
-                    temp_idx = np.array([])
-            else:
-                print("Warning zap channel input range invalid.")
-            if temp_idx.shape > 0:
-                data = copy.deepcopy(zap_channels(data, temp_idx))
-	     	
+     	
     return data, nbinsextra, nbins, start, source_name
 
 def plot_waterfall(data, start, source_name, duration, dm,ofile,
                    integrate_ts=False, integrate_spec=False, show_cb=False, 
                    cmap_str="gist_yarg", sweep_dms=[], sweep_posns=[], 
-                   ax_im=None, ax_ts=None, ax_spec=None, interactive=False, 
-		   downsamp=1,nsub=None,subdm=None,width=None, snr=None, csv_file=None,
-		   prob=None, min_value=None):
+                   ax_im=None, ax_ts=None, ax_spec=None, interactive=True, downsamp=1,nsub=None,subdm=None,width=None, snr=None, csv_file=None,prob=None):
     """ I want a docstring too!
     """	
  
@@ -424,7 +356,7 @@ def plot_waterfall(data, start, source_name, duration, dm,ofile,
     #orig
     img = ax_im.imshow(data.data[..., :nbinlim], aspect='auto', \
                 cmap=matplotlib.cm.cmap_d[cmap_str], \
-                interpolation='nearest', origin='upper',\
+                interpolation='nearest', origin='upper', \
                 extent=(data.starttime, data.starttime+ nbinlim*data.dt, \
                         data.freqs.min(), data.freqs.max()))   
     #ax_im.axvline(x=(data.starttime + nbinlim*data.dt)/2.0,ymin=data.freqs.min(),ymax=data.freqs.max(),lw=3,color='b') 
@@ -642,17 +574,13 @@ def main():
                             width_bins=options.width_bins, mask=options.mask, \
                             maskfn=options.maskfile, \
 			    csv_file=options.csv_file,\
-                            bandpass_corr=options.bandpass_corr,\
-			    zap_range=options.zap_range,\
-                            zap_original=options.zap_original)
+                            bandpass_corr=options.bandpass_corr)
 
     ofile,ttest,ttestprob = plot_waterfall(data,  start, source_name, options.duration, \
 		   dm=options.dm,ofile=options.ofile, integrate_ts=options.integrate_ts, \
                    integrate_spec=options.integrate_spec, show_cb=options.show_cb, 
                    cmap_str=options.cmap, sweep_dms=options.sweep_dms, \
-                   sweep_posns=options.sweep_posns, downsamp=options.downsamp,\
-		   width=options.width,snr=options.snr,csv_file=options.csv_file,prob=options.prob,\
-		   interactive=options.inter_plt)	
+                   sweep_posns=options.sweep_posns, downsamp=options.downsamp,width=options.width,snr=options.snr,csv_file=options.csv_file,prob=options.prob)	
 
     ttestprob = "%.2f" % ((1-ttestprob)*100)
     ttest = "%.2f" % (ttest)
@@ -775,22 +703,6 @@ if __name__=='__main__':
                         help="The name of a valid matplotlib colour map." \
                                 "(Default: gist_yarg.)", \
                         default='gist_yarg')
-    parser.add_option('-Z', dest='zap_original', type='string',
-                        help="Zaps the original frequency channel of the given index before subbaning data." \
-                                "One channel is zapped if given single number 'n'. "\
-                                "Range of channels is zapped if given range 'n:m'."\
-                                "Seperate multiple sets with commas e.g 2,5,7:9",
-                        default=None)
-    parser.add_option('-z', '--zap-chans', dest='zap_range', type='string',
-                        help="Zaps the frequency channel of the given index. " \
-                                "One channel is zapped if given single number 'n'. "\
-                                "Range of channels is zapped if given range 'n:m'."\
-                                "Seperate multiple sets with commas e.g 2,5,7:9",
-                        default=None)
-    parser.add_option('--ip', dest='inter_plt',
-                        help="Interactive mode for plotting with interactive_plot.py",
-                        default=False)
-	
     options, args = parser.parse_args()
     
     if not hasattr(options, 'start'):

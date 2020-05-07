@@ -27,6 +27,7 @@ from sigpyproc.Readers import FilReader
 from PlotCand import extractPlotCand
 from PlotCand import extractPlotCand_old
 import pandas as pd
+import re
 
 def dm_delay(fl, fh, DM):
     kdm = 4148.808 # MHz^2 / (pc cm^-3)
@@ -39,6 +40,7 @@ def emailsend(send_to,subject,msgtxt,files,candtxt):
 	msg['Date'] = formatdate(localtime=True)
 	msg['Subject'] = subject
 
+	#For testing. 
 	username = 'blfrbcand@gmail.com'
 	password = 'breakthrough'
 
@@ -62,7 +64,7 @@ def emailsend(send_to,subject,msgtxt,files,candtxt):
 	print("email sent")
 
 
-def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan,mask_file,smooth,zerodm,csv_file,ml_model):
+def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan,mask_file,smooth,zerodm,csv_file,ml_model,manualzap):
 	if(nogpu is not True):
 		#os.chdir(basedir)
 		#os.system("cd %s" % (basedir))
@@ -98,7 +100,7 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 			print "No candidate found"
 			return
 
-	extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan,mask_file,smooth,zerodm,csv_file)
+	extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan,mask_file,smooth,zerodm,csv_file,manualzap)
 	#extractPlotCand_old(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan,mask_file)
 
 def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range,heimdall):
@@ -107,7 +109,7 @@ def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range,heim
 	#Test 
 	#os.system("heimdall -zap_chans 1775 1942 -f %s -dm_tol 1.01 -dm %f %f -boxcar_max %f -output_dir %s/  -v" % (fil_file,dmlo,dmhi,boxcar_max,base_name));
 	#Orig
-	if dorfi is True:
+	if dorfi is True or manualzap:
 		zapchan = ""
 		#print kill_chan_range
 		for r in kill_chan_range:
@@ -335,7 +337,12 @@ if __name__ == "__main__":
                 help='Remove zerodm candidates. If heimdall then only used with plotting (Default: do not use)')
 	parser.add_option("--smooth", action='store', dest='smooth', default=0.0, type=float,
                 help='Remove (smooth x burst width) boxcar moving average with waterfaller.py (Default: do not smooth)')
-        
+	parser.add_option('-Z', dest='zap_chan_manual', type='string',
+                        help="Zaps the input filterbank file (only works with Heimdall and plotting). " \
+                                "One channel is zapped if given single number 'n'. "\
+                                "Range of channels is zapped if given range 'n:m'."\
+                                "Seperate multiple sets with commas e.g 2,5,7:9",
+                        default=None)
         parser.add_option("--logs", action='store', dest='csv_file', type=str, default="",
 		help='Update results in the input CSV file')
 	parser.add_option("--ML", action='store', dest='model', type=str, default="",help="Trained Model. Each candidate will be varified with this ML model (If given, FRBcand_prob file will be created with additional column as probability of FRB)")
@@ -400,8 +407,7 @@ if __name__ == "__main__":
 	#outdir = options.outdir
 	smooth = options.smooth
 	heimdall = str(options.heimdall)
-
-	print heimdall
+	manualzap = str(options.zap_chan_manual)	
 
 	if not options.outdir: outdir = os.getcwd()
 	else: 
@@ -455,6 +461,7 @@ if __name__ == "__main__":
 	fil_file=os.path.abspath(fil_file)
 	os.system("mv %s.hdr %s/" % (fname,basedir))
 	os.chdir(basedir)
+
 	if(dorfi is True):
 		kill_chans,kill_chan_range,kill_time_range,mask_file = rfi(fil_file, time, timesig, freqsig, chanfrac, intfrac, max_percent, mask, sp)
 	else : 
@@ -462,6 +469,16 @@ if __name__ == "__main__":
 		kill_chan_range = []
 		kill_time_range = []
 		mask_file = ""
+
+	if manualzap:
+		sub_grps = [x.group() for x in re.finditer("(\d+\:\d+|\d+)+", manualzap)]		
+		#print sub_grps
+		for zap in sub_grps:
+			if ":" in zap:
+				kill_chan_range.append(str(zap.split(":")[0] + " " + zap.split(":")[1]))				
+			else:			
+				kill_chan_range.append(str(zap) + " " + str(zap))
+
 	if(nogpu is not True):
 		if(nosearch is not True):
 			# IF running heimdall then remove old candidates 
@@ -472,11 +489,11 @@ if __name__ == "__main__":
 
 		if filter(os.path.isfile,glob.glob("*.cand")):
 			gcands = []
-			candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan,mask_file,smooth,zerodm,csv_file,ml_model)
+			candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan,mask_file,smooth,zerodm,csv_file,ml_model,manualzap)
 		else:	print "No heimdall candidate found"
 	else:
 		gcands = PRESTOsp(fil_file,lodm,hidm,outdir,snr_cut,zerodm,mask_file,base_name,nosearch)
-		candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan,mask_file,smooth,zerodm,csv_file,ml_model)
+		candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan,mask_file,smooth,zerodm,csv_file,ml_model,manualzap)
 
 	if(email is True):
 		pdffile = source_name + "_frb_cand.pdf"
