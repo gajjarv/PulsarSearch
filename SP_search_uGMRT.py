@@ -3,7 +3,7 @@
 Take .fil file as an input file and does single pulse search
 """
 import matplotlib
-matplotlib.use("pdf")
+matplotlib.use('pdf')
 from argparse import ArgumentParser
 import os,sys,math
 import rfi_quality_check
@@ -14,7 +14,7 @@ from rfi_filter_vg import rfi_filter as rfi
 import numpy as np
 import glob
 from itertools import chain
-sys.path.insert(0,'/home/vishal/PulsarSearch/robert_sp/')
+sys.path.insert(0,'/home/vgajjar/SP_search_wrapper/PulsarSearch/robert_sp/')
 import sp_cand_find as sp
 import smtplib
 from os.path import basename
@@ -25,11 +25,14 @@ from email.utils import COMMASPACE, formatdate
 import subprocess as sb
 from sigpyproc.Readers import FilReader
 from PlotCand import extractPlotCand
+from PlotCand import extractPlotCand_old
+import pandas as pd
+import re
 
 def dm_delay(fl, fh, DM):
     kdm = 4148.808 # MHz^2 / (pc cm^-3)
     return abs(kdm * DM * (1.0 / (fl * fl) - 1 / (fh * fh)))
-'''
+
 def emailsend(send_to,subject,msgtxt,files,candtxt):
 	msg = MIMEMultipart()
 	msg['From'] = 'blfrbcand@gmail.com'
@@ -37,13 +40,11 @@ def emailsend(send_to,subject,msgtxt,files,candtxt):
 	msg['Date'] = formatdate(localtime=True)
 	msg['Subject'] = subject
 
-	#For testing
-	username = 'ugmrtfrbcand@gmail.com'
-	password = 'uGMRTFRB'
+	#For testing. 
+	username = 'blfrbcand@gmail.com'
+	password = 'breakthrough'
 
-	print "preparing email.."
 	msg.attach(MIMEText(msgtxt))
-	
 	if candtxt:
 		with open(candtxt) as fp:
 			msg.attach(MIMEText(fp.read()))
@@ -54,33 +55,36 @@ def emailsend(send_to,subject,msgtxt,files,candtxt):
 			part['Content-Disposition'] = 'attachment; filename="%s"' % basename(f)
 			msg.attach(part)
 
-	try:	
-		server = smtplib.SMTP("smtp.gmail.com",465)
-		print "Before sending"
-		server.ehlo()
-		server.starttls()
-		server.login(username,password)
-		server.sendmail(msg['From'], msg['To'], msg.as_string())
-		server.quit()
-		print("email sent")
-	except:
-		print "failed to send email"
+	server = smtplib.SMTP('smtp.gmail.com:587')
+	server.ehlo()
+	server.starttls()
+	server.login(username,password)
+	server.sendmail(msg['From'], msg['To'], msg.as_string())
+	server.quit()
+	print("email sent")
 
-'''
-def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan,smooth,zerodm):
+
+def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan,mask_file,smooth,zerodm,csv_file,ml_model,manualzap):
 	if(nogpu is not True):
 		#os.chdir(basedir)
 		#os.system("cd %s" % (basedir))
-		#print "Inside : %s" % (basedir)
+		#print "Inside : %s" % (basedir) 
 		os.system("rm *_all.cand")
 		os.system("rm *.ar *.norm")
 		os.system("coincidencer *.cand")	
-		os.system("trans_gen_overview_uGMRT.py  -dm_cut 6 -cands_file *_all.cand")
+		os.system("trans_gen_overview.py -cands_file *_all.cand")
 		os.system("mv overview_1024x768.tmp.png %s.overview.png" % (source_name))
 		os.system("frb_detector_bl.py  -gdm 6 -cands_file *_all.cand -filter_cut %d -snr_cut %f -max_cands_per_sec %f -min_members_cut %f -verbose" % (filter_cut,snr_cut,maxCandSec,minMem))
 		os.system("frb_detector_bl.py  -gdm 6 -cands_file *_all.cand -filter_cut %d -snr_cut %f -max_cands_per_sec %f -min_members_cut %f  > FRBcand" % (filter_cut,snr_cut,maxCandSec,minMem))
+		if ml_model:
+			print "ML model given"
+			FRBcand = os.path.abspath("FRBcand")
+			os.system("python /home/vgajjar/hey-aliens/simulateFRBclassification/predict.py %s %s %s" % (ml_model,fil_file,FRBcand))
 		if(os.stat("FRBcand").st_size is not 0):
-			frb_cands = np.loadtxt("FRBcand",dtype={'names': ('snr','time','samp_idx','dm','filter','prim_beam'),'formats': ('f4', 'f4', 'i4','f4','i4','i4')})
+			if ml_model and os.stat("FRBcand_prob.txt").st_size is not 0: 
+				frb_cands = np.loadtxt("FRBcand_prob.txt",dtype={'names': ('snr','time','samp_idx','dm','filter','prim_beam','FRBprob'),'formats': ('f4', 'f4', 'i4','f4','i4','i4','f4')})
+			else:
+				frb_cands = np.loadtxt("FRBcand",dtype={'names': ('snr','time','samp_idx','dm','filter','prim_beam'),'formats': ('f4', 'f4', 'i4','f4','i4','i4')})
 		else:
 			print "No candidate found"
 			return
@@ -96,27 +100,64 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 			print "No candidate found"
 			return
 
-        extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan,mask_file,smooth,zerodm,csv_file)           
+	extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan,mask_file,smooth,zerodm,csv_file,manualzap)
+	#extractPlotCand_old(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan,mask_file)
 
-
-def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range):
+def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range,heimdall):
 
 	print "Running Heimdal with %f to %f DM range" % (lodm,hidm)
 	#Test 
 	#os.system("heimdall -zap_chans 1775 1942 -f %s -dm_tol 1.01 -dm %f %f -boxcar_max %f -output_dir %s/  -v" % (fil_file,dmlo,dmhi,boxcar_max,base_name));
 	#Orig
-	if dorfi is True:
+	if dorfi is True or manualzap:
 		zapchan = ""
 		#print kill_chan_range
 		for r in kill_chan_range:
 			zapchan = zapchan + " -zap_chans " + r 
-		# After talking to AJ and SO  much testing I found that 'rfi_no_narrow' works better. 
-		cmd = "heimdall -f %s -rfi_tol 10 -scrunching_tol 1.01 -dm_nbits 32 -dm_pulse_width 1024 -rfi_no_narrow  -dm %f %f -boxcar_max %f -output_dir %s  %s -dm_tol 1.15 " % (fil_file,dmlo,dmhi,boxcar_max,outdir,zapchan)		
+		# After talking to AJ and SO and after much testing I found that 'rfi_no_narrow' works better. 
+		cmd = "heimdall -f %s -rfi_tol 10 -dm_tol 1.15 -dm_pulse_width 100 -rfi_no_narrow -rfi_no_broad -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s -v %s %s" % (fil_file,dmlo,dmhi,boxcar_max,outdir,zapchan,heimdall)		
 		print cmd
-		os.system(cmd)
+		#os.system(cmd)
+		p=sb.Popen(cmd,stdout=sb.PIPE, shell=True)
+		out,err=p.communicate()
+		#Sometime the heimdall command fails with some Thrust memory error
+		#so running it again
+		if p.returncode != 0:
+			print "First try after failure"
+			p=sb.Popen(cmd,stdout=sb.PIPE,shell=True)
+			out,err=p.communicate()
+			if p.returncode != 0:
+				print "Second try after failure"
+				p=sb.Popen(cmd,stdout=sb.PIPE,shell=True)	
+				out,err=p.communicate()
+				if p.returncode != 0:
+					print "HEIMDALL_ERROR=" + str(p.returncode)
+				else:	
+					print "HEIMDALL_ERROR=0"
+		else:
+			print "HEIMDALL_ERROR=0"
+		
 	else:
 		# After talking to AJ and SO
-		os.system("heimdall -f %s -rfi_tol 10 scrunching_tol 1.01 -dm_nbits 32 -rfi_no_narrow -dm_pulse_width 1024  -dm %f %f -boxcar_max %f -output_dir %s  -dm_tol 1.15  " % (fil_file,dmlo,dmhi,boxcar_max,outdir));
+		cmd = "heimdall -f %s -dm_tol 1.15 -rfi_tol 10 -dm_pulse_width 100   -rfi_no_narrow -rfi_no_broad -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s -v %s" % (fil_file,dmlo,dmhi,boxcar_max,outdir,heimdall)	
+		print cmd
+		#os.system(cmd);
+		p=sb.Popen(cmd,stdout=sb.PIPE, shell=True)
+                out,err=p.communicate()
+		if p.returncode != 0:
+                        print "First try after failure"
+                        p=sb.Popen(cmd,stdout=sb.PIPE,shell=True)
+                        out,err=p.communicate()
+                        if p.returncode != 0:
+                                print "Second try after failure"
+                                p=sb.Popen(cmd,stdout=sb.PIPE,shell=True)
+                                out,err=p.communicate()
+                                if p.returncode != 0:
+                                        print "HEIMDALL_ERROR=" + str(p.returncode)
+                                else:
+                                        print "HEIMDALL_ERROR=0"
+                else:
+                        print "HEIMDALL_ERROR=0"
 	return
 
 def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosearch):
@@ -128,8 +169,8 @@ def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosear
 
 	#DM Step
 	dmstep = 1
-	#Number of subbands	
-	nsub = 4096
+	#Number of subbands
+        nsub = 4096	
 
 	if not nosearch:
 		cmd = "rm *.dat prepsub*.inf *.singlepulse" 
@@ -137,10 +178,10 @@ def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosear
 
 	if zerodm:
 		if mask_file:
-			cmd = "prepsubband %s -lodm 0 -nsub %d -numdms 1 -dmstep 1 -mask %s -o prepsubband" % (fil_file,nsub,mask_file)
+			cmd = "prepsubband %s -lodm 0 -nsub %d -numdms 1 -dmstep 1 -mask %s -o prepsubband" % (fil_file,nsub,mask_file)	
 		else:
-			cmd = "prepsubband %s -lodm 0 -nsub %d  -numdms 1 -dmstep 1 -o prepsubband" % (fil_file,nsub)
-		
+			cmd = "prepsubband %s -lodm 0 -nsub %d  -numdms 1 -dmstep 1 -o prepsubband" % (fil_file,nsub)	
+
 		#if not nosearch: os.system(cmd)
 		os.system(cmd)
 
@@ -151,7 +192,7 @@ def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosear
 		if mask_file:
 			cmd = "prepsubband %s -lodm %f -numdms %d -nsub %d -dmstep %d -mask %s -o prepsubband" % (fil_file,d,dmhi1-d,nsub,dmstep,mask_file)
 		else:
-			cmd = "prepsubband %s -lodm %f -numdms %d -nsub %d -dmstep %d -o prepsubband" % (fil_file,d,dmhi1-d,nsub,dmstep)		
+			cmd = "prepsubband %s -lodm %f -numdms %d -nsub %d -dmstep %d -o prepsubband" % (fil_file,d,dmhi1-d,nsub,dmstep)
 		if not nosearch: os.system(cmd)
 
 	#Run single pulse search on the .dat files
@@ -210,18 +251,27 @@ def PRESTOsp(fil_file,dmlo,dmhi,outdir,snr_cut,zerodm,mask_file,base_name,nosear
 
 #def candplots_nogpu(fil_file,source_name,noplot,kill_chans,kill_time_range):	
 
-def downsample(fil_file):
-	basename = ".".join(fil_file.split(".")[:-1])
-	tmp = basename + "_2add.fil"
-	cmd = "decimate -c 1 -t 2 %s > %s " % (fil_file,tmp) # Decimate
+def downsample(fil_file,inbits,inchans):
+
+        #basename = ".".join(fil_file.split(".")[:-1])
+	basename="downsampled"
+	#sum_fil="/home/obs/sw/bl_sigproc/src/sum_fil"
+	sum_fil="/home/vgajjar/bl_sigproc/src/sum_fil"
+	if(inbits>8 and inchans < 8193):
+		outf = basename + "_8bit.fil"
+		cmd = sum_fil + " %s -o %s -obits 8 -qlen 10000" % (fil_file,outf)
+	if(inbits>8 and inchans > 8192):
+		outf = basename + "_8bit_2chan.fil"
+		cmd = sum_fil + "  %s -o %s -obits 8 -fcollapse 2 -qlen 10000" % (fil_file,outf)
+	if(inbits < 9 and inchans > 8192):
+		outf = basename + "_2chan.fil"
+		cmd = sum_fil + "  %s -o %s -obits 8  -fcollapse 2 -qlen 10000" % (fil_file,outf)
+	if(inbits < 9 and inchans < 8193):
+		outf = fil_file
+
 	print cmd
 	os.system(cmd)
-	cmd = "uGMRT_FilFix.py %s" % (tmp) # Fix header problems
-	print cmd
-	os.system(cmd)
-	# Return new file name
-	return ".".join(fil_file.split(".")[:-1])+"_2add_DS1.fil"
-	#return ".".join(fil_file.split(".")[:-1])+"_2add.fil"
+        return outf
 
 if __name__ == "__main__":
 
@@ -245,28 +295,36 @@ if __name__ == "__main__":
                 help="RFIFIND: The fraction of bad intervals that will mask a full channel (Default: 0.3)")
 	parser.add_option("--max_percent", action='store', dest='max_percent', default=20.0, type=float,
                 help="Maximum percentage of flagged data allowed to pass through the filter. (Default: 20.0%)")
-	parser.add_option("--mask", action='store_true', dest='mask',
-                help='Use this flag to indicate whether a .mask file already exists for the given filterbank file.')
+	parser.add_option("--mask", action='store', dest='mask',default='',type=str,
+                help='User supplied mask file')
+	#parser.add_option("--mask", action='store_true', dest='mask',
+                #help='Use this flag to indicate whether a .mask file already exists for the given filterbank file.')
 	'''
 	parser.add_option("--dozap", action='store_true', dest='sp',
                 help='Use this flag to run zap (Default: Do not Run)')
 	'''
 	parser.add_option("--dorfi", action='store_true', dest='dorfi',
                 help='Run RFIFIND (Default: Do not Run)')
+	parser.add_option("--negDM", action='store_true', dest='negdm',
+                help='Do all four types of negative search (Only works with SPANDAK; Default: Do not Run)')
+	parser.add_option("--subBand", action='store_true', dest='negdm',
+                help='Do sub-band search search (Only works with SPANDAK; Default: Do not Run)')
 
 	parser.add_option("--lodm", action='store', dest='lodm', default=0.0, type=float,
                 help="Heimdall: Low DM limit to search (Default: 0)")
         parser.add_option("--hidm", action='store', dest='hidm', default=1000.0, type=float,
                 help="Heimdall: High DM limit to search (Default: 1000)")
-        parser.add_option("--boxcar_max", action='store', dest='boxcar_max', default=256, type=float,
-                help="Heimdall: Boxcar maximum window size to search (Default: 256)")
+        parser.add_option("--boxcar_max", action='store', dest='boxcar_max', default=16, type=float,
+                help="Heimdall: Boxcar maximum window size to search (Default: 16)")
 	parser.add_option("--nosearch", action='store_true', dest='nosearch',
                 help='Do not run Heimdall (Default: Run)')
+	parser.add_option("--heimdall ", default='-v', dest='heimdall', type=str,
+		help='Arguments to pass to heimdall (ex: --heimdall "-gpu_id 1")')
 
-	parser.add_option("--snr_cut", action='store', dest='snr_cut', default=8.0, type=float,
-                help="Post Heimdall: SNR cut for candidate selection (Default: 8.0)")	
-	parser.add_option("--filter_cut", action='store', dest='filter_cut', default=8.0, type=int,
-                help="Post Heimdall: Window size or filter cut for candidate selection (Default: 8.0)")
+	parser.add_option("--snr_cut", action='store', dest='snr_cut', default=6.0, type=float,
+                help="Post Heimdall: SNR cut for candidate selection (Default: 6.0)")	
+	parser.add_option("--filter_cut", action='store', dest='filter_cut', default=16.0, type=int,
+                help="Post Heimdall: Window size or filter cut for candidate selection (Default: 16.0)")
 	parser.add_option("--maxCsec", action='store', dest='maxCandSec', default=2.0, type=float,
                 help="Post Heimdall: Maximum allowed candidate per sec (Default: 2.0)")
 	parser.add_option("--min_members_cut", action='store', dest='minMem', default=3.0, type=float,
@@ -275,41 +333,54 @@ if __name__ == "__main__":
                 help='Do not run plot candidates (Default: Run)')
         parser.add_option("--nogpu", action='store_true', dest='nogpu',
                 help='Run single_pulse_search.py (no heimdall)')
-	parser.add_option("--zerodm", action='store_true', dest='zerodm',default=True,
-		help='Remove zerodm candidates. If heimdall then only used with plotting (Default: use it for GMRT)')
+	parser.add_option("--zerodm", action='store_false', dest='zerodm',
+                help='Remove zerodm candidates. If heimdall then only used with plotting (Default: do not use)')
 	parser.add_option("--smooth", action='store', dest='smooth', default=0.0, type=float,
                 help='Remove (smooth x burst width) boxcar moving average with waterfaller.py (Default: do not smooth)')
-	
-	parser.add_option("--logs", action='store', dest='csv_file', type=str, default="",
-                help='Update results in the input CSV file')
-        parser.add_option("--ML", action='store', dest='model', type=str, default="",help="Trained Model. Each candidate will be varified with this ML model (If given, FRBcand_prob file will be created with additional column as probability of FRB)")
+	parser.add_option('-Z', dest='zap_chan_manual', type='string',
+                        help="Zaps the input filterbank file (only works with Heimdall and plotting). " \
+                                "One channel is zapped if given single number 'n'. "\
+                                "Range of channels is zapped if given range 'n:m'."\
+                                "Seperate multiple sets with commas e.g 2,5,7:9",
+                        default=None)
+        parser.add_option("--logs", action='store', dest='csv_file', type=str, default="",
+		help='Update results in the input CSV file')
+	parser.add_option("--ML", action='store', dest='model', type=str, default="",help="Trained Model. Each candidate will be varified with this ML model (If given, FRBcand_prob file will be created with additional column as probability of FRB)")
 
 	parser.add_option("--email", action='store_true', dest='email',
                 help='Send candidate file over email (no email)')	
-	
-	parser.add_option("--nodsamp", action='store_true', dest='nodsamp',
-                help='Do not downsample; For current GMRT files,it is required (default: do downsample)')
 
+	parser.add_option("--nodsamp", action='store_true', dest='nodsamp',
+                help='Do not downsample; For the current 32-bit BL files,it is required (default: do downsample)')
+	
+	
 	options,args = parser.parse_args()
 
 	if (not options.fil_file):
                 print 'Input file required.'
                 print parser.print_help()
                 sys.exit(1)
-	
-	nodsamp = options.nodsamp
-	fil_file = os.path.abspath(options.fil_file)
-	
-	if options.csv_file: csv_file = os.path.abspath(options.csv_file)
-        else: csv_file=""
-        if options.model: ml_model=options.model
-        else: ml_model=""
-	
 
-	# For GMRT, downsample by 2 and new file created 
-	if(nodsamp is not True): fil_file = downsample(fil_file)	
+	nodsamp = options.nodsamp
+        fil_file = os.path.abspath(options.fil_file)
+
+	if options.csv_file: csv_file = os.path.abspath(options.csv_file)
+	else: csv_file=""
+	if options.model: ml_model=options.model
+	else: ml_model=""
+
+	origf = FilReader(fil_file)
+	inchans = origf.header['nchans']
+        inbits = origf.header['nbits']
+
+        # For 32-bit BL, downsample to 8-bit and create new file
+        if(nodsamp is not True):
+                if(inchans > 8192 or inbits > 8):
+                        print "Running sum_fil"
+                        fil_file = downsample(fil_file,inbits,inchans)
 
 	fname = fil_file.split("/")[-1]
+	print fil_file
 	time = options.time
 	timesig = options.timesig
 	freqsig = options.freqsig
@@ -332,8 +403,11 @@ if __name__ == "__main__":
 	nogpu = options.nogpu
 	zerodm = options.zerodm
 	email = options.email
-	smooth = options.smooth
+	negdm = options.negdm
 	#outdir = options.outdir
+	smooth = options.smooth
+	heimdall = str(options.heimdall)
+	manualzap = str(options.zap_chan_manual)	
 
 	if not options.outdir: outdir = os.getcwd()
 	else: 
@@ -348,15 +422,15 @@ if __name__ == "__main__":
 	f = FilReader(fil_file)
 	nchan = f.header['nchans']
 	fch1 = f.header['fch1']
-	foff = f.header['foff']	
-	tint = f.header['tsamp']	
-	Ttot = f.header['tobs']
+	foff = f.header['foff']
+	tint = f.header['tsamp']
+        Ttot = f.header['tobs']
 
 	print "\n Nchan : " + str(nchan) + \
-	      "\n High Freq (MHz) : " + str(fch1) + \
-	      "\n Chan. Bandwidth (MHz) : " + str(foff) + \
-	      "\n Integration time : " + str(tint) + \
-	      "\n Total time : " + str(Ttot) + "\n"
+              "\n High Freq (MHz) : " + str(fch1) + \
+              "\n Chan. Bandwidth (MHz) : " + str(foff) + \
+              "\n Integration time : " + str(tint) + \
+              "\n Total time : " + str(Ttot) + "\n"
 	
 	fh = fch1
 	fl = fch1 + (foff*nchan)
@@ -384,8 +458,10 @@ if __name__ == "__main__":
 	if(os.path.isdir(base_name) is not True):	
 		os.system("mkdir %s" % (base_name))
 	basedir = os.getcwd() + "/" + base_name
+	fil_file=os.path.abspath(fil_file)
 	os.system("mv %s.hdr %s/" % (fname,basedir))
 	os.chdir(basedir)
+
 	if(dorfi is True):
 		kill_chans,kill_chan_range,kill_time_range,mask_file = rfi(fil_file, time, timesig, freqsig, chanfrac, intfrac, max_percent, mask, sp)
 	else : 
@@ -393,32 +469,36 @@ if __name__ == "__main__":
 		kill_chan_range = []
 		kill_time_range = []
 		mask_file = ""
+
+	if manualzap:
+		sub_grps = [x.group() for x in re.finditer("(\d+\:\d+|\d+)+", manualzap)]		
+		#print sub_grps
+		for zap in sub_grps:
+			if ":" in zap:
+				kill_chan_range.append(str(zap.split(":")[0] + " " + zap.split(":")[1]))				
+			else:			
+				kill_chan_range.append(str(zap) + " " + str(zap))
+
 	if(nogpu is not True):
 		if(nosearch is not True):
 			# IF running heimdall then remove old candidates 
                 	os.system("rm %s/*.cand" % (outdir))
-			heimdall_run(fil_file,lodm,hidm,outdir,boxcar_max,dorfi,kill_chan_range)
+			heimdall_run(fil_file,lodm,hidm,outdir,boxcar_max,dorfi,kill_chan_range,heimdall)
 			#os.system("mv %s.* %s" % (base_name,base_name))
 			#if(os.path.isfile("*.cand") is True):
 
 		if filter(os.path.isfile,glob.glob("*.cand")):
 			gcands = []
-			candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan,smooth,zerodm)
+			candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan,mask_file,smooth,zerodm,csv_file,ml_model,manualzap)
 		else:	print "No heimdall candidate found"
 	else:
 		gcands = PRESTOsp(fil_file,lodm,hidm,outdir,snr_cut,zerodm,mask_file,base_name,nosearch)
-		candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan,smooth,zerodm)
+		candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,kill_chans,kill_time_range,nogpu,gcands,fl,fh,tint,Ttot,nchan,mask_file,smooth,zerodm,csv_file,ml_model,manualzap)
 
 	if(email is True):
 		pdffile = source_name + "_frb_cand.pdf"
 		pngfile = source_name + ".overview.png"
-		#os.system(cmd)
-		cmd = "/home/gajjar/gdrive upload %s" % (pdffile)
-		os.system(cmd)
-		cmd = "/home/gajjar/gdrive upload %s" % (pngfile)
-		os.system(cmd)
-		'''
-		# Email is not working so just uploading it to google drive
+		#cmd = "convert *.ps %s" % (pdffile)
 		pdffile = [pdffile]
 		subject = "Broadband candidates from %s" % (base_name)
 		cmd = "mjd2cal %s" % (MJDfloat)	
@@ -429,6 +509,4 @@ if __name__ == "__main__":
 		#print msgtxt,subject
 		#candtxt = "DIAG_FRB130729_57913_0488_FRBcand.txt"
 		candtxt = ""	
-		#emailsend(send_to,subject,msgtxt,pdffile,candtxt)
-		'''
-
+		emailsend(send_to,subject,msgtxt,pdffile,candtxt)
