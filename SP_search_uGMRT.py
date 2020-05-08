@@ -115,7 +115,7 @@ def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range,heim
 		for r in kill_chan_range:
 			zapchan = zapchan + " -zap_chans " + r 
 		# After talking to AJ and SO and after much testing I found that 'rfi_no_narrow' works better. 
-		cmd = "heimdall -f %s -rfi_tol 10 -dm_tol 1.15 -dm_pulse_width 1024 -rfi_no_narrow -rfi_no_broad -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s -v %s %s" % (fil_file,dmlo,dmhi,boxcar_max,outdir,zapchan,heimdall)		
+		cmd = "heimdall -f %s -rfi_tol 10 -dm_tol 1.15 -dm_pulse_width 1024 -rfi_no_narrow  -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s -v %s %s" % (fil_file,dmlo,dmhi,boxcar_max,outdir,zapchan,heimdall)		
 		print cmd
 		#os.system(cmd)
 		p=sb.Popen(cmd,stdout=sb.PIPE, shell=True)
@@ -139,7 +139,7 @@ def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range,heim
 		
 	else:
 		# After talking to AJ and SO
-		cmd = "heimdall -f %s -dm_tol 1.15 -rfi_tol 10 -dm_pulse_width 1024 -rfi_no_narrow -rfi_no_broad -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s -v %s" % (fil_file,dmlo,dmhi,boxcar_max,outdir,heimdall)	
+		cmd = "heimdall -f %s -dm_tol 1.15 -rfi_tol 10 -dm_pulse_width 1024 -rfi_no_narrow -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s -v %s" % (fil_file,dmlo,dmhi,boxcar_max,outdir,heimdall)	
 		print cmd
 		#os.system(cmd);
 		p=sb.Popen(cmd,stdout=sb.PIPE, shell=True)
@@ -257,11 +257,15 @@ def downsample(fil_file):
         cmd = "decimate -c 1 -t 2 %s > %s " % (fil_file,tmp) # Decimate
         print cmd
         os.system(cmd)
-        cmd = "uGMRT_FilFix.py %s" % (tmp) # Fix header problems
+        #This was only required to run it with DSPSR. Now flagging as we are using waterfaller
+	'''
+	cmd = "uGMRT_FilFix.py %s" % (tmp) # Fix header problems
         print cmd
         os.system(cmd)
         # Return new file name
         return ".".join(fil_file.split(".")[:-1])+"_2add_DS1.fil"
+	'''
+	return ".".join(fil_file.split(".")[:-1])+"_2add.fil"
 
 if __name__ == "__main__":
 
@@ -304,8 +308,8 @@ if __name__ == "__main__":
                 help="Heimdall: Low DM limit to search (Default: 0)")
         parser.add_option("--hidm", action='store', dest='hidm', default=1000.0, type=float,
                 help="Heimdall: High DM limit to search (Default: 1000)")
-        parser.add_option("--boxcar_max", action='store', dest='boxcar_max', default=16, type=float,
-                help="Heimdall: Boxcar maximum window size to search (Default: 16)")
+        parser.add_option("--boxcar_max", action='store', dest='boxcar_max', default=256, type=float,
+                help="Heimdall: Boxcar maximum window size to search (Default: 256)")
 	parser.add_option("--nosearch", action='store_true', dest='nosearch',
                 help='Do not run Heimdall (Default: Run)')
 	parser.add_option("--heimdall ", default='-v', dest='heimdall', type=str,
