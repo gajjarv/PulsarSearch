@@ -115,7 +115,8 @@ def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range,heim
 		for r in kill_chan_range:
 			zapchan = zapchan + " -zap_chans " + r 
 		# After talking to AJ and SO and after much testing I found that 'rfi_no_narrow' works better. 
-		cmd = "heimdall -f %s -rfi_tol 10 -dm_tol 1.15 -dm_pulse_width 1024 -rfi_no_narrow  -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s -v %s %s" % (fil_file,dmlo,dmhi,boxcar_max,outdir,zapchan,heimdall)		
+		# I am not sure but heimdall was failing without nsamp gulp option. 
+		cmd = "heimdall -f %s -rfi_tol 10 -dm_tol 1.15 -dm_pulse_width 1024 -rfi_no_narrow  -dm_nbits 32 -nsamps_gulp 100000 -dm %f %f -boxcar_max %f -output_dir %s -v %s %s" % (fil_file,dmlo,dmhi,boxcar_max,outdir,zapchan,heimdall)		
 		print cmd
 		#os.system(cmd)
 		p=sb.Popen(cmd,stdout=sb.PIPE, shell=True)
@@ -139,7 +140,7 @@ def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range,heim
 		
 	else:
 		# After talking to AJ and SO
-		cmd = "heimdall -f %s -dm_tol 1.15 -rfi_tol 10 -dm_pulse_width 1024 -rfi_no_narrow -dm_nbits 32 -dm %f %f -boxcar_max %f -output_dir %s -v %s" % (fil_file,dmlo,dmhi,boxcar_max,outdir,heimdall)	
+		cmd = "heimdall -f %s -dm_tol 1.15 -rfi_tol 10 -dm_pulse_width 1024 -rfi_no_narrow -dm_nbits 32  -nsamps_gulp 100000  -dm %f %f -boxcar_max %f -output_dir %s -v %s" % (fil_file,dmlo,dmhi,boxcar_max,outdir,heimdall)	
 		print cmd
 		#os.system(cmd);
 		p=sb.Popen(cmd,stdout=sb.PIPE, shell=True)
