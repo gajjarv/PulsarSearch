@@ -79,7 +79,7 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 		if ml_model:
 			print "ML model given"
 			FRBcand = os.path.abspath("FRBcand")
-			os.system("python /home/vgajjar/hey-aliens/simulateFRBclassification/predict.py %s -f %s %s" % (ml_model,fil_file,FRBcand))
+			os.system("python /home/vgajjar/hey-aliens/simulateFRBclassification/predict.py %s %s -f %s" % (FRBcand,ml_model,fil_file))
 		if(os.stat("FRBcand").st_size is not 0):
 			if ml_model and os.stat("FRBcand_prob.txt").st_size is not 0: 
 				frb_cands = np.loadtxt("FRBcand_prob.txt",dtype={'names': ('snr','time','samp_idx','dm','filter','prim_beam','FRBprob'),'formats': ('f4', 'f4', 'i4','f4','i4','i4','f4')})
