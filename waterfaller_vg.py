@@ -659,8 +659,10 @@ def main():
     # Update CSV file if file is provided	
     if csv_file:
 	sourcename=rawdatafile.header['source_name']
-	src_ra=rawdatafile.header['src_raj']
-	src_dec=rawdatafile.header['src_dej']
+	try: src_ra=rawdatafile.header['src_raj']
+	except: src_ra = '00'
+	try: src_dec=rawdatafile.header['src_dej']
+	except: src_dec="00"
 	tstart=rawdatafile.header['tstart']
 	fch1=rawdatafile.header['fch1']
 	nchans=rawdatafile.header['nchans']

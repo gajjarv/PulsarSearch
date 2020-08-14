@@ -16,6 +16,9 @@ echo $file
 
 if [[ "$file" ]]; then
 	origname=`header $file -source_name`
+	#To remove white spcaes in source name
+	origname=${origname//[[:blank:]]/}
+
 	nchan=`header $file -nchans `
 	nbits=`header $file -nbits`
 	
@@ -85,7 +88,7 @@ if [[ $fullinput == *"--negDM"* ]] && [[ $nchan -le 8192 ]] && [[ $nbits -le 8 ]
 	cmd="/home/vgajjar/bl_sigproc/src/filedit --flipTime $file"
 	echo $cmd
 	$cmd
-	cmd="SP_search_BL.py $lpart --fil outfile.fil $rpart"
+	cmd="SP_search_BL.py $lpart --fil nT_outfile.fil $rpart"
 	echo $cmd
 	$cmd
 	localname=`header outfile.fil -source_name`
@@ -100,7 +103,7 @@ if [[ $fullinput == *"--negDM"* ]] && [[ $nchan -le 8192 ]] && [[ $nbits -le 8 ]
 	cmd="/home/vgajjar/bl_sigproc/src/filedit --flipFreq $file"
 	echo $cmd
         $cmd
-        cmd="SP_search_BL.py $lpart --fil outfile.fil $rpart"
+        cmd="SP_search_BL.py $lpart --fil nF_outfile.fil $rpart"
 	echo $cmd
         $cmd
 	localname=`header outfile.fil -source_name`
@@ -115,7 +118,7 @@ if [[ $fullinput == *"--negDM"* ]] && [[ $nchan -le 8192 ]] && [[ $nbits -le 8 ]
         cmd="/home/vgajjar/bl_sigproc/src/filedit --flipFreq --flipTime $file"
 	echo $cmd
         $cmd
-        cmd="SP_search_BL.py $lpart --fil outfile.fil $rpart"
+        cmd="SP_search_BL.py $lpart --fil nTnF_outfile.fil $rpart"
 	echo $cmd
         $cmd
 	localname=`header outfile.fil -source_name`

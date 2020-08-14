@@ -76,7 +76,7 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 		os.system("mv overview_1024x768.tmp.png %s.overview.png" % (source_name))
 		os.system("frb_detector_bl.py  -gdm 6 -cands_file *_all.cand -filter_cut %d -snr_cut %f -max_cands_per_sec %f -min_members_cut %f -verbose" % (filter_cut,snr_cut,maxCandSec,minMem))
 		os.system("frb_detector_bl.py  -gdm 6 -cands_file *_all.cand -filter_cut %d -snr_cut %f -max_cands_per_sec %f -min_members_cut %f  > FRBcand" % (filter_cut,snr_cut,maxCandSec,minMem))
-		if ml_model:
+		if ml_model and (os.stat("FRBcand").st_size is not 0):
 			print "ML model given"
 			FRBcand = os.path.abspath("FRBcand")
 			os.system("python /home/vgajjar/hey-aliens/simulateFRBclassification/predict.py %s %s -f %s" % (FRBcand,ml_model,fil_file))
