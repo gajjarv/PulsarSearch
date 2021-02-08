@@ -11,7 +11,10 @@
 
 import os, sys, glob
 import numpy,time 
-import sifting
+try:
+        import sifting
+except ImportError:
+        from presto import sifting
 import math
 import optparse
 
