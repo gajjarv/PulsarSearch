@@ -134,6 +134,8 @@ def heimdall_run(fil_file,dmlo,dmhi,base_name,snr_cut,dorfi,kill_chan_range,heim
 					print "HEIMDALL_ERROR=" + str(p.returncode)
 				else:	
 					print "HEIMDALL_ERROR=0"
+			else:
+				print "HEIMDALL_ERROR=0"
 		else:
 			print "HEIMDALL_ERROR=0"
 		

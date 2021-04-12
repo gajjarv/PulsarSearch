@@ -91,11 +91,12 @@ if [[ $fullinput == *"--negDM"* ]] && [[ $nchan -le 8192 ]] && [[ $nbits -le 8 ]
 	cmd="SP_search_BL.py $lpart --fil nT_outfile.fil $rpart"
 	echo $cmd
 	$cmd
-	localname=`header outfile.fil -source_name`
+	localname=`header nT_outfile.fil -source_name`
+	localname=${localname//[[:blank:]]/}	
         cmd="mv $localname* $origname"
         echo $cmd
         $cmd
-	cmd="rm outfile.fil"
+	cmd="rm nT_outfile.fil"
 	echo $cmd
 	$cmd
 
@@ -106,11 +107,12 @@ if [[ $fullinput == *"--negDM"* ]] && [[ $nchan -le 8192 ]] && [[ $nbits -le 8 ]
         cmd="SP_search_BL.py $lpart --fil nF_outfile.fil $rpart"
 	echo $cmd
         $cmd
-	localname=`header outfile.fil -source_name`
+	localname=`header nF_outfile.fil -source_name`
+	localname=${localname//[[:blank:]]/}
         cmd="mv $localname* $origname"
         echo $cmd
         $cmd
-	cmd="rm outfile.fil"
+	cmd="rm nF_outfile.fil"
 	echo $cmd
         $cmd
 
@@ -121,11 +123,12 @@ if [[ $fullinput == *"--negDM"* ]] && [[ $nchan -le 8192 ]] && [[ $nbits -le 8 ]
         cmd="SP_search_BL.py $lpart --fil nTnF_outfile.fil $rpart"
 	echo $cmd
         $cmd
-	localname=`header outfile.fil -source_name`
+	localname=`header nTnF_outfile.fil -source_name`
+	localname=${localname//[[:blank:]]/}
         cmd="mv $localname* $origname"
         echo $cmd
         $cmd
-	cmd="rm outfile.fil"
+	cmd="rm nTnF_outfile.fil"
 	echo $cmd
         $cmd
 	
