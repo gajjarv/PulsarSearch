@@ -135,7 +135,8 @@ def waterfall(rawdatafile, start, duration, dm=None, nbins=None, nsub=None,\
         nchan_per_sub = rawdatafile.nchan/nsub
         top_ctrfreq = rawdatafile.freqs.max() - \
                       0.5*nchan_per_sub*df # center of top subband
-        start += 4.15e3 * np.abs(1./ref_freq**2 - 1./top_ctrfreq**2) * dm
+        #With heimdall start time is usually the arrival time at highest frequency so not sure if this needed
+        #start += 4.15e3 * np.abs(1./ref_freq**2 - 1./top_ctrfreq**2) * dm
 
     try: source_name=rawdatafile.header['source_name']
     except: source_name="Unknown"
@@ -211,6 +212,8 @@ def waterfall(rawdatafile, start, duration, dm=None, nbins=None, nsub=None,\
     if (zerodm == True):
         data.data -=  data.data.mean(axis=0)
 
+    #This was original but getting wrong arrival time with sub-banding 
+    '''
     # Subband data
     if (nsub is not None) and (subdm is not None):
         data.subband(nsub, subdm, padval='mean')		
@@ -218,6 +221,16 @@ def waterfall(rawdatafile, start, duration, dm=None, nbins=None, nsub=None,\
     # Dedisperse
     if dm:
         data.dedisperse(dm, padval='rotate')
+    '''
+
+     #So doing dedispersion first and then sub-banding, problem now is that it will be very slow
+     # Dedisperse
+    if dm:
+        data.dedisperse(dm, padval='rotate')
+     
+     # Subband data
+    if (nsub is not None) and (subdm is not None):
+        data.subband(nsub, subdm, padval='mean') 
 
     # Downsample
     # Moving it after the DM-vs-time plot
