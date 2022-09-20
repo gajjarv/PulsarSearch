@@ -282,7 +282,7 @@ if __name__ == "__main__":
 
 	#parser = ArgumentParser(description = "Parser for inputs")
 	parser.add_option("--fil", action='store', dest='fil_file', type=str,
-                help="SIGPROC .fil file")
+                help="SIGPROC .fil file (with negative bw and high to low freq order")
 	parser.add_option("--outdir", action='store', dest='outdir', default="",type=str,
                 help="Full Output directory where SOURCE_NAME_MJD folder will be created. (Default : .)")
 
