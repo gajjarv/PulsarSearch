@@ -30,8 +30,8 @@ class Classifier(object):
     # test if candidate is galactic or low dm in BL case
     def is_galactic(self, cand):
       #Orig
-      #return cand['dm'] <= self.dm_cut
-      return (cand['dm'] <= 70) | (cand['dm'] >= 72)
+      return cand['dm'] <= self.dm_cut
+      #return (cand['dm'] <= 70) | (cand['dm'] >= 72)
 
     def is_not_adjacent(self, cand, epoch, half_time): 	 
       return (cand['time'] > epoch + half_time) | (cand['time'] < epoch - half_time)

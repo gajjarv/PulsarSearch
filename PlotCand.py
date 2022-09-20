@@ -216,7 +216,7 @@ def extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,ki
 			                downfact = 1		
 				if downfact == 0: downfact = 1
 				 	
-				#print fbin,filter,bin_width,downfact	
+				print fbin,filter,bin_width,downfact	
 				#stime = time-(extimeplot*0.1) # Go back data
                                 #stime = time - float(cand_band_smear) 
 				#TotDisplay = (downfact*bin_width)*tint*128 # To display 256 times the pulse width in the plot
@@ -435,6 +435,11 @@ if __name__ == "__main__":
     kill_chans=[]
     nchan = 2048
     source_name="Fake"
+    mask_file = ""
+    smooth = 0.0
+    csv_file="cand.csv"
+    zerodm=False
+    manualzap=False
     
     f = FilReader(fil_file)
     nchan = f.header['nchans']
@@ -444,7 +449,6 @@ if __name__ == "__main__":
     Ttot = f.header['tobs']
     fh = fch1
     fl = fch1 + (foff*nchan)
-    source_name = f.header['source_name']
-    extractPlotCand_old(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan)
-    extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan,mask_file,smooth)
+    #extractPlotCand_old(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan)
+    extractPlotCand(fil_file,frb_cands,noplot,fl,fh,tint,Ttot,kill_time_range,kill_chans,source_name,nchan,mask_file,smooth,zerodm,csv_file,manualzap)
 

@@ -79,7 +79,8 @@ def candplots(fil_file,source_name,snr_cut,filter_cut,maxCandSec,noplot,minMem,k
 		if ml_model and (os.stat("FRBcand").st_size is not 0):
 			print "ML model given"
 			FRBcand = os.path.abspath("FRBcand")
-			os.system("python /home/vgajjar/hey-aliens/simulateFRBclassification/predict.py %s %s -f %s" % (FRBcand,ml_model,fil_file))
+			cmd="python /home/vgajjar/hey-aliens/simulateFRBclassification/predict.py %s %s -f %s" % (FRBcand,ml_model,fil_file)
+			os.system(cmd)
 		if(os.stat("FRBcand").st_size is not 0):
 			if ml_model and os.stat("FRBcand_prob.txt").st_size is not 0: 
 				frb_cands = np.loadtxt("FRBcand_prob.txt",dtype={'names': ('snr','time','samp_idx','dm','filter','prim_beam','FRBprob'),'formats': ('f4', 'f4', 'i4','f4','i4','i4','f4')})
@@ -417,7 +418,7 @@ if __name__ == "__main__":
 		if(os.path.isdir(outdir) is not True):       
                 	os.system("mkdir %s" % (outdir))
 			
-	#print "Output will go to %s" % (outdir)					
+	print "Output will go to %s" % (outdir)					
 	
 	os.chdir(outdir)
 
