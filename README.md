@@ -1,3 +1,5 @@
+** INSTALLATION Instructions (Credit: Vinay Bharambe) **
+[Click here to view the PDF file](https://github.com/gajjarv/PulsarSearch/blob/master/images/Pulsar_and_FRB_softwares_installation_manual.pdf)
 
 
 **SPANDAK: Searching for naturally and artificially dispersed transient signals for Breakthrough Listen**
