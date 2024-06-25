@@ -35,6 +35,21 @@ SPANDAK --fil file.fil --ML saved_model.h5
 Dependencies: coming soon... 
 
 
+**Understanding SPANDAK output without ML**
+
+There are two main types of output from the SPANDAK pipeline. A text file with a list of final candidate named 'FRBcand', the columns are as follows of this FRBcand file
+
+This file has six columns, and their names are as follows. 
+
+1. snr: Signal to noise ratio of the bursts
+2. Time: Detected burst arrival time from the start of the file in seconds 
+3. samp idx: Index of the sample (similar to arrival time) 
+4. DM: Detected DM of the burst 
+5. Filter: Detected width of the burst in units of N where width = 2^N milliseconds 
+6. Beam number : For multibeam searches, the primary beam of the detected FRB
+
+
+
 ===================================================================================\
 This is documentation on pulsar seach pipeline
 
