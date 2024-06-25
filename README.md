@@ -59,8 +59,8 @@ Candidate that started with...
 
 **Understanding SPANDAK output with ML**
 
-If the SPANDAK pipeline was ran with the ML code, then a separate text file which is similar to FRBcand is created named FRBcand_prob 
-The names of the first six columns with an added seventh column that now also shows probability of these candidate being a real FRB. 
+If the SPANDAK pipeline was ran with the ML code, then a separate text file which is similar to FRBcand is created named FRBcand_prob.  
+In this file, the first six columns are the same as mentioned above with an added seventh column that now also shows probability of that candidate being a real FRB. 
 
 Furthermore, along now the code also produce plots for candidate that starts with ..
 
