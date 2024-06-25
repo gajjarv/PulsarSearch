@@ -32,40 +32,37 @@ SPANDAK --fil file.fil --dorfi
 SPANDAK --fil file.fil --ML saved_model.h5
 
 
-Dependencies: coming soon... 
+Dependencies: Please see above installation guide.  
 
 
 **Understanding SPANDAK output without ML**
 
-There are two main types of output from the SPANDAK pipeline. A text file with a list of final candidate named 'FRBcand', the columns are as follows of this FRBcand file
+There are two main types of output from the SPANDAK pipeline. The first type is a text file with a list of final candidates named FRBcand. The columns in this FRBcand file are as follows:
 
-This file has six columns, and their names are as follows. 
+This file has six columns, and their names are as follows:
 
-1. snr: Signal to noise ratio of the bursts
-2. Time: Detected burst arrival time from the start of the file in seconds 
-3. samp idx: Index of the sample (similar to arrival time) 
-4. DM: Detected DM of the burst 
-5. Filter: Detected width of the burst in units of N where width = 2^N x sampling time  
-6. Beam number : For multibeam searches, the primary beam of the detected FRB
+	1.	snr: Signal-to-noise ratio of the bursts.
+	2.	Time: Detected burst arrival time from the start of the file in seconds.
+	3.	samp_idx: Index of the sample (similar to arrival time).
+	4.	DM: Detected dispersion measure (DM) of the burst.
+	5.	Filter: Detected width of the burst in units of N, where width = 2^N \times sampling time.
+	6.	Beam number: For multibeam searches, the primary beam of the detected FRB.
 
-The other type of output are .png plots where each plot correspond to shortlisted candidates, 
-For each candidate, a t-test is perform on the broadbandness of the burst. These candidates 
-are divided into three catagories. 
+The second type of output consists of .png plots, where each plot corresponds to shortlisted candidates. For each candidate, a t-test is performed on the broadbandness of the burst. These candidates are divided into three categories:
 
-Candidate that started with...
-1. B_, These are candidate that showed t-test value > 3 and DM vs SNR curve showed peak at the center 
-2. C_, There are candidate that showed t-test value > 1 and DM vs SNR curve showed peak at the center 
-3. Other candidate that did not fit above criteria 
+Candidates that start with:
+
+	1.	B_: Candidates that showed a t-test value > 3 and the DM vs SNR curve showed a peak at the center.
+	2.	C_: Candidates that showed a t-test value > 1 and the DM vs SNR curve showed a peak at the center.
+	3.	Other candidates that did not fit the above criteria.
 
 **Understanding SPANDAK output with ML**
 
-If the SPANDAK pipeline was ran with the ML code, then a separate text file which is similar to FRBcand is created named FRBcand_prob.  
-In this file, the first six columns are the same as mentioned above with an added seventh column that now also shows probability of that candidate being a real FRB. 
+If the SPANDAK pipeline was run with the ML code, then a separate text file similar to FRBcand is created, named FRBcand_prob. In this file, the first six columns are the same as mentioned above, with an added seventh column that shows the probability of that candidate being a real FRB.
 
-Furthermore, along now the code also produce plots for candidate that starts with ..
+Furthermore, in addition to producing the above-mentioned B and C category candidates, the code will also produce plots for candidates that start with:
 
-A_, These are candidate that showed more than 5% probability of FRB. This kept low to reduce the false negative which is more critical than getting large number of 
-false positives. 
+	•	A_: These are candidates that showed more than a 5% probability of being an FRB. This threshold is kept low to reduce false negatives, which is more critical than getting a large number of false positives.
 
 ===================================================================================\
 This is documentation on pulsar seach pipeline
