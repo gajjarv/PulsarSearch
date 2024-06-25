@@ -45,10 +45,27 @@ This file has six columns, and their names are as follows.
 2. Time: Detected burst arrival time from the start of the file in seconds 
 3. samp idx: Index of the sample (similar to arrival time) 
 4. DM: Detected DM of the burst 
-5. Filter: Detected width of the burst in units of N where width = 2^N milliseconds 
+5. Filter: Detected width of the burst in units of N where width = 2^N x sampling time  
 6. Beam number : For multibeam searches, the primary beam of the detected FRB
 
+The other type of output are .png plots where each plot correspond to shortlisted candidates, 
+For each candidate, a t-test is perform on the broadbandness of the burst. These candidates 
+are divided into three catagories. 
 
+Candidate that started with...
+1. B_, These are candidate that showed t-test value > 3 and DM vs SNR curve showed peak at the center 
+2. C_, There are candidate that showed t-test value > 1 and DM vs SNR curve showed peak at the center 
+3. Other candidate that did not fit above criteria 
+
+**Understanding SPANDAK output with ML**
+
+If the SPANDAK pipeline was ran with the ML code, then a separate text file which is similar to FRBcand is created named FRBcand_prob 
+The names of the first six columns with an added seventh column that now also shows probability of these candidate being a real FRB. 
+
+Furthermore, along now the code also produce plots for candidate that starts with ..
+
+A_, These are candidate that showed more than 5% probability of FRB. This kept low to reduce the false negative which is more critical than getting large number of 
+false positives. 
 
 ===================================================================================\
 This is documentation on pulsar seach pipeline
